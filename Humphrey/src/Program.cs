@@ -5,6 +5,8 @@ using sly.lexer;
 using sly.parser.generator;
 using static Extensions.Helpers;
 
+using Humphrey.FrontEnd;
+
 namespace Humphrey.Experiments
 {
     unsafe class Program
@@ -14,65 +16,6 @@ namespace Humphrey.Experiments
 
         // Append new line, or else csly crashes parsing the comments!
         public static readonly string testProgram = "bit Buffer (bit a) { return a; } #single line comment" + Environment.NewLine;
-
-        public enum Tokens
-        {
-            [Lexeme(GenericToken.Identifier, IdentifierType.Custom, "_a-zA-Z","_a-zA-Z0-9")]
-            Identifier,
-            [Lexeme(GenericToken.KeyWord, "bit")]
-            Bit,
-            [Lexeme(GenericToken.KeyWord, "return")]
-            Return,
-            [Lexeme(GenericToken.SugarToken, "+")]
-            Plus,
-            [Lexeme(GenericToken.SugarToken, ";")]
-            SemiColon,
-            [Lexeme(GenericToken.SugarToken, "{")]
-            OpenCurlyBrace,
-            [Lexeme(GenericToken.SugarToken, "}")]
-            CloseCurlyBrace,
-            [Lexeme(GenericToken.SugarToken, "(")]
-            OpenParanthesis,
-            [Lexeme(GenericToken.SugarToken, ")")]
-            CloseParanthesis,
-            [Lexeme(GenericToken.SugarToken, ",")]
-            Comma,
-            [SingleLineComment("#")]
-            SingleComment
-        }
-
-        public class Parser
-        {
-            [Production("return_list : Bit")]
-            public string ReturnList(Token<Tokens> bit)
-            {
-                return "ReturnList";
-            }
-
-            [Production("param_list : Bit Identifier")]
-            public string ParamList(Token<Tokens> bit, Token<Tokens> identifier)
-            {
-                return "ParamList";
-            }
-            
-            [Production("block : OpenCurlyBrace [d] statement CloseCurlyBrace [d]")]
-            public string Block(string statement)
-            {
-                return "Block";
-            }
-
-            [Production("statement : Return [d] Identifier SemiColon [d]")]
-            public string Statement(Token<Tokens> statement)
-            {
-                return "Statement";
-            }
-
-            [Production("function : return_list Identifier OpenParanthesis [d] param_list CloseParanthesis [d] block")]
-            public string FunctionDecleration(string return_list, Token<Tokens> identifier, string param_list, string block)
-            {
-                return $"{return_list} {identifier.Value} {param_list} {block}";
-            }
-        }
 
         static void LangTest()
         {
