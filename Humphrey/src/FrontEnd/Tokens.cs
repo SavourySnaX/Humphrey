@@ -3,6 +3,7 @@ using Superpower.Display;
 using Superpower.Model;
 using Superpower.Tokenizers;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.NetworkInformation;
 
 namespace Humphrey.FrontEnd
@@ -40,6 +41,9 @@ namespace Humphrey.FrontEnd
 
         [Token(Category = "Syntax", Example =",")]
         S_Comma,
+
+        [Token(Category = "Syntax", Example ="_")]
+        S_Underscore,
 
         [Token(Category = "Comment")]
         SingleComment
@@ -106,13 +110,22 @@ namespace Humphrey.FrontEnd
                 }
                 else if (char.IsLetter(c) || c == '_')
                 {
-                    var start = next.Location;
-                    next = SkipToNotLetterDigitOrUnderscore(start);
-                    var keywordCheck = start.Until(next.Location).ToStringValue();
-                    if (_keywords.TryGetValue(keywordCheck, out var keyword))
-                        yield return Result.Value(keyword, start, next.Location);
+                    var start = next;
+                    next = SkipToNotLetterDigitOrUnderscore(start.Location);
+                    var keywordCheck = start.Location.Until(next.Location).ToStringValue();
+                    if (keywordCheck.All(c => c == '_'))
+                    {
+                        // All the characters are underscore, for now return them as operators
+                        foreach (var _ in keywordCheck)
+                        {
+                            yield return Result.Value(Tokens.S_Underscore, start.Location, start.Remainder);
+                            start = start.Remainder.ConsumeChar();
+                        }
+                    }
+                    else if (_keywords.TryGetValue(keywordCheck, out var keyword))
+                        yield return Result.Value(keyword, start.Location, next.Location);
                     else
-                        yield return Result.Value(Tokens.Identifier, start, next.Location);
+                        yield return Result.Value(Tokens.Identifier, start.Location, next.Location);
                 }
                 else
                 {

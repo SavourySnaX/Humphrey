@@ -1,9 +1,5 @@
 ﻿using Humphrey.FrontEnd;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using Xunit;
 
 namespace Humphrey.Tests.src
@@ -14,7 +10,7 @@ namespace Humphrey.Tests.src
         [InlineData("+", Tokens.O_Plus)]
         public void CheckOperatorTokens(string input, Tokens expected)
         {
-            TokenTest(input, expected);
+            TokenTest(input, new[] { expected });
         }
 
         [Theory]
@@ -24,9 +20,10 @@ namespace Humphrey.Tests.src
         [InlineData(")", Tokens.S_CloseParanthesis)]
         [InlineData(",", Tokens.S_Comma)]
         [InlineData(";", Tokens.S_SemiColon)]
+        [InlineData("_", Tokens.S_Underscore)]
         public void CheckSyntaxTokens(string input, Tokens expected)
         {
-            TokenTest(input, expected);
+            TokenTest(input, new[] { expected });
         }
 
         [Theory]
@@ -34,17 +31,40 @@ namespace Humphrey.Tests.src
         [InlineData("bit", Tokens.KW_Bit)]
         public void CheckKeywordTokens(string input, Tokens expected)
         {
-            TokenTest(input, expected);
+            TokenTest(input, new[] { expected });
         }
 
-        private void TokenTest(string input, Tokens expected)
+        [Theory]
+        [InlineData("returnbit", Tokens.Identifier)]
+        [InlineData("Return", Tokens.Identifier)]
+        [InlineData("bIt", Tokens.Identifier)]
+        [InlineData("_a", Tokens.Identifier)]
+        [InlineData("a1", Tokens.Identifier)]
+        [InlineData("Ꜳ", Tokens.Identifier)]
+        public void CheckIdentiferTokens(string input, Tokens expected)
+        {
+            TokenTest(input, new[] { expected });
+        }
+
+        [Theory]
+        [InlineData("__", new[] { Tokens.S_Underscore, Tokens.S_Underscore })]
+        public void CheckOutliers(string input, Tokens[] tokens)
+        {
+            TokenTest(input, tokens);
+        }
+
+        private void TokenTest(string input, Tokens[] expected)
         {
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var list = tokens.ToList();
-            Assert.True(list.Count == 1);
-            Assert.True(list[0].Kind == expected);
+            Assert.True(list.Count == expected.Length);
+            for (int a = 0; a < list.Count; a++)
+            {
+                Assert.True(list[a].Kind == expected[a]);
+            }
         }
+
 
     }
 }
