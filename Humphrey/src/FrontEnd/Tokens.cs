@@ -1,10 +1,8 @@
 ﻿using Superpower;
 using Superpower.Display;
 using Superpower.Model;
-using Superpower.Tokenizers;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.NetworkInformation;
 
 namespace Humphrey.FrontEnd
 {
