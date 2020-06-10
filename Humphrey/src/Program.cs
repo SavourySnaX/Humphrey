@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using LLVMSharp.Interop;
-using sly.lexer;
-using sly.parser.generator;
 using static Extensions.Helpers;
 
 using Humphrey.FrontEnd;
@@ -14,14 +12,17 @@ namespace Humphrey.Experiments
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int Add(int a, int b);
 
-        // Append new line, or else csly crashes parsing the comments!
-        public static readonly string testProgram = "bit Buffer (bit a) { return a; } #single line comment" + Environment.NewLine;
-
+       // public static HumphreyTokeniser()
         static void LangTest()
         {
+        //    var tokeniser = new HumphreyTokeniser();
+        //    var tokens = tokeniser.Tokenize(testProgram);
+
+
+            /*
             var parser = new Parser();
             var builder = new ParserBuilder<Tokens, string>();
-            var built = builder.BuildParser(parser, ParserType.EBNF_LL_RECURSIVE_DESCENT, "function");
+            var built = builder.BuildParser(parser, ParserType.EBNF_LL_RECURSIVE_DESCENT, "file");
 
             if (built.IsError)
                 foreach(var error in built.Errors)
@@ -37,6 +38,7 @@ namespace Humphrey.Experiments
                 }
 
             Console.WriteLine($"Success : {result.Result}");
+            */
         }
 
         static void Main(string[] args)

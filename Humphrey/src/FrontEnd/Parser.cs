@@ -1,10 +1,19 @@
-﻿using sly.lexer;
-using sly.parser.generator;
+﻿using Superpower;
+using System.Collections.Generic;
 
 namespace Humphrey.FrontEnd
-{
+{/*
     public class Parser
     {
+        static readonly TokenListParser<>
+
+
+        [Production("file : function?")]
+        public string File(string rule)
+        {
+            return "RootFile";
+        }
+
         [Production("return_list : Bit")]
         public string ReturnList(Token<Tokens> bit)
         {
@@ -34,5 +43,6 @@ namespace Humphrey.FrontEnd
         {
             return $"{return_list} {identifier.Value} {param_list} {block}";
         }
-    }
+    
+    }*/
 }
