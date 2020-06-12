@@ -4,6 +4,8 @@ using LLVMSharp.Interop;
 using static Extensions.Helpers;
 
 using Humphrey.FrontEnd;
+using Superpower.Parsers;
+using Superpower;
 
 namespace Humphrey.Experiments
 {
@@ -15,6 +17,15 @@ namespace Humphrey.Experiments
        // public static HumphreyTokeniser()
         static void LangTest()
         {
+            string test = "main";
+
+            var tokeniaser = new HumphreyTokeniser();
+
+            var tokens = tokeniaser.Tokenize(test);
+
+            var parse = Parser.File.Parse(tokens);
+
+
         //    var tokeniser = new HumphreyTokeniser();
         //    var tokens = tokeniser.Tokenize(testProgram);
 

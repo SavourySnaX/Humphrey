@@ -1,8 +1,40 @@
 ﻿using Superpower;
+using Superpower.Model;
+using Superpower.Parsers;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace Humphrey.FrontEnd
-{/*
+{
+    class Parser
+    {
+        //static readonly TokenListParser<Tokens, string>
+
+
+        /*
+         *  # Test File
+         * 
+         *  main : 
+         *  {
+         *    add(1,1)
+         *  }
+         * 
+         *  add : bit a,bit b
+         *  {
+         *    return a+b
+         *  } bit result
+         *
+         */
+
+        static readonly TokenListParser<Tokens, string> Identifier =
+            Token.EqualTo(Tokens.Identifier).Select(n => n.ToStringValue());
+
+        public static readonly TokenListParser<Tokens, string> File = Identifier;
+    }
+
+
+
+    /*
     public class Parser
     {
         static readonly TokenListParser<>
