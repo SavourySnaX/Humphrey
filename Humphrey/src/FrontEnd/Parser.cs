@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 
 namespace Humphrey.FrontEnd
 {
-    class Parser
+    public class HumphreyParser
     {
         //static readonly TokenListParser<Tokens, string>
 
@@ -26,10 +26,12 @@ namespace Humphrey.FrontEnd
          *
          */
 
-        static readonly TokenListParser<Tokens, string> Identifier =
+        public static readonly TokenListParser<Tokens, string> Identifier =
             Token.EqualTo(Tokens.Identifier).Select(n => n.ToStringValue());
 
-        public static readonly TokenListParser<Tokens, string> File = Identifier;
+        public static readonly TokenListParser<Tokens, string[]> IdentifierList = Identifier.Many();
+
+        public static readonly TokenListParser<Tokens, string[]> File = Identifier.Many();
     }
 
 

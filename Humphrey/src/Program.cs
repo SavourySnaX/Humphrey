@@ -14,7 +14,6 @@ namespace Humphrey.Experiments
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int Add(int a, int b);
 
-       // public static HumphreyTokeniser()
         static void LangTest()
         {
             string test = "main";
@@ -23,33 +22,7 @@ namespace Humphrey.Experiments
 
             var tokens = tokeniaser.Tokenize(test);
 
-            var parse = Parser.File.Parse(tokens);
-
-
-        //    var tokeniser = new HumphreyTokeniser();
-        //    var tokens = tokeniser.Tokenize(testProgram);
-
-
-            /*
-            var parser = new Parser();
-            var builder = new ParserBuilder<Tokens, string>();
-            var built = builder.BuildParser(parser, ParserType.EBNF_LL_RECURSIVE_DESCENT, "file");
-
-            if (built.IsError)
-                foreach(var error in built.Errors)
-                {
-                    Console.WriteLine($"Whoops : {error.Message}");
-                }
-
-            var result = built.Result.Parse(testProgram);
-            if (result.IsError)
-                foreach(var error in result.Errors)
-                {
-                    Console.WriteLine($"SyntaxError : {error.ErrorMessage}");
-                }
-
-            Console.WriteLine($"Success : {result.Result}");
-            */
+            var parse = HumphreyParser.File.Parse(tokens);
         }
 
         static void Main(string[] args)
