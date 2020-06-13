@@ -10,6 +10,7 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("a     b c d    e", new[] { "a", "b","c","d","e" })]
         [InlineData("main + bob", new[] { "main" })]
         [InlineData("+", null)]
+        [InlineData("return bit", null)]
         public void CheckIdentifierList(string input, string[] expected)
         {
             var tokenise = new HumphreyTokeniser();
