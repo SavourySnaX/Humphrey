@@ -44,7 +44,10 @@ namespace Humphrey.FrontEnd
         S_Underscore,
 
         [Token(Category = "Comment")]
-        SingleComment
+        SingleComment,
+
+        [Token(Category = "Comment")]
+        MultiLineComment
     }
 
     public class HumphreyTokeniser : Tokenizer<Tokens>
@@ -86,6 +89,33 @@ namespace Humphrey.FrontEnd
             return next;
         }
 
+        protected static Result<char> SkipToEndCommentBlock(TextSpan span)
+        {
+            var next = span.ConsumeChar();
+            int blockCommentDepth = 1;
+            while (next.HasValue && blockCommentDepth > 0)
+            {
+                if (next.Value == '#')
+                {
+                    next = next.Remainder.ConsumeChar();
+                    if (!next.HasValue)
+                        break;
+                    if (next.Value == '!')
+                        blockCommentDepth++;
+                }
+                else if (next.Value == '!')
+                {
+                    next = next.Remainder.ConsumeChar();
+                    if (!next.HasValue)
+                        break;
+                    if (next.Value == '!')
+                        blockCommentDepth--;
+                }
+                next = next.Remainder.ConsumeChar();
+            }
+            return next;
+        }
+
         protected override IEnumerable<Result<Tokens>> Tokenize(TextSpan span)
         {
             var next = SkipWhiteSpace(span);
@@ -103,8 +133,23 @@ namespace Humphrey.FrontEnd
                 else if (c == '#')
                 {
                     var start = next.Location;
-                    next = SkipToNewLine(start);
-                    yield return Result.Value(Tokens.SingleComment, start, next.Location);
+                    next = next.Remainder.ConsumeChar();
+                    if (!next.HasValue)
+                        yield return Result.Value(Tokens.SingleComment, start, next.Remainder);
+                    else
+                    {
+                        c = next.Value;
+                        if (c == '!')
+                        {
+                            next = SkipToEndCommentBlock(start);
+                            yield return Result.Value(Tokens.MultiLineComment, start, next.Location);
+                        }
+                        else
+                        {
+                            next = SkipToNewLine(start);
+                            yield return Result.Value(Tokens.SingleComment, start, next.Location);
+                        }
+                    }
                 }
                 else if (char.IsLetter(c) || c == '_')
                 {

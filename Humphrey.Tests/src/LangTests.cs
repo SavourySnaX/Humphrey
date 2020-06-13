@@ -19,8 +19,9 @@ namespace Humphrey.FrontEnd.tests
             public IEnumerator<object[]> GetEnumerator(string dummy, [CallerFilePath] string rootFilePath = "")
             {
                 var pathsToScan = new Stack<string>();
+                var dirName = Path.GetDirectoryName(rootFilePath);
 
-                pathsToScan.Push(Path.GetDirectoryName(rootFilePath));
+                pathsToScan.Push(dirName);
 
                 while (pathsToScan.Count>0)
                 {
@@ -31,7 +32,7 @@ namespace Humphrey.FrontEnd.tests
                     }
                     foreach (var file in Directory.GetFiles(current,"*.humphrey"))
                     {
-                        yield return new object[] { File.ReadAllText(file)+Environment.NewLine };
+                        yield return new object[] { Path.GetFileName(file), File.ReadAllText(file)+Environment.NewLine };
                     }
                 }
             }
@@ -41,7 +42,7 @@ namespace Humphrey.FrontEnd.tests
 
         [Theory]
         [ClassData(typeof(SourceFileDataSource))]
-        public void RunSourceFileTest(string testProgram)
+        public void RunSourceFileTest(string filename, string testProgram)
         {
             var result = HumphreyParser.File.Invoke(new HumphreyTokeniser().Tokenize(testProgram));
             Assert.True(result.HasValue);

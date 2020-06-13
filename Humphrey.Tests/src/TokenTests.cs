@@ -1,4 +1,5 @@
 ﻿using Humphrey.FrontEnd;
+using Superpower.Parsers;
 using System.Linq;
 using Xunit;
 
@@ -6,6 +7,17 @@ namespace Humphrey.Tests.src
 {
     public class TokenTests
     {
+        [Theory]
+        [InlineData("#", Tokens.SingleComment)]
+        [InlineData("#####", Tokens.SingleComment)]
+        [InlineData("# return", Tokens.SingleComment)]
+        [InlineData("# This is a whole line of comment", Tokens.SingleComment)]
+        [InlineData("#! This is a whole block of comment !#", Tokens.MultiLineComment)]
+        public void CheckComments(string input, Tokens expected)
+        {
+            TokenTest(input, new[] { expected });
+        }
+
         [Theory]
         [InlineData("+", Tokens.O_Plus)]
         public void CheckOperatorTokens(string input, Tokens expected)

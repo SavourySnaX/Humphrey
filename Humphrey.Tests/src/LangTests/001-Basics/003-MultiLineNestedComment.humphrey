@@ -1,0 +1,9 @@
+#!
+	A multi line comment
+
+	#!
+		A nested multi line comment
+	!#
+
+	A multi line comment continue
+!#
