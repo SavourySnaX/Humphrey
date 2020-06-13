@@ -43,14 +43,8 @@ namespace Humphrey.FrontEnd.tests
         [ClassData(typeof(SourceFileDataSource))]
         public void RunSourceFileTest(string testProgram)
         {
-            /*
-            var parser = new Parser();
-            var builder = new ParserBuilder<Tokens, string>();
-            var built = builder.BuildParser(parser, ParserType.EBNF_LL_RECURSIVE_DESCENT, "file");
-            Assert.False(built.IsError);
-            var result = built.Result.Parse(testProgram);
-            Assert.False(result.IsError);
-            */
+            var result = HumphreyParser.File.Invoke(new HumphreyTokeniser().Tokenize(testProgram));
+            Assert.True(result.HasValue);
         }
     }
 }
