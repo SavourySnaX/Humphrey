@@ -10,6 +10,19 @@ namespace Humphrey.FrontEnd
     {
         //static readonly TokenListParser<Tokens, string>
 
+        /*
+         * 
+         * Numbers
+         * 
+         *  1234567890 = 1_234_567_890 = 1234567890\10
+         *  
+         *  15 = 0xf = $F = %1111 = F\_16 = F₁₆
+         *  
+         *  F\_16
+         * 
+         * 
+         */
+
 
         /*
          *  # Test File
@@ -25,6 +38,11 @@ namespace Humphrey.FrontEnd
          *  } bit result
          *
          */
+
+        public static readonly TokenListParser<Tokens, string> Number =
+            Token.EqualTo(Tokens.Number).Select(n => HumphreyTokeniser.ConvertNumber(n.ToStringValue()));
+
+        public static readonly TokenListParser<Tokens, string[]> NumberList = Number.Many();
 
         public static readonly TokenListParser<Tokens, string> Identifier =
             Token.EqualTo(Tokens.Identifier).Select(n => n.ToStringValue());

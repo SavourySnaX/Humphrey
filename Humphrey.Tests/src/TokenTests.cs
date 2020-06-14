@@ -59,6 +59,23 @@ namespace Humphrey.Tests.src
         }
 
         [Theory]
+        [InlineData("0", Tokens.Number)]
+        [InlineData("1", Tokens.Number)]
+        [InlineData("1_000_000", Tokens.Number)]
+        [InlineData("$F", Tokens.Number)]
+        [InlineData("%1010", Tokens.Number)]
+        [InlineData("%1010_0011", Tokens.Number)]
+        [InlineData(@"F\_16", Tokens.Number)]
+        [InlineData("F₁₆", Tokens.Number)]
+        [InlineData("DE_AD_BE_EF₁₆", Tokens.Number)]
+        [InlineData("18₉", Tokens.Number)]
+        [InlineData("10101₂", Tokens.Number)]
+        public void CheckNumbers(string input, Tokens expected)
+        {
+            TokenTest(input, new[] { expected });
+        }
+
+        [Theory]
         [InlineData("__", new[] { Tokens.S_Underscore, Tokens.S_Underscore })]
         public void CheckOutliers(string input, Tokens[] tokens)
         {
