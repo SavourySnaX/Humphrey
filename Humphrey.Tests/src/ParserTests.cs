@@ -110,5 +110,36 @@ namespace Humphrey.FrontEnd.tests
             }
         }
 
+        [Theory]
+        [InlineData("0+5","+ 0 5")]
+        [InlineData("a+b","+ a b")]
+        [InlineData("a+b+c","+ a + b c")]
+        [InlineData("a+b-c","+ a - b c")]
+        [InlineData("(a+b)-c","- + a b c")]
+        [InlineData("((a)+(b))-(c)","- + a b c")]
+        [InlineData("a","a")]
+        [InlineData("22","22")]
+        [InlineData("+1","+ 1")]
+        [InlineData("+5","+ 5")]
+        [InlineData("-3","- 3")]
+        [InlineData("-a","- a")]
+        [InlineData("-(3+4)","- + 3 4")]
+        public void CheckExpression(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            var (success, parsed) = parser.Expression();
+            if (null == expected)
+            {
+                Assert.False(success);
+            }
+            else
+            {
+                Assert.True(success);
+                Assert.True(parsed == expected);
+            }
+        }
+
     }
 }

@@ -96,6 +96,7 @@ namespace Humphrey.FrontEnd
 
         public ItemDelegate[] UnaryOperators => new ItemDelegate[] { AddOperator, SubOperator };
         public ItemDelegate[] BinaryOperators => new ItemDelegate[] { AddOperator, SubOperator };
+        public ItemDelegate[] ExpressionKind => new ItemDelegate[] { UnaryExpression, BinaryExpression };
 
         // terminal : Number | Identifier | BracketedExpression
         public ItemDelegate[] Terminal => new ItemDelegate[] { Number, Identifier, BracketedExpression };
@@ -105,13 +106,17 @@ namespace Humphrey.FrontEnd
         {
             if (!Item(Tokens.S_OpenParanthesis).success)
                 return (false, "");
-            var expr = BinaryExpression();
+            var expr = Expression();
             if (!expr.success)
                 return (false, "");
             if (!Item(Tokens.S_CloseParanthesis).success)
                 return (false, "");
             return expr;
         }
+
+        // expression : UnaryExpression
+        //            | BinaryExpression
+        public (bool success, string item) Expression() { return OneOf(ExpressionKind); }
 
         // binary_expression : Terminal
         //                   | Terminal operator expression
@@ -123,9 +128,9 @@ namespace Humphrey.FrontEnd
                 var op = OneOf(BinaryOperators);
                 if (op.success)
                 {
-                    var binExpr = BinaryExpression();
-                    if (binExpr.success)
-                        return (true, $"{op.item} {terminal.item} {binExpr.item}");
+                    var expr = Expression();
+                    if (expr.success)
+                        return (true, $"{op.item} {terminal.item} {expr.item}");
 
                     return (false, "");
                 }
@@ -142,9 +147,9 @@ namespace Humphrey.FrontEnd
             var op = OneOf(UnaryOperators);
             if (!op.success)
                 return (false, "");
-            var binExpr = BinaryExpression();
-            if (binExpr.success)
-                return (true, $"{op.item} {binExpr.item}");
+            var expr = Expression();
+            if (expr.success)
+                return (true, $"{op.item} {expr.item}");
 
             return (false, "");
         }
