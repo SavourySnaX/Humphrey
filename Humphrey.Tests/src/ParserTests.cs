@@ -88,5 +88,27 @@ namespace Humphrey.FrontEnd.tests
             }
         }
 
+        [Theory]
+        [InlineData("+5","+ 5")]
+        [InlineData("-3","- 3")]
+        [InlineData("-a","- a")]
+        [InlineData("-(3+4)","- + 3 4")]
+        public void CheckUnaryExpression(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            var (success, parsed) = parser.UnaryExpression();
+            if (null == expected)
+            {
+                Assert.False(success);
+            }
+            else
+            {
+                Assert.True(success);
+                Assert.True(parsed == expected);
+            }
+        }
+
     }
 }

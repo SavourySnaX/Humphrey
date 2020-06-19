@@ -94,6 +94,7 @@ namespace Humphrey.FrontEnd
         // add_operator : Plus
         public (bool success, string) SubOperator() { return Item(Tokens.O_Subtract); }
 
+        public ItemDelegate[] UnaryOperators => new ItemDelegate[] { AddOperator, SubOperator };
         public ItemDelegate[] BinaryOperators => new ItemDelegate[] { AddOperator, SubOperator };
 
         // terminal : Number | Identifier | BracketedExpression
@@ -122,7 +123,11 @@ namespace Humphrey.FrontEnd
                 var op = OneOf(BinaryOperators);
                 if (op.success)
                 {
-                    return (true, $"{op.item} {terminal.item} {BinaryExpression().item}");
+                    var binExpr = BinaryExpression();
+                    if (binExpr.success)
+                        return (true, $"{op.item} {terminal.item} {binExpr.item}");
+
+                    return (false, "");
                 }
 
                 return (true, terminal.item);
@@ -131,6 +136,18 @@ namespace Humphrey.FrontEnd
             return (false, "");
         }
 
+        // unary_expression : unary_operator expression
+        public (bool success, string item) UnaryExpression()
+        {
+            var op = OneOf(UnaryOperators);
+            if (!op.success)
+                return (false, "");
+            var binExpr = BinaryExpression();
+            if (binExpr.success)
+                return (true, $"{op.item} {binExpr.item}");
+
+            return (false, "");
+        }
 
         // Root
         public (bool success, string[]) File() { return IdentifierList(); }
