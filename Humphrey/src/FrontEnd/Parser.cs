@@ -1,100 +1,67 @@
-﻿using Superpower;
-using Superpower.Model;
-using Superpower.Parsers;
-using System.Collections.Generic;
-using System.Linq.Expressions;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace Humphrey.FrontEnd
 {
     public class HumphreyParser
     {
-        //static readonly TokenListParser<Tokens, string>
+        public HumphreyParser(IEnumerable<Result<Tokens>> toParse)
+        {
+            tokens = new Queue<Result<Tokens>>(toParse);
+            NextToken();
+        }
 
-        /*
-         * 
-         * Numbers
-         * 
-         *  1234567890 = 1_234_567_890 = 1234567890\10
-         *  
-         *  15 = 0xf = $F = %1111 = F\_16 = F₁₆
-         *  
-         *  F\_16
-         * 
-         * 
-         */
+        void NextToken()
+        {
+            if (tokens.Count != 0)
+                lookahead = tokens.Dequeue();
+            else
+                lookahead = new Result<Tokens>();
+        }
+
+        Queue<Result<Tokens>> tokens;
+        Result<Tokens> lookahead;
+
+        (bool success, string item) Item(Tokens kind)
+        {
+            if (lookahead.HasValue && lookahead.Value == kind)
+            {
+                var v = lookahead.ToStringValue();
+                if (kind == Tokens.Number)
+                    v = HumphreyTokeniser.ConvertNumber(v);
+                NextToken();
+                return (true, v);
+            }
+            return (false, "");
+        }
+
+        // * (0 or more)
+        protected (bool success, string[]) ItemList(Tokens kind)
+        {
+            var list = new List<string>();
+            while (true)
+            {
+                var (success, item) = Item(kind);
+                if (success)
+                    list.Add(item);
+                else
+                    break;
+            }
+
+            return (true, list.ToArray());
+        }
 
 
-        /*
-         *  # Test File
-         * 
-         *  main : 
-         *  {
-         *    add(1,1)
-         *  }
-         * 
-         *  add : bit a,bit b
-         *  {
-         *    return a+b
-         *  } bit result
-         *
-         */
+        // Number
+        public (bool success, string) Number => Item(Tokens.Number);
 
-        public static readonly TokenListParser<Tokens, string> Number =
-            Token.EqualTo(Tokens.Number).Select(n => HumphreyTokeniser.ConvertNumber(n.ToStringValue()));
+        // Identifier
+        public (bool success, string) Identifier => Item(Tokens.Identifier);
 
-        public static readonly TokenListParser<Tokens, string[]> NumberList = Number.Many();
+        // Number*
+        public (bool success, string[]) NumberList => ItemList(Tokens.Number);
 
-        public static readonly TokenListParser<Tokens, string> Identifier =
-            Token.EqualTo(Tokens.Identifier).Select(n => n.ToStringValue());
-
-        public static readonly TokenListParser<Tokens, string[]> IdentifierList = Identifier.Many();
-
-        public static readonly TokenListParser<Tokens, string[]> File = Identifier.Many();
+        // Identifier*        
+        public (bool success, string[]) IdentifierList => ItemList(Tokens.Identifier);
     }
-
-
-
-    /*
-    public class Parser
-    {
-        static readonly TokenListParser<>
-
-
-        [Production("file : function?")]
-        public string File(string rule)
-        {
-            return "RootFile";
-        }
-
-        [Production("return_list : Bit")]
-        public string ReturnList(Token<Tokens> bit)
-        {
-            return "ReturnList";
-        }
-
-        [Production("param_list : Bit Identifier")]
-        public string ParamList(Token<Tokens> bit, Token<Tokens> identifier)
-        {
-            return "ParamList";
-        }
-
-        [Production("block : OpenCurlyBrace [d] statement CloseCurlyBrace [d]")]
-        public string Block(string statement)
-        {
-            return "Block";
-        }
-
-        [Production("statement : Return [d] Identifier SemiColon [d]")]
-        public string Statement(Token<Tokens> statement)
-        {
-            return "Statement";
-        }
-
-        [Production("function : return_list Identifier OpenParanthesis [d] param_list CloseParanthesis [d] block")]
-        public string FunctionDecleration(string return_list, Token<Tokens> identifier, string param_list, string block)
-        {
-            return $"{return_list} {identifier.Value} {param_list} {block}";
-        }
-    
-    }*/
 }

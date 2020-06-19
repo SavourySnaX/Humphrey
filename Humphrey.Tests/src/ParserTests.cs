@@ -15,16 +15,17 @@ namespace Humphrey.FrontEnd.tests
         {
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
-            var parsed = HumphreyParser.IdentifierList.Invoke(tokens);
-            Assert.True(parsed.HasValue);
+            var parser = new HumphreyParser(tokens);
+            var (success, parsed) = parser.IdentifierList;
+            Assert.True(success);
 
             if (expected == null)
                 expected = new string[0];
 
-            Assert.True(parsed.Value.Length == expected.Length);
-            for (int a = 0; a < parsed.Value.Length; a++)
+            Assert.True(parsed.Length == expected.Length);
+            for (int a = 0; a < parsed.Length; a++)
             {
-                Assert.True(parsed.Value[a] == expected[a]);
+                Assert.True(parsed[a] == expected[a]);
             }
         }
 
@@ -46,16 +47,17 @@ namespace Humphrey.FrontEnd.tests
         {
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
-            var parsed = HumphreyParser.NumberList.Invoke(tokens);
-            Assert.True(parsed.HasValue);
+            var parser = new HumphreyParser(tokens);
+            var (success, parsed) = parser.NumberList;
+            Assert.True(success);
 
             if (expected == null)
                 expected = new string[0];
 
-            Assert.True(parsed.Value.Length == expected.Length);
-            for (int a = 0; a < parsed.Value.Length; a++)
+            Assert.True(parsed.Length == expected.Length);
+            for (int a = 0; a < parsed.Length; a++)
             {
-                Assert.True(parsed.Value[a] == expected[a]);
+                Assert.True(parsed[a] == expected[a]);
             }
         }
 

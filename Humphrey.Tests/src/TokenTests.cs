@@ -1,5 +1,4 @@
 ﻿using Humphrey.FrontEnd;
-using Superpower.Parsers;
 using System.Linq;
 using Xunit;
 
@@ -90,7 +89,7 @@ namespace Humphrey.Tests.src
             Assert.True(list.Count == expected.Length);
             for (int a = 0; a < list.Count; a++)
             {
-                Assert.True(list[a].Kind == expected[a]);
+                Assert.True(list[a].Value == expected[a]);
             }
         }
 

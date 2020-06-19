@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using LLVMSharp.Interop;
+using System.Linq;
 using static Extensions.Helpers;
 
 using Humphrey.FrontEnd;
-using Superpower.Parsers;
-using Superpower;
 
 namespace Humphrey.Experiments
 {
@@ -18,11 +17,11 @@ namespace Humphrey.Experiments
         {
             string test = "main";
 
-            var tokeniaser = new HumphreyTokeniser();
+            var tokeniser = new HumphreyTokeniser();
 
-            var tokens = tokeniaser.Tokenize(test);
+            var tokens = tokeniser.Tokenize(test).ToList();
 
-            var parse = HumphreyParser.File.Parse(tokens);
+            //var parse = HumphreyParser.File.Parse(tokens);
         }
 
         static void Main(string[] args)

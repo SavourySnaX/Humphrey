@@ -1,7 +1,4 @@
-﻿using Superpower;
-using Superpower.Display;
-using Superpower.Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -9,6 +6,19 @@ using System.Text;
 
 namespace Humphrey.FrontEnd
 {
+
+    [System.AttributeUsage(System.AttributeTargets.Field, Inherited = false, AllowMultiple = true)]
+    public class TokenAttribute : System.Attribute
+    {
+        public TokenAttribute()
+        {
+        }
+
+        public string Category {get;set;}
+        public string Example {get;set;}
+    }
+
+
     public enum Tokens
     {
         None,
@@ -56,7 +66,72 @@ namespace Humphrey.FrontEnd
         MultiLineComment
     }
 
-    public class HumphreyTokeniser : Tokenizer<Tokens>
+    public struct TokenSpan
+    {
+        public TokenSpan(string e, int p)
+        {
+            encompass = e;
+            position = p;
+        }
+
+        string encompass;
+        int position;
+
+        public Result<char> ConsumeChar()
+        {
+            if (AtEnd)
+                return new Result<char>(this);
+
+            return new Result<char>(encompass[position], this, new TokenSpan(encompass, ++position));
+        }
+
+        public string ToStringValue(TokenSpan remain)
+        {
+            return encompass.Substring(position, remain.position - position);
+        }
+
+        public bool AtEnd => position >= encompass.Length;
+        public Result<char> Until(TokenSpan location)
+        {
+            return new Result<char>(encompass[position], this, location);
+        }
+    }
+
+    public struct Result<T>
+    {
+        public Result(T val, TokenSpan loc, TokenSpan remain)
+        {
+            value = val;
+            location = loc;
+            remaining = remain;
+            hasValue = true;
+        }
+
+        public Result(TokenSpan remain)
+        {
+            hasValue = false;
+            location = remain;
+            remaining = remain;
+            value = default;
+        }
+
+        TokenSpan remaining;
+        TokenSpan location;
+        readonly T value;
+        bool hasValue;
+
+        public string ToStringValue()
+        {
+            return location.ToStringValue(remaining);
+        }
+
+        public bool HasValue => hasValue;
+        public T Value => value;
+        public TokenSpan Location => location;
+        public TokenSpan Remainder => remaining;
+    }
+
+    public class HumphreyTokeniser 
     {
         readonly Dictionary<char, Tokens> _operators = new Dictionary<char, Tokens>
         {
@@ -75,7 +150,17 @@ namespace Humphrey.FrontEnd
             ["return"] = Tokens.KW_Return,
         };
 
-        protected static Result<char> SkipToNewLine(TextSpan span)
+        protected static Result<char> SkipWhiteSpace(TokenSpan span)
+        {
+            var next = span.ConsumeChar();
+            while (next.HasValue && char.IsWhiteSpace(next.Value))
+            {
+                next = next.Remainder.ConsumeChar();
+            }
+            return next;
+        }
+
+        protected static Result<char> SkipToNewLine(TokenSpan span)
         {
             var next = span.ConsumeChar();
             while (next.HasValue && next.Value != '\n' && next.Value != '\r') 
@@ -90,7 +175,7 @@ namespace Humphrey.FrontEnd
             return char.IsLetterOrDigit(c) || c == '_' || c == '$' || c == '%';
         }
 
-        protected static Result<char> SkipToNotNumberOrIdentifier(char firstChar, TextSpan span, out Tokens kind)
+        protected static Result<char> SkipToNotNumberOrIdentifier(char firstChar, TokenSpan span, out Tokens kind)
         {
             bool operatorOnly = firstChar == '_';
             bool digitOnly = char.IsDigit(firstChar);
@@ -169,7 +254,7 @@ namespace Humphrey.FrontEnd
             return next;
         }
 
-        protected static Result<char> SkipToEndCommentBlock(TextSpan span)
+        protected static Result<char> SkipToEndCommentBlock(TokenSpan span)
         {
             var next = span.ConsumeChar();
             int blockCommentDepth = 1;
@@ -275,7 +360,12 @@ namespace Humphrey.FrontEnd
             return ConvertNumber(number) != null;
         }
 
-        protected override IEnumerable<Result<Tokens>> Tokenize(TextSpan span)
+        public IEnumerable<Result<Tokens>> Tokenize(string input)
+        {
+            return Tokenize(new TokenSpan(input, 0));
+        }
+
+        protected IEnumerable<Result<Tokens>> Tokenize(TokenSpan span)
         {
             var next = SkipWhiteSpace(span);
             if (!next.HasValue)
@@ -286,7 +376,7 @@ namespace Humphrey.FrontEnd
                 var c = next.Value;
                 if (_operators.TryGetValue(c, out var token))
                 {
-                    yield return Result.Value(token, next.Location, next.Remainder);
+                    yield return new Result<Tokens>(token, next.Location, next.Remainder);
                     next = next.Remainder.ConsumeChar();
                 }
                 else if (c == '#')
@@ -294,19 +384,19 @@ namespace Humphrey.FrontEnd
                     var start = next.Location;
                     next = next.Remainder.ConsumeChar();
                     if (!next.HasValue)
-                        yield return Result.Value(Tokens.SingleComment, start, next.Remainder);
+                        yield return new Result<Tokens>(Tokens.SingleComment, start, next.Remainder);
                     else
                     {
                         c = next.Value;
                         if (c == '!')
                         {
                             next = SkipToEndCommentBlock(start);
-                            yield return Result.Value(Tokens.MultiLineComment, start, next.Location);
+                            yield return new Result<Tokens>(Tokens.MultiLineComment, start, next.Location);
                         }
                         else
                         {
                             next = SkipToNewLine(start);
-                            yield return Result.Value(Tokens.SingleComment, start, next.Location);
+                            yield return new Result<Tokens>(Tokens.SingleComment, start, next.Location);
                         }
                     }
                 }
@@ -320,14 +410,14 @@ namespace Humphrey.FrontEnd
                     if (kind == Tokens.Identifier)
                     {
                         if (_keywords.TryGetValue(keywordCheck, out var keyword))
-                            yield return Result.Value(keyword, start.Location, next.Location);
+                            yield return new Result<Tokens>(keyword, start.Location, next.Location);
                         else
-                            yield return Result.Value(Tokens.Identifier, start.Location, next.Location);
+                            yield return new Result<Tokens>(Tokens.Identifier, start.Location, next.Location);
                     }
                     else if (kind == Tokens.Number)
                     {
                         if (IsLegalNumberFormat(keywordCheck))
-                            yield return Result.Value(Tokens.Number, start.Location, next.Location);
+                            yield return new Result<Tokens>(Tokens.Number, start.Location, next.Location);
                         else
                             yield break;
                     }
@@ -336,14 +426,14 @@ namespace Humphrey.FrontEnd
                         // All the characters are underscore, for now return them as operators
                         foreach (var _ in keywordCheck)
                         {
-                            yield return Result.Value(Tokens.S_Underscore, start.Location, start.Remainder);
+                            yield return new Result<Tokens>(Tokens.S_Underscore, start.Location, start.Remainder);
                             start = start.Remainder.ConsumeChar();
                         }
                     }
                 }
                 else
                 {
-                    yield return Result.Empty<Tokens>(next.Location, new[] { "?" });
+                    yield return new Result<Tokens>();
                 }
 
                 next = SkipWhiteSpace(next.Location);
