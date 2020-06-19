@@ -44,7 +44,7 @@ namespace Humphrey.FrontEnd.tests
         [ClassData(typeof(SourceFileDataSource))]
         public void RunSourceFileTest(string filename, string testProgram)
         {
-            var result = new HumphreyParser(new HumphreyTokeniser().Tokenize(testProgram)).File;
+            var result = new HumphreyParser(new HumphreyTokeniser().Tokenize(testProgram)).File();
             Assert.True(result.success);
         }
     }

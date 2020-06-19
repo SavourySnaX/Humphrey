@@ -16,7 +16,7 @@ namespace Humphrey.FrontEnd.tests
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.IdentifierList;
+            var (success, parsed) = parser.IdentifierList();
             Assert.True(success);
 
             if (expected == null)
@@ -48,7 +48,7 @@ namespace Humphrey.FrontEnd.tests
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.NumberList;
+            var (success, parsed) = parser.NumberList();
             Assert.True(success);
 
             if (expected == null)
@@ -58,6 +58,33 @@ namespace Humphrey.FrontEnd.tests
             for (int a = 0; a < parsed.Length; a++)
             {
                 Assert.True(parsed[a] == expected[a]);
+            }
+        }
+
+        [Theory]
+        [InlineData("0+5","+ 0 5")]
+        [InlineData("a+b","+ a b")]
+        [InlineData("a+b+c","+ a + b c")]
+        [InlineData("a+b-c","+ a - b c")]
+        [InlineData("(a+b)-c","- + a b c")]
+        [InlineData("((a)+(b))-(c)","- + a b c")]
+        [InlineData("a","a")]
+        [InlineData("22","22")]
+        [InlineData("+1",null)]
+        public void CheckBinaryExpression(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            var (success, parsed) = parser.BinaryExpression();
+            if (null == expected)
+            {
+                Assert.False(success);
+            }
+            else
+            {
+                Assert.True(success);
+                Assert.True(parsed == expected);
             }
         }
 

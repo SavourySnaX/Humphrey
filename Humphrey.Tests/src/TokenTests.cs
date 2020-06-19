@@ -19,6 +19,7 @@ namespace Humphrey.Tests.src
 
         [Theory]
         [InlineData("+", Tokens.O_Plus)]
+        [InlineData("-", Tokens.O_Subtract)]
         public void CheckOperatorTokens(string input, Tokens expected)
         {
             TokenTest(input, new[] { expected });

@@ -3,6 +3,17 @@ using System.Linq;
 
 namespace Humphrey.FrontEnd
 {
+    [System.Serializable]
+    public class ParseException : System.Exception
+    {
+        public ParseException() { }
+        public ParseException(string message) : base(message) { }
+        public ParseException(string message, System.Exception inner) : base(message, inner) { }
+        protected ParseException(
+            System.Runtime.Serialization.SerializationInfo info,
+            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+    }
+
     public class HumphreyParser
     {
         public HumphreyParser(IEnumerable<Result<Tokens>> toParse)
@@ -36,7 +47,7 @@ namespace Humphrey.FrontEnd
         }
 
         // * (0 or more)
-        protected (bool success, string[]) ItemList(Tokens kind)
+        protected (bool success, string[] items) ItemList(Tokens kind)
         {
             var list = new List<string>();
             while (true)
@@ -51,21 +62,77 @@ namespace Humphrey.FrontEnd
             return (true, list.ToArray());
         }
 
+        public delegate (bool success, string item) ItemDelegate();
 
-        // Number
-        public (bool success, string) Number => Item(Tokens.Number);
+        // | (1 of)
+        protected (bool success, string item) OneOf(ItemDelegate[] kinds)
+        {
+            foreach (var k in kinds)
+            {
+                var t = k();
+                if (t.success)
+                    return t;
+            }
 
-        // Identifier
-        public (bool success, string) Identifier => Item(Tokens.Identifier);
+            return (false, "");
+        }
 
-        // Number*
-        public (bool success, string[]) NumberList => ItemList(Tokens.Number);
+        // number : Number
+        public (bool success, string) Number() { return Item(Tokens.Number); }
 
-        // Identifier*        
-        public (bool success, string[]) IdentifierList => ItemList(Tokens.Identifier);
+        // identifier : Identifier
+        public (bool success, string) Identifier() { return Item(Tokens.Identifier); }
+
+        // number_list : Number*
+        public (bool success, string[]) NumberList() { return ItemList(Tokens.Number); }
+
+        // identifer_list : Identifier*        
+        public (bool success, string[]) IdentifierList() { return ItemList(Tokens.Identifier); }
+
+        // add_operator : Plus
+        public (bool success, string) AddOperator() { return Item(Tokens.O_Plus); }
+        // add_operator : Plus
+        public (bool success, string) SubOperator() { return Item(Tokens.O_Subtract); }
+
+        public ItemDelegate[] BinaryOperators => new ItemDelegate[] { AddOperator, SubOperator };
+
+        // terminal : Number | Identifier | BracketedExpression
+        public ItemDelegate[] Terminal => new ItemDelegate[] { Number, Identifier, BracketedExpression };
+
+        // bracketed_expresson : ( Expression )
+        public (bool success, string item) BracketedExpression()
+        {
+            if (!Item(Tokens.S_OpenParanthesis).success)
+                return (false, "");
+            var expr = BinaryExpression();
+            if (!expr.success)
+                return (false, "");
+            if (!Item(Tokens.S_CloseParanthesis).success)
+                return (false, "");
+            return expr;
+        }
+
+        // binary_expression : Terminal
+        //                   | Terminal operator expression
+        public (bool success, string item) BinaryExpression()
+        {
+            var terminal = OneOf(Terminal);
+            if (terminal.success)
+            {
+                var op = OneOf(BinaryOperators);
+                if (op.success)
+                {
+                    return (true, $"{op.item} {terminal.item} {BinaryExpression().item}");
+                }
+
+                return (true, terminal.item);
+            }
+
+            return (false, "");
+        }
 
 
         // Root
-        public (bool success, string[]) File => ItemList(Tokens.Identifier);
+        public (bool success, string[]) File() { return IdentifierList(); }
     }
 }

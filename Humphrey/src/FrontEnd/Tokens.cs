@@ -38,6 +38,9 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Operator", Example = "+")]
         O_Plus,
 
+        [Token(Category = "Operator", Example = "-")]
+        O_Subtract,
+
         [Token(Category = "Syntax", Example =";")]
         S_SemiColon,
 
@@ -136,6 +139,7 @@ namespace Humphrey.FrontEnd
         readonly Dictionary<char, Tokens> _operators = new Dictionary<char, Tokens>
         {
             ['+'] = Tokens.O_Plus,
+            ['-'] = Tokens.O_Subtract,
             [';'] = Tokens.S_SemiColon,
             [','] = Tokens.S_Comma,
             ['{'] = Tokens.S_OpenCurlyBrace,
