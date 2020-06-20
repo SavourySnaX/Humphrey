@@ -91,11 +91,15 @@ namespace Humphrey.FrontEnd
 
         // add_operator : Plus
         public (bool success, string) AddOperator() { return Item(Tokens.O_Plus); }
-        // add_operator : Plus
+        // subtract_operator : Sub
         public (bool success, string) SubOperator() { return Item(Tokens.O_Subtract); }
+        // multiply_operator : Plus
+        public (bool success, string) MultiplyOperator() { return Item(Tokens.O_Multiply); }
+        // divide_operator : Sub
+        public (bool success, string) DivideOperator() { return Item(Tokens.O_Divide); }
 
         public ItemDelegate[] UnaryOperators => new ItemDelegate[] { AddOperator, SubOperator };
-        public ItemDelegate[] BinaryOperators => new ItemDelegate[] { AddOperator, SubOperator };
+        public ItemDelegate[] BinaryOperators => new ItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator };
         public ItemDelegate[] ExpressionKind => new ItemDelegate[] { UnaryExpression, BinaryExpression };
 
         // terminal : Number | Identifier | BracketedExpression
@@ -106,17 +110,93 @@ namespace Humphrey.FrontEnd
         {
             if (!Item(Tokens.S_OpenParanthesis).success)
                 return (false, "");
+            operators.Push((false, ""));
             var expr = Expression();
             if (!expr.success)
                 return (false, "");
             if (!Item(Tokens.S_CloseParanthesis).success)
                 return (false, "");
-            return expr;
+            return PopSentinel();
+        }
+
+        Stack<(bool binary, string item)> operators;
+        Stack<string> operands;
+
+        public (bool success, string item) ParseExpression()
+        {
+            operators = new Stack<(bool binary, string item)>();
+            operands = new Stack<string>();
+            operators.Push((false, ""));
+            var (result, _) = Expression();
+            operators.Pop();
+            return (result, operands.Pop());
+        }
+
+        int Precedance(string op)
+        {
+            switch (op)
+            {
+                case "":
+                    return int.MaxValue;
+                case "+":
+                    return 500;
+                case "-":
+                    return 500;
+                case "*":
+                    return 300;
+                case "/":
+                    return 300;
+                default:
+                    throw new ParseException($"Unimplemented Precadnce for operator : {op}");
+            }
+        }
+
+        bool IsTopLowerPrecedance(string op)
+        {
+            int top = Precedance(operators.Peek().item);
+            int currentOp = Precedance(op);
+            return currentOp >= top;
+        }
+
+        public void PopOperator()
+        {
+            if (operators.Peek().binary)
+            {
+                var i2 = operands.Pop();
+                var i1 = operands.Pop();
+                operands.Push($"{operators.Pop().item} {i1} {i2}");
+            }
+            else
+            {
+                operands.Push($"{operators.Pop().item} {operands.Pop()}");
+            }
+        }
+
+        public (bool success, string item) PopSentinel()
+        {
+            if (operators.Pop().item != "")
+                return (false, "");
+            return (true, operands.Pop());
+        }
+
+        public void PushOperator((bool binary, string item) op)
+        {
+            while (IsTopLowerPrecedance(op.item))
+            {
+                PopOperator();
+            }
+            operators.Push(op);
         }
 
         // expression : UnaryExpression
         //            | BinaryExpression
-        public (bool success, string item) Expression() { return OneOf(ExpressionKind); }
+        public (bool success, string item) Expression()
+        {
+            var (result, _) = OneOf(ExpressionKind);
+            while (operators.Peek().item != "")
+                PopOperator();
+            return (result, "");
+        }
 
         // binary_expression : Terminal
         //                   | Terminal operator expression
@@ -125,9 +205,11 @@ namespace Humphrey.FrontEnd
             var terminal = OneOf(Terminal);
             if (terminal.success)
             {
+                operands.Push(terminal.item);
                 var op = OneOf(BinaryOperators);
                 if (op.success)
                 {
+                    PushOperator((true, op.item));
                     var expr = Expression();
                     if (expr.success)
                         return (true, $"{op.item} {terminal.item} {expr.item}");
@@ -147,6 +229,7 @@ namespace Humphrey.FrontEnd
             var op = OneOf(UnaryOperators);
             if (!op.success)
                 return (false, "");
+            PushOperator((false, op.item));
             var expr = Expression();
             if (expr.success)
                 return (true, $"{op.item} {expr.item}");

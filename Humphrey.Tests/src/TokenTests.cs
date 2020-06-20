@@ -20,6 +20,8 @@ namespace Humphrey.Tests.src
         [Theory]
         [InlineData("+", Tokens.O_Plus)]
         [InlineData("-", Tokens.O_Subtract)]
+        [InlineData("*", Tokens.O_Multiply)]
+        [InlineData("/", Tokens.O_Divide)]
         public void CheckOperatorTokens(string input, Tokens expected)
         {
             TokenTest(input, new[] { expected });

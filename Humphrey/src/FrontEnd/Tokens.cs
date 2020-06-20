@@ -14,8 +14,16 @@ namespace Humphrey.FrontEnd
         {
         }
 
-        public string Category {get;set;}
-        public string Example {get;set;}
+        public string Category { get; set; }
+        public string Example { get; set; }
+        public int Precedance { get; set; }
+
+        public EAssociativity Associativity { get; set; }
+        public enum EAssociativity
+        {
+            Left,
+            Right
+        }
     }
 
 
@@ -35,11 +43,17 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Keyword")]
         KW_Return,
 
-        [Token(Category = "Operator", Example = "+")]
+        [Token(Category = "Operator", Example = "+", Precedance = 50, Associativity = TokenAttribute.EAssociativity.Left)]
         O_Plus,
 
-        [Token(Category = "Operator", Example = "-")]
+        [Token(Category = "Operator", Example = "-", Precedance = 50, Associativity = TokenAttribute.EAssociativity.Left)]
         O_Subtract,
+        
+        [Token(Category = "Operator", Example = "*", Precedance = 75, Associativity = TokenAttribute.EAssociativity.Left)]
+        O_Multiply,
+
+        [Token(Category = "Operator", Example = "/", Precedance = 75, Associativity = TokenAttribute.EAssociativity.Left)]
+        O_Divide,
 
         [Token(Category = "Syntax", Example =";")]
         S_SemiColon,
@@ -140,6 +154,8 @@ namespace Humphrey.FrontEnd
         {
             ['+'] = Tokens.O_Plus,
             ['-'] = Tokens.O_Subtract,
+            ['*'] = Tokens.O_Multiply,
+            ['/'] = Tokens.O_Divide,
             [';'] = Tokens.S_SemiColon,
             [','] = Tokens.S_Comma,
             ['{'] = Tokens.S_OpenCurlyBrace,
@@ -438,6 +454,7 @@ namespace Humphrey.FrontEnd
                 else
                 {
                     yield return new Result<Tokens>();
+                    next = next.Remainder.ConsumeChar();
                 }
 
                 next = SkipWhiteSpace(next.Location);

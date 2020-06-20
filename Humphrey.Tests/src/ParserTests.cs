@@ -64,57 +64,8 @@ namespace Humphrey.FrontEnd.tests
         [Theory]
         [InlineData("0+5","+ 0 5")]
         [InlineData("a+b","+ a b")]
-        [InlineData("a+b+c","+ a + b c")]
-        [InlineData("a+b-c","+ a - b c")]
-        [InlineData("(a+b)-c","- + a b c")]
-        [InlineData("((a)+(b))-(c)","- + a b c")]
-        [InlineData("a","a")]
-        [InlineData("22","22")]
-        [InlineData("+1",null)]
-        public void CheckBinaryExpression(string input, string expected)
-        {
-            var tokenise = new HumphreyTokeniser();
-            var tokens = tokenise.Tokenize(input);
-            var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.BinaryExpression();
-            if (null == expected)
-            {
-                Assert.False(success);
-            }
-            else
-            {
-                Assert.True(success);
-                Assert.True(parsed == expected);
-            }
-        }
-
-        [Theory]
-        [InlineData("+5","+ 5")]
-        [InlineData("-3","- 3")]
-        [InlineData("-a","- a")]
-        [InlineData("-(3+4)","- + 3 4")]
-        public void CheckUnaryExpression(string input, string expected)
-        {
-            var tokenise = new HumphreyTokeniser();
-            var tokens = tokenise.Tokenize(input);
-            var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.UnaryExpression();
-            if (null == expected)
-            {
-                Assert.False(success);
-            }
-            else
-            {
-                Assert.True(success);
-                Assert.True(parsed == expected);
-            }
-        }
-
-        [Theory]
-        [InlineData("0+5","+ 0 5")]
-        [InlineData("a+b","+ a b")]
-        [InlineData("a+b+c","+ a + b c")]
-        [InlineData("a+b-c","+ a - b c")]
+        [InlineData("a+b+c","+ + a b c")]
+        [InlineData("a+b-c","- + a b c")]
         [InlineData("(a+b)-c","- + a b c")]
         [InlineData("((a)+(b))-(c)","- + a b c")]
         [InlineData("a","a")]
@@ -124,12 +75,18 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("-3","- 3")]
         [InlineData("-a","- a")]
         [InlineData("-(3+4)","- + 3 4")]
+        [InlineData("7-3-2","- - 7 3 2")]
+        [InlineData("6/3","/ 6 3")]
+        [InlineData("51 *   94","* 51 94")]
+        [InlineData("1+2*3","+ 1 * 2 3")]
+        [InlineData("2*3+1","+ * 2 3 1")]
+        [InlineData("01₂+10₂+100₂","+ + 1 2 4")]
         public void CheckExpression(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.Expression();
+            var (success, parsed) = parser.ParseExpression();
             if (null == expected)
             {
                 Assert.False(success);
