@@ -129,7 +129,7 @@ namespace Humphrey.FrontEnd
         public ItemDelegate[] UnaryOperators => new ItemDelegate[] { AddOperator, SubOperator };
         public ItemDelegate[] BinaryOperators => new ItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator };
         public ItemDelegate[] ExpressionKind => new ItemDelegate[] { UnaryExpression, BinaryExpression };
-        public ItemDelegate[] Types => new ItemDelegate[] { BitKeyword, Identifier/*, FunctionType, StructType*/ };
+        public ItemDelegate[] Types => new ItemDelegate[] { BitKeyword, Identifier, FunctionType/*, StructType*/ };
         public ItemDelegate[] Assignables => new ItemDelegate[] { /* block, */ ParseExpression };
 
         public ItemDelegate[] GlobalDefinition => new ItemDelegate[] { Definition };
@@ -347,13 +347,27 @@ namespace Humphrey.FrontEnd
                     s.Append(paramDefinitionList.item[i]);
                 }
 
+                if (!CloseParenthesis().success)
+                    return (false, "");
+
                 return (true, s.ToString());
             }
             return (false, "");
         }
 
-
         // function_type : parameter_list parameter_list
+        public (bool success, string item) FunctionType()
+        {
+            var inputs = ParamList();
+            if (!inputs.success)
+                return (false, "");
+
+            var outputs = ParamList();
+            if (!outputs.success)
+                return (false, "");
+
+            return (true, $"({inputs.item}) ({outputs.item})");
+        }
 
         // type : bit                       // builtin
         //      | identifier                // type

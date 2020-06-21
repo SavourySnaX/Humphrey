@@ -149,6 +149,9 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("bitval=a","bitval = a")]
         [InlineData("a:0",null)]
         [InlineData("a=bit",null)]
+        [InlineData("FunctionPtr:()()=0","FunctionPtr : () () = 0")]
+        [InlineData("bit:()()=0",null)]
+        [InlineData("Main:()(returnVal:bit)","Main : () (returnVal : bit)")]
         public void CheckDefinition(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();
@@ -211,5 +214,25 @@ namespace Humphrey.FrontEnd.tests
             }
         }
         
+        [Theory]
+        [InlineData("()",null)]
+        [InlineData("()()","() ()")]
+        [InlineData("(a:bit)(b:bit,c:bit)","(a : bit) (b : bit , c : bit)")]
+        public void CheckFunctionType(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            var (success, parsed) = parser.FunctionType();
+            if (null == expected)
+            {
+                Assert.False(success);
+            }
+            else
+            {
+                Assert.True(success);
+                Assert.True(parsed == expected);
+            }
+        }
     }
 }
