@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Humphrey.FrontEnd
 {
@@ -120,6 +121,10 @@ namespace Humphrey.FrontEnd
         public (bool success, string item) EqualsOperator() { return Item(Tokens.O_Equals); }
         // colon_operator : Equals
         public (bool success, string item) ColonOperator() { return Item(Tokens.O_Colon); }
+        // comma_syntax : ,
+        public (bool success, string item) CommaSyntax() { return Item(Tokens.S_Comma); }
+        public (bool success, string item) OpenParanthesis() { return Item(Tokens.S_OpenParanthesis); }
+        public (bool success, string item) CloseParenthesis() { return Item(Tokens.S_CloseParanthesis); }
 
         public ItemDelegate[] UnaryOperators => new ItemDelegate[] { AddOperator, SubOperator };
         public ItemDelegate[] BinaryOperators => new ItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator };
@@ -135,13 +140,13 @@ namespace Humphrey.FrontEnd
         // bracketed_expresson : ( Expression )
         public (bool success, string item) BracketedExpression()
         {
-            if (!Item(Tokens.S_OpenParanthesis).success)
+            if (!OpenParanthesis().success)
                 return (false, "");
             operators.Push((false, ""));
             var expr = Expression();
             if (!expr.success)
                 return (false, "");
-            if (!Item(Tokens.S_CloseParanthesis).success)
+            if (!CloseParenthesis().success)
                 return (false, "");
             return PopSentinel();
         }
@@ -272,12 +277,81 @@ namespace Humphrey.FrontEnd
         public (bool success, string[]) File() { return ManyOf(GlobalDefinition); }
 
         // param_definition : identifier : type
+        public (bool success, string item) ParamDefinition()
+        {
+            string returnValue = "";
+            var identifier = Identifier();
+            if (!identifier.success)
+                return (false, "");
+
+            returnValue += identifier.item;
+            bool hadType = false;
+            if (Item(Tokens.O_Colon).success)
+            {
+                hadType = true;
+                var typeSpecifier = Type();
+                if (!typeSpecifier.success)
+                    return (false, "");
+                returnValue += $" : {typeSpecifier.item}";
+            }
+            
+            if (!hadType)
+                return (false, "");
+
+            return (true, returnValue);
+        }
 
         // param_definition_list : param_definition
         //                       | param_definition , param_defitinition_list
+        public (bool success, string[] item) ParamDefinitionList()
+        {
+            var list = new List<string>();
+
+            var param = ParamDefinition();
+            if (!param.success)
+                return (false, null);
+
+            list.Add(param.item);
+
+            while (CommaSyntax().success)
+            {
+                param = ParamDefinition();
+                if (!param.success)
+                    return (false, null);
+
+                list.Add(param.item);
+            }
+
+            return (true, list.ToArray());
+        }
 
         // parameter_list : ( param_definition_list )
         //                | ( )
+        public (bool success, string item) ParamList()
+        {
+            var s = new StringBuilder();
+
+            if (!OpenParanthesis().success)
+                return (false, "");
+            
+            if (CloseParenthesis().success)
+                return (true, "");
+
+            var paramDefinitionList = ParamDefinitionList();
+            if (paramDefinitionList.success)
+            {
+                for (var i = 0; i < paramDefinitionList.item.Length;i++)
+                {
+                    if (i!=0)
+                        s.Append(" , ");
+                    s.Append(paramDefinitionList.item[i]);
+                }
+
+                return (true, s.ToString());
+            }
+            return (false, "");
+        }
+
 
         // function_type : parameter_list parameter_list
 

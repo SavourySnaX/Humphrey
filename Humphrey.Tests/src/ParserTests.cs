@@ -120,6 +120,27 @@ namespace Humphrey.FrontEnd.tests
         }
         
         [Theory]
+        [InlineData("a : bit","a : bit")]
+        [InlineData("a : a","a : a")]       // Semantically incorrect
+        [InlineData("0",null)]
+        public void CheckParamDefinition(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            var (success, parsed) = parser.ParamDefinition();
+            if (null == expected)
+            {
+                Assert.False(success);
+            }
+            else
+            {
+                Assert.True(success);
+                Assert.True(parsed == expected);
+            }
+        }
+        
+        [Theory]
         [InlineData("a:bit","a : bit")]
         [InlineData("a:a","a : a")]             // Semantically incorrect
         [InlineData("bitval   :bit= 1", "bitval : bit = 1")]
@@ -144,5 +165,51 @@ namespace Humphrey.FrontEnd.tests
                 Assert.True(parsed == expected);
             }
         }
+        
+        [Theory]
+        [InlineData("a:bit",new []{"a : bit"})]
+        [InlineData("a:bit,b:bit",new []{"a : bit","b : bit"})]
+        [InlineData("a:bit,b:thing",new []{"a : bit","b : thing"})]
+        [InlineData("a:bit,b:0",null)]
+        public void CheckParamDefinitionList(string input, string[] expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            var (success, parsed) = parser.ParamDefinitionList();
+            if (null == expected)
+            {
+                Assert.False(success);
+            }
+            else
+            {
+                Assert.True(success);
+                Assert.True(parsed.Length == expected.Length);
+                for (int a = 0; a < parsed.Length;a++)
+                    Assert.True(parsed[a] == expected[a]);
+            }
+        }
+        
+        [Theory]
+        [InlineData("()","")]
+        [InlineData("(a : bit)","a : bit")]
+        [InlineData("(a:bit,b:bit)","a : bit , b : bit")]
+        public void CheckParamList(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            var (success, parsed) = parser.ParamList();
+            if (null == expected)
+            {
+                Assert.False(success);
+            }
+            else
+            {
+                Assert.True(success);
+                Assert.True(parsed == expected);
+            }
+        }
+        
     }
 }
