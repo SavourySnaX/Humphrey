@@ -1,0 +1,9 @@
+# The simplest program, just returns success
+
+# MainType : () (returnValue : bit)
+
+Main : () (returnValue : bit) =
+{
+    return 0
+} 
+

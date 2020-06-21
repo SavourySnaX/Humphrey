@@ -22,6 +22,8 @@ namespace Humphrey.Tests.src
         [InlineData("-", Tokens.O_Subtract)]
         [InlineData("*", Tokens.O_Multiply)]
         [InlineData("/", Tokens.O_Divide)]
+        [InlineData("=", Tokens.O_Equals)]
+        [InlineData(":", Tokens.O_Colon)]
         public void CheckOperatorTokens(string input, Tokens expected)
         {
             TokenTest(input, new[] { expected });

@@ -98,5 +98,51 @@ namespace Humphrey.FrontEnd.tests
             }
         }
 
+        [Theory]
+        [InlineData("bit","bit")]
+        [InlineData("a","a")]
+        [InlineData("0",null)]
+        public void CheckType(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            var (success, parsed) = parser.Type();
+            if (null == expected)
+            {
+                Assert.False(success);
+            }
+            else
+            {
+                Assert.True(success);
+                Assert.True(parsed == expected);
+            }
+        }
+        
+        [Theory]
+        [InlineData("a:bit","a : bit")]
+        [InlineData("a:a","a : a")]             // Semantically incorrect
+        [InlineData("bitval   :bit= 1", "bitval : bit = 1")]
+        [InlineData("bitval=1","bitval = 1")]
+        [InlineData("bitval=1*0","bitval = * 1 0")]
+        [InlineData("bitval=a","bitval = a")]
+        [InlineData("a:0",null)]
+        [InlineData("a=bit",null)]
+        public void CheckDefinition(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            var (success, parsed) = parser.Definition();
+            if (null == expected)
+            {
+                Assert.False(success);
+            }
+            else
+            {
+                Assert.True(success);
+                Assert.True(parsed == expected);
+            }
+        }
     }
 }

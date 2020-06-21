@@ -77,30 +77,57 @@ namespace Humphrey.FrontEnd
             return (false, "");
         }
 
+        // 0 or more ( | )
+        protected (bool success, string[] items) ManyOf(ItemDelegate[] kinds)
+        {
+            var list = new List<string>();
+            while (true)
+            {
+                var (success, item) = OneOf(kinds);
+                if (success)
+                    list.Add(item);
+                else
+                    break;
+            }
+
+            return (true, list.ToArray());
+        }
+
         // number : Number
-        public (bool success, string) Number() { return Item(Tokens.Number); }
+        public (bool success, string item) Number() { return Item(Tokens.Number); }
 
         // identifier : Identifier
-        public (bool success, string) Identifier() { return Item(Tokens.Identifier); }
+        public (bool success, string item) Identifier() { return Item(Tokens.Identifier); }
 
         // number_list : Number*
-        public (bool success, string[]) NumberList() { return ItemList(Tokens.Number); }
+        public (bool success, string[] items) NumberList() { return ItemList(Tokens.Number); }
 
         // identifer_list : Identifier*        
-        public (bool success, string[]) IdentifierList() { return ItemList(Tokens.Identifier); }
+        public (bool success, string[] items) IdentifierList() { return ItemList(Tokens.Identifier); }
 
+        // bit_keyword : bit
+        public (bool success, string item) BitKeyword() { return Item(Tokens.KW_Bit); }
         // add_operator : Plus
-        public (bool success, string) AddOperator() { return Item(Tokens.O_Plus); }
+        public (bool success, string item) AddOperator() { return Item(Tokens.O_Plus); }
         // subtract_operator : Sub
-        public (bool success, string) SubOperator() { return Item(Tokens.O_Subtract); }
+        public (bool success, string item) SubOperator() { return Item(Tokens.O_Subtract); }
         // multiply_operator : Plus
-        public (bool success, string) MultiplyOperator() { return Item(Tokens.O_Multiply); }
+        public (bool success, string item) MultiplyOperator() { return Item(Tokens.O_Multiply); }
         // divide_operator : Sub
-        public (bool success, string) DivideOperator() { return Item(Tokens.O_Divide); }
+        public (bool success, string item) DivideOperator() { return Item(Tokens.O_Divide); }
+
+        // equals_operator : Equals
+        public (bool success, string item) EqualsOperator() { return Item(Tokens.O_Equals); }
+        // colon_operator : Equals
+        public (bool success, string item) ColonOperator() { return Item(Tokens.O_Colon); }
 
         public ItemDelegate[] UnaryOperators => new ItemDelegate[] { AddOperator, SubOperator };
         public ItemDelegate[] BinaryOperators => new ItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator };
         public ItemDelegate[] ExpressionKind => new ItemDelegate[] { UnaryExpression, BinaryExpression };
+        public ItemDelegate[] Types => new ItemDelegate[] { BitKeyword, Identifier/*, FunctionType, StructType*/ };
+        public ItemDelegate[] Assignables => new ItemDelegate[] { /* block, */ ParseExpression };
+
+        public ItemDelegate[] GlobalDefinition => new ItemDelegate[] { Definition };
 
         // terminal : Number | Identifier | BracketedExpression
         public ItemDelegate[] Terminal => new ItemDelegate[] { Number, Identifier, BracketedExpression };
@@ -129,7 +156,7 @@ namespace Humphrey.FrontEnd
             operators.Push((false, ""));
             var (result, _) = Expression();
             operators.Pop();
-            return (result, operands.Pop());
+            return (result, result ? operands.Pop() : "");
         }
 
         int Precedance(string op)
@@ -146,6 +173,10 @@ namespace Humphrey.FrontEnd
                     return 300;
                 case "/":
                     return 300;
+                case "=":
+                    return 150;
+                case ":":
+                    return 100;
                 default:
                     throw new ParseException($"Unimplemented Precadnce for operator : {op}");
             }
@@ -238,6 +269,65 @@ namespace Humphrey.FrontEnd
         }
 
         // Root
-        public (bool success, string[]) File() { return IdentifierList(); }
+        public (bool success, string[]) File() { return ManyOf(GlobalDefinition); }
+
+        // param_definition : identifier : type
+
+        // param_definition_list : param_definition
+        //                       | param_definition , param_defitinition_list
+
+        // parameter_list : ( param_definition_list )
+        //                | ( )
+
+        // function_type : parameter_list parameter_list
+
+        // type : bit                       // builtin
+        //      | identifier                // type
+        //      | struct_type               // struct
+        //      | function_type             // function
+        public (bool success, string item) Type() { return OneOf(Types); }
+
+        // assignable : { statements }      // function body
+        //            | expression
+        public (bool success, string item) Assignable() { return OneOf(Assignables); }
+
+        // definition : identifier : type
+        //            | identifier = assignable
+        //            | identifier : type = assignable
+        public (bool success, string item) Definition()
+        {
+            string returnValue = "";
+            var identifier = Identifier();
+            if (!identifier.success)
+                return (false, "");
+
+            returnValue += identifier.item;
+            bool hadType = false;
+            bool hadValue = false;
+            if (Item(Tokens.O_Colon).success)
+            {
+                hadType = true;
+                var typeSpecifier = Type();
+                if (!typeSpecifier.success)
+                    return (false, "");
+                returnValue += $" : {typeSpecifier.item}";
+            }
+            
+            if (Item(Tokens.O_Equals).success)
+            {
+                hadValue = true;
+                var assignable = Assignable();
+                if (!assignable.success)
+                    return (false, "");
+                returnValue += $" = {assignable.item}";
+            }
+
+            if (!hadType&&!hadValue)
+                return (false, "");
+
+            return (true, returnValue);
+
+        }
+
     }
 }

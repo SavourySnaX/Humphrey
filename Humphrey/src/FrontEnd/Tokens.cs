@@ -43,17 +43,23 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Keyword")]
         KW_Return,
 
-        [Token(Category = "Operator", Example = "+", Precedance = 50, Associativity = TokenAttribute.EAssociativity.Left)]
+        [Token(Category = "Operator", Example = "+", Precedance = 500, Associativity = TokenAttribute.EAssociativity.Left)]
         O_Plus,
 
-        [Token(Category = "Operator", Example = "-", Precedance = 50, Associativity = TokenAttribute.EAssociativity.Left)]
+        [Token(Category = "Operator", Example = "-", Precedance = 500, Associativity = TokenAttribute.EAssociativity.Left)]
         O_Subtract,
         
-        [Token(Category = "Operator", Example = "*", Precedance = 75, Associativity = TokenAttribute.EAssociativity.Left)]
+        [Token(Category = "Operator", Example = "*", Precedance = 300, Associativity = TokenAttribute.EAssociativity.Left)]
         O_Multiply,
 
-        [Token(Category = "Operator", Example = "/", Precedance = 75, Associativity = TokenAttribute.EAssociativity.Left)]
+        [Token(Category = "Operator", Example = "/", Precedance = 300, Associativity = TokenAttribute.EAssociativity.Left)]
         O_Divide,
+
+        [Token(Category = "Operator", Example = "=", Precedance = 150, Associativity = TokenAttribute.EAssociativity.Left)]
+        O_Equals,
+
+        [Token(Category = "Operator", Example = ":", Precedance = 100, Associativity = TokenAttribute.EAssociativity.Left)]
+        O_Colon,
 
         [Token(Category = "Syntax", Example =";")]
         S_SemiColon,
@@ -156,6 +162,8 @@ namespace Humphrey.FrontEnd
             ['-'] = Tokens.O_Subtract,
             ['*'] = Tokens.O_Multiply,
             ['/'] = Tokens.O_Divide,
+            [':'] = Tokens.O_Colon,
+            ['='] = Tokens.O_Equals,
             [';'] = Tokens.S_SemiColon,
             [','] = Tokens.S_Comma,
             ['{'] = Tokens.S_OpenCurlyBrace,
