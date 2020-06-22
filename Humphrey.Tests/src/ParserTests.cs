@@ -234,5 +234,52 @@ namespace Humphrey.FrontEnd.tests
                 Assert.True(parsed == expected);
             }
         }
+
+        [Theory]
+        [InlineData("{}","{ }")]
+        [InlineData("{return;}","{ return}")]
+        [InlineData("{{{}}",null)]
+        [InlineData("return;", "return")]
+        [InlineData("return", null)]
+        [InlineData("return 5+2;", "return + 5 2")]
+        public void CheckStatement(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            var (success, parsed) = parser.Statement();
+            if (null == expected)
+            {
+                Assert.False(success);
+            }
+            else
+            {
+                Assert.True(success);
+                Assert.True(parsed == expected);
+            }
+        }
+
+
+        [Theory]
+        [InlineData("{}","{ }")]
+        [InlineData("{{{}}}","{ { { }}}")]
+        [InlineData("{{{}return;}}","{ { { } return}}")]
+        [InlineData("{{{}}",null)]
+        public void CheckCodeBlock(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            var (success, parsed) = parser.CodeBlock();
+            if (null == expected)
+            {
+                Assert.False(success);
+            }
+            else
+            {
+                Assert.True(success);
+                Assert.True(parsed == expected);
+            }
+        }
     }
 }

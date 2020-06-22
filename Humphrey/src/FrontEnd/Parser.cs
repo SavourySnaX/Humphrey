@@ -23,12 +23,20 @@ namespace Humphrey.FrontEnd
             NextToken();
         }
 
+        bool IsSkippableToken(Tokens token)
+        {
+            return (token == Tokens.SingleComment || token == Tokens.MultiLineComment);
+        }
+
         void NextToken()
         {
-            if (tokens.Count != 0)
-                lookahead = tokens.Dequeue();
-            else
-                lookahead = new Result<Tokens>();
+            do
+            {
+                if (tokens.Count != 0)
+                    lookahead = tokens.Dequeue();
+                else
+                    lookahead = new Result<Tokens>();
+            } while (lookahead.HasValue && IsSkippableToken(lookahead.Value));
         }
 
         Queue<Result<Tokens>> tokens;
@@ -108,6 +116,7 @@ namespace Humphrey.FrontEnd
 
         // bit_keyword : bit
         public (bool success, string item) BitKeyword() { return Item(Tokens.KW_Bit); }
+        public (bool success, string item) ReturnKeyword() { return Item(Tokens.KW_Return); }
         // add_operator : Plus
         public (bool success, string item) AddOperator() { return Item(Tokens.O_Plus); }
         // subtract_operator : Sub
@@ -123,14 +132,18 @@ namespace Humphrey.FrontEnd
         public (bool success, string item) ColonOperator() { return Item(Tokens.O_Colon); }
         // comma_syntax : ,
         public (bool success, string item) CommaSyntax() { return Item(Tokens.S_Comma); }
+        public (bool success, string item) SemiColonSyntax() { return Item(Tokens.S_SemiColon); }
         public (bool success, string item) OpenParanthesis() { return Item(Tokens.S_OpenParanthesis); }
         public (bool success, string item) CloseParenthesis() { return Item(Tokens.S_CloseParanthesis); }
+        public (bool success, string item) OpenCurlyBrace() { return Item(Tokens.S_OpenCurlyBrace); }
+        public (bool success, string item) CloseCurlyBrace() { return Item(Tokens.S_CloseCurlyBrace); }
 
         public ItemDelegate[] UnaryOperators => new ItemDelegate[] { AddOperator, SubOperator };
         public ItemDelegate[] BinaryOperators => new ItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator };
         public ItemDelegate[] ExpressionKind => new ItemDelegate[] { UnaryExpression, BinaryExpression };
         public ItemDelegate[] Types => new ItemDelegate[] { BitKeyword, Identifier, FunctionType/*, StructType*/ };
-        public ItemDelegate[] Assignables => new ItemDelegate[] { /* block, */ ParseExpression };
+        public ItemDelegate[] Assignables => new ItemDelegate[] {  CodeBlock, ParseExpression };
+        public ItemDelegate[] Statements => new ItemDelegate[] { CodeBlock, ReturnStatement };
 
         public ItemDelegate[] GlobalDefinition => new ItemDelegate[] { Definition };
 
@@ -415,6 +428,74 @@ namespace Humphrey.FrontEnd
 
             return (true, returnValue);
 
+        }
+
+        // return_statement : return [expr] ;
+        public (bool success, string item) ReturnStatement()
+        {
+            if (!ReturnKeyword().success)
+                return (false, "");
+            
+            if (SemiColonSyntax().success)
+                return (true, "return");
+
+            var expr = ParseExpression();
+            if (!expr.success)
+                return (false, "");
+
+            if (!SemiColonSyntax().success)
+                return (false, "");
+
+            return (true, $"return {expr.item}");
+        }
+
+        // statement : block
+        //           | keyword..
+        //           | assignment
+        public (bool success, string item) Statement() { return OneOf(Statements); }
+
+        // statement_list : statement
+        //                | statement statement_list
+        public (bool success, string[] item) StatementList()
+        {
+            var list = new List<string>();
+
+            while (true)
+            {
+                var statement = Statement();
+                if (!statement.success)
+                    break;
+                list.Add(statement.item);
+            } 
+
+            return (true, list.ToArray());
+        }
+
+        // code_block : { statement_list* }
+        public (bool success, string item) CodeBlock()
+        {
+            var s = new StringBuilder();
+
+            if (!OpenCurlyBrace().success)
+                return (false, "");
+
+            var statements = StatementList();
+            if (!statements.success)
+                return (false, "");
+
+            if (!CloseCurlyBrace().success)
+                return (false, "");
+
+            s.Append("{ ");
+            for (var i = 0; i < statements.item.Length; i++)
+            {
+                if (i != 0)
+                    s.Append(" ");
+                s.Append(statements.item[i]);
+            }
+            s.Append("}");
+
+            return (true, s.ToString());
         }
 
     }
