@@ -45,7 +45,7 @@ namespace Humphrey.FrontEnd.tests
         public void RunSourceFileTest(string filename, string testProgram)
         {
             var result = new HumphreyParser(new HumphreyTokeniser().Tokenize(testProgram)).File();
-            Assert.True(result.success);
+            Assert.True(result != null, $"{filename} Failed to Parse");
         }
     }
 }

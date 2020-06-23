@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using System.Text;
+using Xunit;
 
 namespace Humphrey.FrontEnd.tests
 {
@@ -9,24 +10,14 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("main bob", new[] { "main", "bob" })]
         [InlineData("a     b c d    e", new[] { "a", "b","c","d","e" })]
         [InlineData("main + bob", new[] { "main" })]
-        [InlineData("+", null)]
-        [InlineData("return bit", null)]
+        [InlineData("+", new string[]{})]
+        [InlineData("return bit", new string[]{})]
         public void CheckIdentifierList(string input, string[] expected)
         {
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.IdentifierList();
-            Assert.True(success);
-
-            if (expected == null)
-                expected = new string[0];
-
-            Assert.True(parsed.Length == expected.Length);
-            for (int a = 0; a < parsed.Length; a++)
-            {
-                Assert.True(parsed[a] == expected[a]);
-            }
+            CheckAst(input, parser.IdentifierList(), expected);
         }
 
         [Theory]
@@ -43,22 +34,13 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("10101₂", new[] { "21" })]
         [InlineData("0₂0", new[] { "0", "0" })]
         [InlineData("9 5 2", new[] { "9", "5", "2" })]
+        [InlineData("DEADBEEF", new string[] { })]
         public void CheckNumberList(string input, string[] expected)
         {
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.NumberList();
-            Assert.True(success);
-
-            if (expected == null)
-                expected = new string[0];
-
-            Assert.True(parsed.Length == expected.Length);
-            for (int a = 0; a < parsed.Length; a++)
-            {
-                Assert.True(parsed[a] == expected[a]);
-            }
+            CheckAst(input, parser.NumberList(), expected);
         }
 
         [Theory]
@@ -86,16 +68,7 @@ namespace Humphrey.FrontEnd.tests
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.ParseExpression();
-            if (null == expected)
-            {
-                Assert.False(success);
-            }
-            else
-            {
-                Assert.True(success);
-                Assert.True(parsed == expected);
-            }
+            CheckAst(input, parser.ParseExpression(), expected);
         }
 
         [Theory]
@@ -107,16 +80,7 @@ namespace Humphrey.FrontEnd.tests
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.Type();
-            if (null == expected)
-            {
-                Assert.False(success);
-            }
-            else
-            {
-                Assert.True(success);
-                Assert.True(parsed == expected);
-            }
+            CheckAst(input, parser.Type(), expected);
         }
         
         [Theory]
@@ -128,47 +92,29 @@ namespace Humphrey.FrontEnd.tests
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.ParamDefinition();
-            if (null == expected)
-            {
-                Assert.False(success);
-            }
-            else
-            {
-                Assert.True(success);
-                Assert.True(parsed == expected);
-            }
+            CheckAst(input, parser.ParamDefinition(), expected);
         }
-        
+
         [Theory]
-        [InlineData("a:bit","a : bit")]
-        [InlineData("a:a","a : a")]             // Semantically incorrect
+        [InlineData("a:bit", "a : bit")]
+        [InlineData("a:a", "a : a")]             // Semantically incorrect
         [InlineData("bitval   :bit= 1", "bitval : bit = 1")]
-        [InlineData("bitval=1","bitval = 1")]
-        [InlineData("bitval=1*0","bitval = * 1 0")]
-        [InlineData("bitval=a","bitval = a")]
-        [InlineData("a:0",null)]
-        [InlineData("a=bit",null)]
-        [InlineData("FunctionPtr:()()=0","FunctionPtr : () () = 0")]
-        [InlineData("bit:()()=0",null)]
-        [InlineData("Main:()(returnVal:bit)","Main : () (returnVal : bit)")]
+        [InlineData("bitval=1", "bitval = 1")]
+        [InlineData("bitval=1*0", "bitval = * 1 0")]
+        [InlineData("bitval=a", "bitval = a")]
+        [InlineData("a:0", null)]
+        [InlineData("a=bit", null)]
+        [InlineData("FunctionPtr:()()=0", "FunctionPtr : () () = 0")]
+        [InlineData("bit:()()=0", null)]
+        [InlineData("Main:()(returnVal:bit)", "Main : () (returnVal : bit)")]
         public void CheckDefinition(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.Definition();
-            if (null == expected)
-            {
-                Assert.False(success);
-            }
-            else
-            {
-                Assert.True(success);
-                Assert.True(parsed == expected);
-            }
+            CheckAst(input, parser.Definition(), expected);
         }
-        
+
         [Theory]
         [InlineData("a:bit",new []{"a : bit"})]
         [InlineData("a:bit,b:bit",new []{"a : bit","b : bit"})]
@@ -179,18 +125,7 @@ namespace Humphrey.FrontEnd.tests
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.ParamDefinitionList();
-            if (null == expected)
-            {
-                Assert.False(success);
-            }
-            else
-            {
-                Assert.True(success);
-                Assert.True(parsed.Length == expected.Length);
-                for (int a = 0; a < parsed.Length;a++)
-                    Assert.True(parsed[a] == expected[a]);
-            }
+            CheckAst(input, parser.ParamDefinitionList(), expected);
         }
         
         [Theory]
@@ -202,16 +137,7 @@ namespace Humphrey.FrontEnd.tests
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.ParamList();
-            if (null == expected)
-            {
-                Assert.False(success);
-            }
-            else
-            {
-                Assert.True(success);
-                Assert.True(parsed == expected);
-            }
+            CheckAst(input, parser.ParamList(), expected);
         }
         
         [Theory]
@@ -223,16 +149,7 @@ namespace Humphrey.FrontEnd.tests
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.FunctionType();
-            if (null == expected)
-            {
-                Assert.False(success);
-            }
-            else
-            {
-                Assert.True(success);
-                Assert.True(parsed == expected);
-            }
+            CheckAst(input, parser.FunctionType(), expected);
         }
 
         [Theory]
@@ -247,39 +164,72 @@ namespace Humphrey.FrontEnd.tests
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.Statement();
-            if (null == expected)
-            {
-                Assert.False(success);
-            }
-            else
-            {
-                Assert.True(success);
-                Assert.True(parsed == expected);
-            }
+            CheckAst(input, parser.Statement(), expected);
         }
 
 
         [Theory]
         [InlineData("{}","{ }")]
         [InlineData("{{{}}}","{ { { }}}")]
-        [InlineData("{{{}return;}}","{ { { } return}}")]
+        [InlineData("{{{}return;}}","{ { { }return}}")]
         [InlineData("{{{}}",null)]
         public void CheckCodeBlock(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            var (success, parsed) = parser.CodeBlock();
+            CheckAst(input, parser.CodeBlock(), expected);
+        }
+
+        void CheckAst(string input, IAst result, string expected)
+        {
             if (null == expected)
             {
-                Assert.False(success);
+                Assert.True(result == null, $"'{input}': Expected parse fail, got : '{result?.Dump()}'");
             }
             else
             {
-                Assert.True(success);
-                Assert.True(parsed == expected);
+                Assert.True(result != null, $"'{input}': Expected parse success, got failure");
+                var res = result.Dump();
+                Assert.True(res == expected, $"'{input}': Expected '{expected}' but got '{res}'");
             }
         }
+
+        string DumpAst(IAst[] result)
+        {
+            if (result == null)
+                return "null";
+
+            var s = new StringBuilder();
+
+            s.Append($"[{result.Length}] ");
+
+            foreach(var r in result)
+            {
+                s.Append(r.Dump());
+            }
+
+            return s.ToString();
+        }
+
+        void CheckAst(string input, IAst[] result, string[] expected)
+        {
+            if (null == expected)
+            {
+                Assert.True(result == null, $"'{input}': Expected empty parse, got : '{DumpAst(result)}'");
+            }
+            else
+            {
+                Assert.True(result.Length == expected.Length, $"'{input}': Expected {result.Length} items, got '{DumpAst(result)}'");
+                for (int a = 0; a < result.Length;a++)
+                {
+                    var res = result[a].Dump();
+                    Assert.True(res == expected[a], $"'{input}': Expected '{expected[a]}' but got '{res}'");
+                }
+            }
+        }
+
+
+
     }
 }

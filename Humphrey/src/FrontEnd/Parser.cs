@@ -56,154 +56,143 @@ namespace Humphrey.FrontEnd
         }
 
         // * (0 or more)
-        protected (bool success, string[] items) ItemList(Tokens kind)
+        protected IAst[] ItemList(AstItemDelegate kind)
         {
-            var list = new List<string>();
+            var list = new List<IAst>();
             while (true)
             {
-                var (success, item) = Item(kind);
-                if (success)
+                var item = kind();
+                if (item != null)
                     list.Add(item);
                 else
                     break;
             }
 
-            return (true, list.ToArray());
+            return list.ToArray();
         }
 
         public delegate (bool success, string item) ItemDelegate();
+        public delegate IAst AstItemDelegate();
+        public delegate IAst AstInitDelegate(string item);
 
         // | (1 of)
-        protected (bool success, string item) OneOf(ItemDelegate[] kinds)
+        protected IAst OneOf(AstItemDelegate[] kinds)
         {
             foreach (var k in kinds)
             {
                 var t = k();
-                if (t.success)
+                if (t != null)
                     return t;
             }
 
-            return (false, "");
+            return null;
         }
 
         // 0 or more ( | )
-        protected (bool success, string[] items) ManyOf(ItemDelegate[] kinds)
+        protected IAst[] ManyOf(AstItemDelegate[] kinds)
         {
-            var list = new List<string>();
+            var list = new List<IAst>();
             while (true)
             {
-                var (success, item) = OneOf(kinds);
-                if (success)
-                    list.Add(item);
+                var t = OneOf(kinds);
+                if (t != null)
+                    list.Add(t);
                 else
                     break;
             }
 
-            return (true, list.ToArray());
+            return list.ToArray();
+        }
+
+        protected IAst AstItem(Tokens kind, AstInitDelegate init)
+        {
+            var item = Item(kind);
+            if (item.success)
+                return init(item.item);
+
+            return null;
         }
 
         // number : Number
-        public (bool success, string item) Number() { return Item(Tokens.Number); }
+        public AstNumber Number() { return AstItem(Tokens.Number, (e) => new AstNumber(e)) as AstNumber; }
 
         // identifier : Identifier
-        public (bool success, string item) Identifier() { return Item(Tokens.Identifier); }
+        public AstIdentifier Identifier() { return AstItem(Tokens.Identifier, (e) => new AstIdentifier(e)) as AstIdentifier; }
 
         // number_list : Number*
-        public (bool success, string[] items) NumberList() { return ItemList(Tokens.Number); }
+        public IAst[] NumberList() { return ItemList(Number); }
 
         // identifer_list : Identifier*        
-        public (bool success, string[] items) IdentifierList() { return ItemList(Tokens.Identifier); }
+        public IAst[] IdentifierList() { return ItemList(Identifier); }
 
         // bit_keyword : bit
-        public (bool success, string item) BitKeyword() { return Item(Tokens.KW_Bit); }
-        public (bool success, string item) ReturnKeyword() { return Item(Tokens.KW_Return); }
+        public AstBitType BitKeyword() { return AstItem(Tokens.KW_Bit, (e) => new AstBitType()) as AstBitType; }
+        public IAst ReturnKeyword() { return AstItem(Tokens.KW_Return, (e) => new AstKeyword(e)); }
+
         // add_operator : Plus
-        public (bool success, string item) AddOperator() { return Item(Tokens.O_Plus); }
+        public IAst AddOperator() { return AstItem(Tokens.O_Plus, (e) => new AstOperator(e)); }
         // subtract_operator : Sub
-        public (bool success, string item) SubOperator() { return Item(Tokens.O_Subtract); }
+        public IAst SubOperator() { return AstItem(Tokens.O_Subtract, (e) => new AstOperator(e)); }
         // multiply_operator : Plus
-        public (bool success, string item) MultiplyOperator() { return Item(Tokens.O_Multiply); }
+        public IAst MultiplyOperator() { return AstItem(Tokens.O_Multiply, (e) => new AstOperator(e)); }
         // divide_operator : Sub
-        public (bool success, string item) DivideOperator() { return Item(Tokens.O_Divide); }
+        public IAst DivideOperator() { return AstItem(Tokens.O_Divide, (e) => new AstOperator(e)); }
 
         // equals_operator : Equals
-        public (bool success, string item) EqualsOperator() { return Item(Tokens.O_Equals); }
-        // colon_operator : Equals
-        public (bool success, string item) ColonOperator() { return Item(Tokens.O_Colon); }
-        // comma_syntax : ,
-        public (bool success, string item) CommaSyntax() { return Item(Tokens.S_Comma); }
-        public (bool success, string item) SemiColonSyntax() { return Item(Tokens.S_SemiColon); }
-        public (bool success, string item) OpenParanthesis() { return Item(Tokens.S_OpenParanthesis); }
-        public (bool success, string item) CloseParenthesis() { return Item(Tokens.S_CloseParanthesis); }
-        public (bool success, string item) OpenCurlyBrace() { return Item(Tokens.S_OpenCurlyBrace); }
-        public (bool success, string item) CloseCurlyBrace() { return Item(Tokens.S_CloseCurlyBrace); }
+        public IAst EqualsOperator() { return AstItem(Tokens.O_Equals, (e) => new AstOperator(e)); }
+        public IAst ColonOperator() { return AstItem(Tokens.O_Colon, (e) => new AstOperator(e)); }
+        public bool CommaSyntax() { return Item(Tokens.S_Comma).success; }
+        public bool SemiColonSyntax() { return Item(Tokens.S_SemiColon).success; }
+        public bool OpenParanthesis() { return Item(Tokens.S_OpenParanthesis).success; }
+        public bool CloseParenthesis() { return Item(Tokens.S_CloseParanthesis).success; }
+        public bool OpenCurlyBrace() { return Item(Tokens.S_OpenCurlyBrace).success; }
+        public bool CloseCurlyBrace() { return Item(Tokens.S_CloseCurlyBrace).success; }
 
-        public ItemDelegate[] UnaryOperators => new ItemDelegate[] { AddOperator, SubOperator };
-        public ItemDelegate[] BinaryOperators => new ItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator };
-        public ItemDelegate[] ExpressionKind => new ItemDelegate[] { UnaryExpression, BinaryExpression };
-        public ItemDelegate[] Types => new ItemDelegate[] { BitKeyword, Identifier, FunctionType/*, StructType*/ };
-        public ItemDelegate[] Assignables => new ItemDelegate[] {  CodeBlock, ParseExpression };
-        public ItemDelegate[] Statements => new ItemDelegate[] { CodeBlock, ReturnStatement };
+        public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator };
+        public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator };
+        public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnaryExpression, BinaryExpression };
+        public AstItemDelegate[] Types => new AstItemDelegate[] { BitKeyword, Identifier, FunctionType/*, StructType*/ };
+        public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
+        public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement };
 
-        public ItemDelegate[] GlobalDefinition => new ItemDelegate[] { Definition };
+        public AstItemDelegate[] GlobalDefinition => new AstItemDelegate[] { Definition };
 
         // terminal : Number | Identifier | BracketedExpression
-        public ItemDelegate[] Terminal => new ItemDelegate[] { Number, Identifier, BracketedExpression };
+        public AstItemDelegate[] Terminal => new AstItemDelegate[] { Number, Identifier, BracketedExpression };
 
         // bracketed_expresson : ( Expression )
-        public (bool success, string item) BracketedExpression()
+        public IAst BracketedExpression()
         {
-            if (!OpenParanthesis().success)
-                return (false, "");
-            operators.Push((false, ""));
+            if (!OpenParanthesis())
+                return null;
+            PushSentinel();
             var expr = Expression();
-            if (!expr.success)
-                return (false, "");
-            if (!CloseParenthesis().success)
-                return (false, "");
+            if (expr == null)
+                return null;
+            if (!CloseParenthesis())
+                return null;
             return PopSentinel();
         }
 
-        Stack<(bool binary, string item)> operators;
-        Stack<string> operands;
+        Stack<(bool binary, IOperator item)> operators;
+        Stack<IExpression> operands;
 
-        public (bool success, string item) ParseExpression()
+        public IExpression ParseExpression()
         {
-            operators = new Stack<(bool binary, string item)>();
-            operands = new Stack<string>();
-            operators.Push((false, ""));
-            var (result, _) = Expression();
-            operators.Pop();
-            return (result, result ? operands.Pop() : "");
+            operators = new Stack<(bool binary, IOperator item)>();
+            operands = new Stack<IExpression>();
+            PushSentinel();
+            var expr = Expression();
+            if (expr == null)
+                return null;
+            return PopSentinel();
         }
 
-        int Precedance(string op)
+        bool IsTopLowerPrecedance(IOperator op)
         {
-            switch (op)
-            {
-                case "":
-                    return int.MaxValue;
-                case "+":
-                    return 500;
-                case "-":
-                    return 500;
-                case "*":
-                    return 300;
-                case "/":
-                    return 300;
-                case "=":
-                    return 150;
-                case ":":
-                    return 100;
-                default:
-                    throw new ParseException($"Unimplemented Precadnce for operator : {op}");
-            }
-        }
-
-        bool IsTopLowerPrecedance(string op)
-        {
-            int top = Precedance(operators.Peek().item);
-            int currentOp = Precedance(op);
+            var peek = operators.Peek();
+            int top = peek.item == null ? int.MaxValue : peek.item.Precedance;
+            int currentOp = op.Precedance;
             return currentOp >= top;
         }
 
@@ -213,22 +202,27 @@ namespace Humphrey.FrontEnd
             {
                 var i2 = operands.Pop();
                 var i1 = operands.Pop();
-                operands.Push($"{operators.Pop().item} {i1} {i2}");
+                operands.Push(new AstBinaryExpression(operators.Pop().item, i1, i2));
             }
             else
             {
-                operands.Push($"{operators.Pop().item} {operands.Pop()}");
+                operands.Push(new AstUnaryExpression(operators.Pop().item, operands.Pop()));
             }
         }
 
-        public (bool success, string item) PopSentinel()
+        public void PushSentinel()
         {
-            if (operators.Pop().item != "")
-                return (false, "");
-            return (true, operands.Pop());
+            operators.Push((false, null));
         }
 
-        public void PushOperator((bool binary, string item) op)
+        public IExpression PopSentinel()
+        {
+            if (operators.Pop().item != null)
+                return null;
+            return operands.Pop();
+        }
+
+        public void PushOperator((bool binary, IOperator item) op)
         {
             while (IsTopLowerPrecedance(op.item))
             {
@@ -239,263 +233,233 @@ namespace Humphrey.FrontEnd
 
         // expression : UnaryExpression
         //            | BinaryExpression
-        public (bool success, string item) Expression()
+        public IExpression Expression()
         {
-            var (result, _) = OneOf(ExpressionKind);
-            while (operators.Peek().item != "")
+            var expr = OneOf(ExpressionKind) as IExpression;
+            while (operators.Peek().item != null)
                 PopOperator();
-            return (result, "");
+            return expr;
         }
 
         // binary_expression : Terminal
         //                   | Terminal operator expression
-        public (bool success, string item) BinaryExpression()
+        public IExpression BinaryExpression()
         {
-            var terminal = OneOf(Terminal);
-            if (terminal.success)
+            var terminal = OneOf(Terminal) as IExpression;
+            if (terminal != null)
             {
-                operands.Push(terminal.item);
-                var op = OneOf(BinaryOperators);
-                if (op.success)
+                operands.Push(terminal);
+                var op = OneOf(BinaryOperators) as IOperator;
+                if (op != null)
                 {
-                    PushOperator((true, op.item));
+                    PushOperator((true, op));
                     var expr = Expression();
-                    if (expr.success)
-                        return (true, $"{op.item} {terminal.item} {expr.item}");
+                    if (expr != null)
+                        return new AstBinaryExpression(op, terminal, expr);
 
-                    return (false, "");
+                    return null;
                 }
 
-                return (true, terminal.item);
+                return terminal;
             }
 
-            return (false, "");
+            return null;
         }
 
         // unary_expression : unary_operator expression
-        public (bool success, string item) UnaryExpression()
+        public IExpression UnaryExpression()
         {
-            var op = OneOf(UnaryOperators);
-            if (!op.success)
-                return (false, "");
-            PushOperator((false, op.item));
+            var op = OneOf(UnaryOperators) as IOperator;
+            if (op == null)
+                return null;
+            PushOperator((false, op));
             var expr = Expression();
-            if (expr.success)
-                return (true, $"{op.item} {expr.item}");
+            if (expr != null)
+                return new AstUnaryExpression(op, expr);
 
-            return (false, "");
+            return null;
         }
 
         // Root
-        public (bool success, string[]) File() { return ManyOf(GlobalDefinition); }
+        public IAst[] File() { return ManyOf(GlobalDefinition); }
 
         // param_definition : identifier : type
-        public (bool success, string item) ParamDefinition()
+        public AstParamDefinition ParamDefinition()
         {
-            string returnValue = "";
             var identifier = Identifier();
-            if (!identifier.success)
-                return (false, "");
+            if (identifier == null)
+                return null;
 
-            returnValue += identifier.item;
-            bool hadType = false;
-            if (Item(Tokens.O_Colon).success)
-            {
-                hadType = true;
-                var typeSpecifier = Type();
-                if (!typeSpecifier.success)
-                    return (false, "");
-                returnValue += $" : {typeSpecifier.item}";
-            }
-            
-            if (!hadType)
-                return (false, "");
+            if (ColonOperator() == null)
+                return null;
 
-            return (true, returnValue);
+            var typeSpecifier = Type();
+            if (typeSpecifier == null)
+                return null;
+
+            return new AstParamDefinition(identifier, typeSpecifier);
         }
 
         // param_definition_list : param_definition
         //                       | param_definition , param_defitinition_list
-        public (bool success, string[] item) ParamDefinitionList()
+        public AstParamDefinition[] ParamDefinitionList()
         {
-            var list = new List<string>();
+            var list = new List<AstParamDefinition>();
 
             var param = ParamDefinition();
-            if (!param.success)
-                return (false, null);
+            if (param == null)
+                return null;
 
-            list.Add(param.item);
+            list.Add(param);
 
-            while (CommaSyntax().success)
+            while (CommaSyntax())
             {
                 param = ParamDefinition();
-                if (!param.success)
-                    return (false, null);
+                if (param == null)
+                    return null;
 
-                list.Add(param.item);
+                list.Add(param);
             }
 
-            return (true, list.ToArray());
+            return list.ToArray();
         }
 
         // parameter_list : ( param_definition_list )
         //                | ( )
-        public (bool success, string item) ParamList()
+        public AstParamList ParamList()
         {
-            var s = new StringBuilder();
+            if (!OpenParanthesis())
+                return null;
 
-            if (!OpenParanthesis().success)
-                return (false, "");
-            
-            if (CloseParenthesis().success)
-                return (true, "");
+            if (CloseParenthesis())
+                return new AstParamList(new AstParamDefinition[] { });
 
             var paramDefinitionList = ParamDefinitionList();
-            if (paramDefinitionList.success)
-            {
-                for (var i = 0; i < paramDefinitionList.item.Length;i++)
-                {
-                    if (i!=0)
-                        s.Append(" , ");
-                    s.Append(paramDefinitionList.item[i]);
-                }
+            if (paramDefinitionList == null)
+                return null;
 
-                if (!CloseParenthesis().success)
-                    return (false, "");
+            if (!CloseParenthesis())
+                return null;
 
-                return (true, s.ToString());
-            }
-            return (false, "");
+            return new AstParamList(paramDefinitionList);
         }
 
         // function_type : parameter_list parameter_list
-        public (bool success, string item) FunctionType()
+        public AstFunctionType FunctionType()
         {
             var inputs = ParamList();
-            if (!inputs.success)
-                return (false, "");
+            if (inputs == null)
+                return null;
 
             var outputs = ParamList();
-            if (!outputs.success)
-                return (false, "");
+            if (outputs == null)
+                return null;
 
-            return (true, $"({inputs.item}) ({outputs.item})");
+            return new AstFunctionType(inputs, outputs);
         }
 
         // type : bit                       // builtin
         //      | identifier                // type
         //      | struct_type               // struct
         //      | function_type             // function
-        public (bool success, string item) Type() { return OneOf(Types); }
+        public IType Type() { return OneOf(Types) as IType; }
 
         // assignable : { statements }      // function body
         //            | expression
-        public (bool success, string item) Assignable() { return OneOf(Assignables); }
+        public IAssignable Assignable() { return OneOf(Assignables) as IAssignable; }
 
         // definition : identifier : type
         //            | identifier = assignable
         //            | identifier : type = assignable
-        public (bool success, string item) Definition()
+        public AstDefinition Definition()
         {
-            string returnValue = "";
             var identifier = Identifier();
-            if (!identifier.success)
-                return (false, "");
+            if (identifier == null)
+                return null;
 
-            returnValue += identifier.item;
             bool hadType = false;
             bool hadValue = false;
-            if (Item(Tokens.O_Colon).success)
+
+            IType typeSpecifier = null;
+            IAssignable assignable = null;
+
+            if (ColonOperator() != null)
             {
                 hadType = true;
-                var typeSpecifier = Type();
-                if (!typeSpecifier.success)
-                    return (false, "");
-                returnValue += $" : {typeSpecifier.item}";
+                typeSpecifier = Type();
+                if (typeSpecifier == null)
+                    return null;
             }
-            
-            if (Item(Tokens.O_Equals).success)
+
+            if (EqualsOperator() != null)
             {
                 hadValue = true;
-                var assignable = Assignable();
-                if (!assignable.success)
-                    return (false, "");
-                returnValue += $" = {assignable.item}";
+                assignable = Assignable();
+                if (assignable == null)
+                    return null;
             }
 
-            if (!hadType&&!hadValue)
-                return (false, "");
+            if (!hadType && !hadValue)
+                return null;
 
-            return (true, returnValue);
-
+            return new AstDefinition(identifier, typeSpecifier, assignable);
         }
 
         // return_statement : return [expr] ;
-        public (bool success, string item) ReturnStatement()
+        public AstReturnStatement ReturnStatement()
         {
-            if (!ReturnKeyword().success)
-                return (false, "");
-            
-            if (SemiColonSyntax().success)
-                return (true, "return");
+            if (ReturnKeyword() == null)
+                return null;
+
+            if (SemiColonSyntax())
+                return new AstReturnStatement(null);
 
             var expr = ParseExpression();
-            if (!expr.success)
-                return (false, "");
+            if (expr == null)
+                return null;
 
-            if (!SemiColonSyntax().success)
-                return (false, "");
+            if (!SemiColonSyntax())
+                return null;
 
-            return (true, $"return {expr.item}");
+            return new AstReturnStatement(expr);
         }
 
         // statement : block
         //           | keyword..
         //           | assignment
-        public (bool success, string item) Statement() { return OneOf(Statements); }
+        public IStatement Statement() { return OneOf(Statements) as IStatement; }
 
         // statement_list : statement
         //                | statement statement_list
-        public (bool success, string[] item) StatementList()
+        public IStatement[] StatementList()
         {
-            var list = new List<string>();
+            var list = new List<IStatement>();
 
             while (true)
             {
                 var statement = Statement();
-                if (!statement.success)
+                if (statement == null)
                     break;
-                list.Add(statement.item);
+                list.Add(statement);
             } 
 
-            return (true, list.ToArray());
+            return list.ToArray();
         }
 
         // code_block : { statement_list* }
-        public (bool success, string item) CodeBlock()
+        public AstCodeBlock CodeBlock()
         {
-            var s = new StringBuilder();
-
-            if (!OpenCurlyBrace().success)
-                return (false, "");
+            if (!OpenCurlyBrace())
+                return null;
 
             var statements = StatementList();
-            if (!statements.success)
-                return (false, "");
+            if (statements == null)
+                return null;
 
-            if (!CloseCurlyBrace().success)
-                return (false, "");
+            if (!CloseCurlyBrace())
+                return null;
 
-            s.Append("{ ");
-            for (var i = 0; i < statements.item.Length; i++)
-            {
-                if (i != 0)
-                    s.Append(" ");
-                s.Append(statements.item[i]);
-            }
-            s.Append("}");
-
-            return (true, s.ToString());
+            return new AstCodeBlock(statements);
         }
 
     }
