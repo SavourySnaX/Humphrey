@@ -36,6 +36,9 @@ namespace Extensions
             }
         }
 
-        
+        public static LLVMTypeRef CreatePointerType(LLVMTypeRef elementType, uint addressSpace = 0)
+        {
+            return LLVM.PointerType(elementType, addressSpace);
+        }
     }
 }

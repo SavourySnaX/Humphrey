@@ -1,3 +1,4 @@
+using Humphrey.Backend;
 namespace Humphrey.FrontEnd
 {
     public class AstKeyword : IAst
@@ -6,6 +7,11 @@ namespace Humphrey.FrontEnd
         public AstKeyword(string value)
         {
             temp = value;
+        }
+    
+        public bool Compile(CompilationUnit unit)
+        {
+            return false;
         }
     
         public string Dump()

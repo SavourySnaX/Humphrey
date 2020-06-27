@@ -1,3 +1,4 @@
+using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
@@ -35,6 +36,11 @@ namespace Humphrey.FrontEnd
             }
         }
 
+    
+        public bool Compile(CompilationUnit unit)
+        {
+            return false;
+        }
     
         public string Dump()
         {

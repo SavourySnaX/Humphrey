@@ -1,7 +1,6 @@
 
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
@@ -11,6 +10,25 @@ namespace Humphrey.FrontEnd
         public AstCodeBlock(IStatement[] statements)
         {
             statementList = statements;
+        }
+    
+        public CompilationBlock CreateCodeBlock(CompilationUnit unit, CompilationFunction function)
+        {
+            var newBB = new CompilationBlock(function.BackendValue.AppendBasicBlock("entry"));
+
+            var builder = unit.CreateBuilder(newBB);
+
+            foreach (var s in statementList)
+            {
+                s.BuildStatement(unit, function, builder);
+            }
+
+            return newBB;
+        }
+
+        public bool Compile(CompilationUnit unit)
+        {
+            return false;
         }
     
         public string Dump()
@@ -25,6 +43,11 @@ namespace Humphrey.FrontEnd
             s.Append("}");
 
             return s.ToString();
+        }
+
+        public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

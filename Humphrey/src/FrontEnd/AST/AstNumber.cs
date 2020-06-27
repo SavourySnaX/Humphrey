@@ -1,3 +1,4 @@
+using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
@@ -9,9 +10,19 @@ namespace Humphrey.FrontEnd
             temp = value;
         }
     
+        public bool Compile(CompilationUnit unit)
+        {
+            return false;
+        }
+    
         public string Dump()
         {
             return temp;
+        }
+
+        public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
+        {
+            return unit.CreateConstant(temp);
         }
     }
 }

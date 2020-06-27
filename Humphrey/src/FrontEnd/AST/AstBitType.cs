@@ -1,3 +1,4 @@
+using Humphrey.Backend;
 namespace Humphrey.FrontEnd
 {
     public class AstBitType : IType
@@ -5,6 +6,17 @@ namespace Humphrey.FrontEnd
         public AstBitType()
         {
         }
+    
+        public CompilationType CreateOrFetchType(CompilationUnit unit)
+        {
+            return unit.FetchIntegerType(1);
+        }
+
+        public bool Compile(CompilationUnit unit)
+        {
+            return false;
+        }
+        public bool IsFunctionType => false;
     
         public string Dump()
         {

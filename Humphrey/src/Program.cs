@@ -5,6 +5,7 @@ using System.Linq;
 using static Extensions.Helpers;
 
 using Humphrey.FrontEnd;
+using Humphrey.Backend;
 
 namespace Humphrey.Experiments
 {
@@ -15,13 +16,25 @@ namespace Humphrey.Experiments
 
         static void LangTest()
         {
-            string test = "main";
+            string test = "Main:()(returnValue:bit)={return 0;}";
+            //string newType = "u8:{_:bit[8];}Main:()(returnValue:u8)={return 51;}";
 
             var tokeniser = new HumphreyTokeniser();
 
             var tokens = tokeniser.Tokenize(test).ToList();
 
-            //var parse = HumphreyParser.File.Parse(tokens);
+            var parse = new HumphreyParser(tokens).File();
+
+            var cu = new CompilationUnit("testing");
+
+            foreach (var def in parse)
+            {
+                def.Compile(cu);
+            }
+
+            cu.Dump();
+
+
         }
 
         static void Main(string[] args)

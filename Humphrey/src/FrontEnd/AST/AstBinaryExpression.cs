@@ -1,3 +1,5 @@
+using Humphrey.Backend;
+
 namespace Humphrey.FrontEnd
 {
     public class AstBinaryExpression : IExpression
@@ -12,9 +14,19 @@ namespace Humphrey.FrontEnd
             rhs = right;
         }
     
+        public bool Compile(CompilationUnit unit)
+        {
+            return false;
+        }
+
         public string Dump()
         {
             return $"{op.Dump()} {lhs.Dump()} {rhs.Dump()}";
+        }
+
+        public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

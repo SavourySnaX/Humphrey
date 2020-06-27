@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Text;
+using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
@@ -8,6 +10,24 @@ namespace Humphrey.FrontEnd
         public AstParamList(AstParamDefinition[] parameters)
         {
             paramList = parameters;
+        }
+    
+        public CompilationParam[] FetchParamList(CompilationUnit unit)
+        {
+            var pList = new CompilationParam[paramList.Length];
+
+            int pIdx = 0;
+            foreach(var param in paramList)
+            {
+                pList[pIdx++] = (param.FetchParam(unit));
+            }
+
+            return pList;
+        }
+
+        public bool Compile(CompilationUnit unit)
+        {
+            return false;
         }
     
         public string Dump()

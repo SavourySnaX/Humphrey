@@ -1,3 +1,4 @@
+using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
@@ -9,9 +10,25 @@ namespace Humphrey.FrontEnd
             temp = value;
         }
     
+        public CompilationType CreateOrFetchType(CompilationUnit unit)
+        {
+            throw new System.NotImplementedException($"Unimplemented Type create/fetch");
+        }
+    
+        public bool Compile(CompilationUnit unit)
+        {
+            return false;
+        }
+        public bool IsFunctionType => false;
+    
         public string Dump()
         {
             return temp;
+        }
+
+        public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }
