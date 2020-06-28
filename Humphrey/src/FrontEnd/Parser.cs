@@ -202,7 +202,7 @@ namespace Humphrey.FrontEnd
             {
                 var i2 = operands.Pop();
                 var i1 = operands.Pop();
-                operands.Push(new AstBinaryExpression(operators.Pop().item, i1, i2));
+                operands.Push(AstBinaryExpression.FetchBinaryExpression(operators.Pop().item, i1, i2));
             }
             else
             {
@@ -255,7 +255,7 @@ namespace Humphrey.FrontEnd
                     PushOperator((true, op));
                     var expr = Expression();
                     if (expr != null)
-                        return new AstBinaryExpression(op, terminal, expr);
+                        return AstBinaryExpression.FetchBinaryExpression(op, terminal, expr);
 
                     return null;
                 }

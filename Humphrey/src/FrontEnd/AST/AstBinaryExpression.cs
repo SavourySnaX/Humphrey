@@ -1,32 +1,25 @@
+using System;
 using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
-    public class AstBinaryExpression : IExpression
+    public static class AstBinaryExpression
     {
-        IOperator op;
-        IExpression lhs;
-        IExpression rhs;
-        public AstBinaryExpression(IOperator oper, IExpression left, IExpression right)
+        public static IExpression FetchBinaryExpression(IOperator oper, IExpression left, IExpression right)
         {
-            op = oper;
-            lhs = left;
-            rhs = right;
-        }
-    
-        public bool Compile(CompilationUnit unit)
-        {
-            return false;
-        }
-
-        public string Dump()
-        {
-            return $"{op.Dump()} {lhs.Dump()} {rhs.Dump()}";
-        }
-
-        public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
-        {
-            throw new System.NotImplementedException();
+            switch (oper.Dump())
+            {
+                case "+":
+                    return new AstBinaryPlus(left, right);
+                case "-":
+                    return new AstBinaryMinus(left, right);
+                case "*":
+                    return new AstBinaryMultiply(left, right);
+                case "/":
+                    return new AstBinaryDivide(left, right);
+                default:
+                    throw new NotImplementedException($"Unimplemented binary operator : {oper.Dump()}");
+            }
         }
     }
 }

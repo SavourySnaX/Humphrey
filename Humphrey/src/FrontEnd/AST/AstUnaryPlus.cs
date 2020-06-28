@@ -23,9 +23,9 @@ namespace Humphrey.FrontEnd
         {
             var value = expr.ProcessExpression(unit, builder);
 
-            var negate = builder.BackendValue.BuildAdd(unit.CreateConstant("0").BackendValue, value.BackendValue);
+            var result = builder.BackendValue.BuildAdd(unit.CreateConstant("0").BackendValue, value.BackendValue);
             
-            return new CompilationValue(negate);
+            return new CompilationValue(result);
         }
     }
 }
