@@ -4,12 +4,15 @@ namespace Humphrey.Backend
 {
     public class CompilationFunctionType : CompilationType
     {
-        private int outParameterOffset;
-        public CompilationFunctionType(LLVMTypeRef type, int outParamOffset) : base(type)
+        CompilationParam[] parameters;
+        private uint outParameterOffset;
+        public CompilationFunctionType(LLVMTypeRef type, CompilationParam[] allParameters, uint outParamOffset) : base(type)
         {
+            parameters = allParameters;
             outParameterOffset = outParamOffset;
         }
 
-        public int OutParamOffset => outParameterOffset;
+        public uint OutParamOffset => outParameterOffset;
+        public CompilationParam[] Parameters => parameters;
     }
 }

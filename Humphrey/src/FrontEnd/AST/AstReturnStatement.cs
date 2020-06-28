@@ -11,16 +11,15 @@ namespace Humphrey.FrontEnd
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
-            if (expr == null)
-            {
-                builder.BackendValue.BuildRetVoid();
-            }
-            else
+            if (expr != null)
             {
                 var value = expr.ProcessExpression(unit, builder);
 
-                builder.BackendValue.BuildRet(value.BackendValue);
+                var parameter = function.BackendValue.GetParam(function.OutParamOffset);
+                builder.BackendValue.BuildStore(value.BackendValue, parameter);
             }
+
+            builder.BackendValue.BuildRetVoid();
 
             return true;
         }

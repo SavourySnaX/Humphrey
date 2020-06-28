@@ -16,7 +16,7 @@ namespace Humphrey.Experiments
 
         static void LangTest()
         {
-            string test = "Main:()(returnValue:bit)={return 0;}";
+            string test = "Main:(input:bit)(returnValue:bit)={return input;}";
             //string newType = "u8:{_:bit[8];}Main:()(returnValue:u8)={return 51;}";
 
             var tokeniser = new HumphreyTokeniser();
@@ -32,9 +32,7 @@ namespace Humphrey.Experiments
                 def.Compile(cu);
             }
 
-            cu.Dump();
-
-
+            Console.WriteLine(cu.Dump());
         }
 
         static void Main(string[] args)
@@ -60,14 +58,6 @@ namespace Humphrey.Experiments
                 LLVM.DumpModule(module);
                 Console.WriteLine($"Module Verification Failed : {message}");
             }
-
-            LLVM.LinkInMCJIT();
-
-            LLVM.InitializeX86TargetMC();
-            LLVM.InitializeX86Target();
-            LLVM.InitializeX86TargetInfo();
-            LLVM.InitializeX86AsmParser();
-            LLVM.InitializeX86AsmPrinter();
 
             var options = LLVMMCJITCompilerOptions.Create();
             if (!module.TryCreateMCJITCompiler(out var ee,ref options, out message))

@@ -12,5 +12,7 @@ namespace Humphrey.Backend
         }
 
         public CompilationType Type => type;
+
+        public string Identifier => identifier;
     }
 }

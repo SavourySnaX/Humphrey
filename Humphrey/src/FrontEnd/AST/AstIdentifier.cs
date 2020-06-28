@@ -28,7 +28,7 @@ namespace Humphrey.FrontEnd
 
         public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            throw new System.NotImplementedException();
+            return unit.FetchValue(temp, builder);
         }
     }
 }

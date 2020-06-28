@@ -16,7 +16,7 @@ namespace Humphrey.FrontEnd
         {
             var newBB = new CompilationBlock(function.BackendValue.AppendBasicBlock("entry"));
 
-            var builder = unit.CreateBuilder(newBB);
+            var builder = unit.CreateBuilder(function, newBB);
 
             foreach (var s in statementList)
             {

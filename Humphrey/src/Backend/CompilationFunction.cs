@@ -5,15 +5,15 @@ namespace Humphrey.Backend
     public class CompilationFunction
     {
         LLVMValueRef function;
-        int offsetToFirstOutParam;
-        public CompilationFunction(LLVMValueRef func, int outParamOffset)
+        CompilationFunctionType type;
+        public CompilationFunction(LLVMValueRef func, CompilationFunctionType funcType)
         {
             function = func;
-            offsetToFirstOutParam = outParamOffset;
+            type = funcType;
         }
 
         public LLVMValueRef BackendValue => function;
-
-        public int OutParamOffset => offsetToFirstOutParam;
+        public CompilationFunctionType FunctionType => type;
+        public uint OutParamOffset => type.OutParamOffset;
     }
 }

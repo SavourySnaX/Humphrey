@@ -1,0 +1,8 @@
+# Returns the value passed into it
+
+Main : (inputValue : bit) (returnValue : bit) =
+{
+    return inputValue;
+} 
+
+
