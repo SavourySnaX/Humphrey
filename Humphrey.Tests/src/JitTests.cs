@@ -47,10 +47,10 @@ Main : () (returnValue : bit) =
         [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { return a-b;}","Main", 0, 1, 1)]
         [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { return a-b;}","Main", 1, 0, 1)]
         [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { return a-b;}","Main", 1, 1, 0)]
-        //[InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { return a*b;}","Main", 0, 0, 0)]       // Multiply causes stack overflow in LLVM to investigate
-        //[InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { return a*b;}","Main", 0, 1, 0)]
-        //[InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { return a*b;}","Main", 1, 0, 0)]
-        //[InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { return a*b;}","Main", 1, 1, 1)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { return a*b;}","Main", 0, 0, 0)]       // Multiply causes stack overflow in LLVM to investigate
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { return a*b;}","Main", 0, 1, 0)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { return a*b;}","Main", 1, 0, 0)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { return a*b;}","Main", 1, 1, 1)]
         [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { return a/b;}","Main", 0, 1, 0)]
         [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { return a/b;}","Main", 1, 1, 1)]
         public void CheckBitBitExpectsBit(string input, string entryPointName, byte ival1, byte ival2, byte expected)

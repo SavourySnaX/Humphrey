@@ -1,3 +1,4 @@
+using System;
 using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
@@ -27,9 +28,7 @@ namespace Humphrey.FrontEnd
             var valueLeft = lhs.ProcessExpression(unit, builder);
             var valueRight = rhs.ProcessExpression(unit, builder);
 
-            valueLeft.BackendValue.Dump();
-            valueRight.BackendValue.Dump();
-            var result = builder.BackendValue.BuildMul(valueLeft.BackendValue, valueRight.BackendValue);
+            var result = builder.BackendValue.BuildMul(valueLeft.BackendValue, valueRight.BackendValue ,"".AsSpan());       // Workaround stack overflow in LLVMSharp 10.0
 
             return new CompilationValue(result);
         }
