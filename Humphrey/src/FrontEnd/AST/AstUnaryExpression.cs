@@ -1,29 +1,20 @@
+using System;
 using Humphrey.Backend;
 namespace Humphrey.FrontEnd
 {
-    public class AstUnaryExpression : IExpression
+    public static class AstUnaryExpression 
     {
-        IOperator op;
-        IExpression expr;
-        public AstUnaryExpression(IOperator oper, IExpression expression)
+        public static IExpression FetchUnaryExpression(IOperator oper, IExpression expression)
         {
-            op = oper;
-            expr = expression;
-        }
-    
-        public bool Compile(CompilationUnit unit)
-        {
-            return false;
-        }
-    
-        public string Dump()
-        {
-            return $"{op.Dump()} {expr.Dump()}";
-        }
-
-        public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
-        {
-            throw new System.NotImplementedException();
+            switch (oper.Dump())
+            {
+                case "+":
+                    return new AstUnaryPlus(expression);
+                case "-":
+                    return new AstUnaryMinus(expression);
+                default:
+                    throw new NotImplementedException($"Unimplemented unary operator : {oper.Dump()}");
+            }
         }
     }
 }

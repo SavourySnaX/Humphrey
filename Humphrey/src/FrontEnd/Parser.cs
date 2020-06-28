@@ -206,7 +206,7 @@ namespace Humphrey.FrontEnd
             }
             else
             {
-                operands.Push(new AstUnaryExpression(operators.Pop().item, operands.Pop()));
+                operands.Push(AstUnaryExpression.FetchUnaryExpression(operators.Pop().item, operands.Pop()));
             }
         }
 
@@ -275,7 +275,7 @@ namespace Humphrey.FrontEnd
             PushOperator((false, op));
             var expr = Expression();
             if (expr != null)
-                return new AstUnaryExpression(op, expr);
+                return AstUnaryExpression.FetchUnaryExpression(op, expr);
 
             return null;
         }
