@@ -21,7 +21,11 @@ namespace Humphrey.FrontEnd
 
         public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            throw new System.NotImplementedException();
+            var value = expr.ProcessExpression(unit, builder);
+
+            var negate = builder.BackendValue.BuildSub(unit.CreateConstant("0").BackendValue, value.BackendValue);
+            
+            return new CompilationValue(negate);
         }
     }
 }

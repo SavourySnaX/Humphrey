@@ -29,6 +29,10 @@ Main : () (returnValue : bit) =
         [Theory]
         [InlineData(@"Main : (a : bit) (returnValue : bit) = { return a;}","Main", 0, 0)]
         [InlineData(@"Main : (a : bit) (returnValue : bit) = { return a;}","Main", 1, 1)]
+        [InlineData(@"Main : (a : bit) (returnValue : bit) = { return +a;}","Main", 0, 0)]
+        [InlineData(@"Main : (a : bit) (returnValue : bit) = { return +a;}","Main", 1, 1)]
+        [InlineData(@"Main : (a : bit) (returnValue : bit) = { return -a;}","Main", 0, 0)]
+        [InlineData(@"Main : (a : bit) (returnValue : bit) = { return -a;}","Main", 1, 1)]
         public void CheckBitExpectsBit(string input, string entryPointName, byte ival, byte expected)
         {
             Assert.True(InputBitExpectsBitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input}");
