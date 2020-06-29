@@ -1,21 +1,23 @@
+using System.Text;
 using Humphrey.Backend;
 namespace Humphrey.FrontEnd
 {
     public class AstReturnStatement : IStatement
     {
-        IExpression expr;
-        public AstReturnStatement(IExpression expression)
+        IExpression[] exprList;
+        public AstReturnStatement(IExpression[] expressionList)
         {
-            expr = expression;
+            exprList = expressionList;
         }
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
-            if (expr != null)
+            uint outParamIdx = function.OutParamOffset;
+            foreach (var expr in exprList)
             {
                 var value = expr.ProcessExpression(unit, builder);
 
-                var parameter = function.BackendValue.GetParam(function.OutParamOffset);
+                var parameter = function.BackendValue.GetParam(outParamIdx++);
                 builder.BackendValue.BuildStore(value.BackendValue, parameter);
             }
 
@@ -31,9 +33,16 @@ namespace Humphrey.FrontEnd
     
         public string Dump()
         {
-            if (expr==null)
+            if (exprList.Length==0)
                 return "return";
-            return $"return {expr.Dump()}";
+            var s = new StringBuilder();
+            for (int a = 0; a < exprList.Length; a++)
+            {
+                if (a != 0)
+                    s.Append(" , ");
+                s.Append(exprList[a].Dump());
+            }
+            return $"return {s.ToString()}";
         }
     }
 }

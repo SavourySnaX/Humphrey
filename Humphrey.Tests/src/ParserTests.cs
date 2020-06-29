@@ -153,12 +153,26 @@ namespace Humphrey.FrontEnd.tests
         }
 
         [Theory]
+        [InlineData("5+2", new [] {"+ 5 2"})]
+        [InlineData("5+2,6-3", new []{"+ 5 2","- 6 3"})]
+        [InlineData("a,b,c,d,55", new [] {"a","b","c","d","55"})]
+        [InlineData("", null)]
+        public void CheckExpressionList(string input, string[] expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.ExpressionList(), expected);
+        }
+
+        [Theory]
         [InlineData("{}","{ }")]
         [InlineData("{return;}","{ return}")]
         [InlineData("{{{}}",null)]
         [InlineData("return;", "return")]
         [InlineData("return", null)]
         [InlineData("return 5+2;", "return + 5 2")]
+        [InlineData("return 5+2,6-3;", "return + 5 2 , - 6 3")]
         public void CheckStatement(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();
@@ -166,7 +180,6 @@ namespace Humphrey.FrontEnd.tests
             var parser = new HumphreyParser(tokens);
             CheckAst(input, parser.Statement(), expected);
         }
-
 
         [Theory]
         [InlineData("{}","{ }")]

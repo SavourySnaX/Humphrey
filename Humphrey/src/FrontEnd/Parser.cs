@@ -324,6 +324,30 @@ namespace Humphrey.FrontEnd
             return list.ToArray();
         }
 
+        // expression_list : expr
+        //                 | expr , expression_list
+        public IExpression[] ExpressionList()
+        {
+            var list = new List<IExpression>();
+
+            var expr = ParseExpression();
+            if (expr == null)
+                return null;
+
+            list.Add(expr);
+
+            while (CommaSyntax())
+            {
+                expr = ParseExpression();
+                if (expr == null)
+                    return null;
+
+                list.Add(expr);
+            }
+
+            return list.ToArray();
+        }
+
         // parameter_list : ( param_definition_list )
         //                | ( )
         public AstParamList ParamList()
@@ -405,23 +429,23 @@ namespace Humphrey.FrontEnd
             return new AstDefinition(identifier, typeSpecifier, assignable);
         }
 
-        // return_statement : return [expr] ;
+        // return_statement : return [expression_list] ;
         public AstReturnStatement ReturnStatement()
         {
             if (ReturnKeyword() == null)
                 return null;
 
             if (SemiColonSyntax())
-                return new AstReturnStatement(null);
+                return new AstReturnStatement(new IExpression[] { });
 
-            var expr = ParseExpression();
-            if (expr == null)
+            var expressionList = ExpressionList();
+            if (expressionList==null)
                 return null;
 
             if (!SemiColonSyntax())
                 return null;
 
-            return new AstReturnStatement(expr);
+            return new AstReturnStatement(expressionList);
         }
 
         // statement : block
