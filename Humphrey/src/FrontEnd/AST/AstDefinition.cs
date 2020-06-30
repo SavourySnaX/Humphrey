@@ -32,21 +32,25 @@ namespace Humphrey.FrontEnd
             }
             else if (type.IsFunctionType && initialiser!=null)
             {
-                // function
-
-                // Todo output parameters need to be marked nonnull dereferencable at the least
                 var newFunction = unit.CreateFunction(ct as CompilationFunctionType, ident.Dump());
 
                 var codeBlock = initialiser as AstCodeBlock;
 
                 codeBlock.CreateCodeBlock(unit, newFunction);
             }
+            else if (initialiser==null)
+            {
+                var newGlobal = unit.CreateGlobalVariable(ct, ident.Dump());
+            }
             else
             {
-                // variable with/without initialiser
-                throw new System.NotImplementedException($"TODO global variable");
-            }            
-            
+                // todo this needs to be a constant/computable value for LLVM so we ideally need a semantic pass soon
+                var expr = initialiser as IExpression;
+
+                var exprValue = expr.ProcessConstantExpression(unit);
+
+                var newGlobal = unit.CreateGlobalVariable(ct, ident.Dump(), exprValue);
+            }
 
             return false;
         }
@@ -59,6 +63,11 @@ namespace Humphrey.FrontEnd
                 return $"{ident.Dump()} : {type.Dump()}";
 
             return $"{ident.Dump()} : {type.Dump()} = {initialiser.Dump()}";
+        }
+
+        public CompilationValue ProcessConstantExpression(CompilationUnit unit)
+        {
+            throw new System.NotImplementedException($"Todo implement constant expression processing");
         }
 
         public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)

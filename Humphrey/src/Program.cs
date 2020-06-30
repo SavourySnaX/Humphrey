@@ -16,7 +16,7 @@ namespace Humphrey.Experiments
 
         static void LangTest()
         {
-            string test = "Main : (a : bit, b : bit) (returnB : bit , returnA : bit) = { return b, a;}";//Main:(a:bit,b:bit)(returnValue:bit)={return a*b;}";
+            string test = "initialised : bit = 1 Main:()(returnValue:bit)={return initialised;}";
             //string newType = "u8:{_:bit[8];}Main:()(returnValue:u8)={return 51;}";
 
             var tokeniser = new HumphreyTokeniser();

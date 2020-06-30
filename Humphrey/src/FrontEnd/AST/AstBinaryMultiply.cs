@@ -23,6 +23,11 @@ namespace Humphrey.FrontEnd
             return $"* {lhs.Dump()} {rhs.Dump()}";
         }
 
+        public CompilationValue ProcessConstantExpression(CompilationUnit unit)
+        {
+            throw new System.NotImplementedException($"Todo implement constant expression processing");
+        }
+
         public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             var valueLeft = lhs.ProcessExpression(unit, builder);

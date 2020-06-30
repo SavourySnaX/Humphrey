@@ -9,18 +9,10 @@ namespace Humphrey.Backend.tests
     public unsafe class JitTests
     {
         [Theory]
-        [InlineData(@"
-Main : () (returnValue : bit) =
-{
-    return 0;
-} 
-        ","Main", 0)]
-        [InlineData(@"
-Main : () (returnValue : bit) =
-{
-    return 1;
-} 
-        ","Main", 1)]
+        [InlineData(@" Main : () (returnValue : bit) = { return 0; } ","Main", 0)]
+        [InlineData(@" Main : () (returnValue : bit) = { return 1; } ","Main", 1)]
+        [InlineData(@"global : bit = 0 Main : () (returnValue : bit) = { return global; } ","Main", 0)]
+        [InlineData(@"global : bit = 1 Main : () (returnValue : bit) = { return global; } ","Main", 1)]
         public void CheckVoidExpectsBit(string input, string entryPointName, byte expected)
         {
             Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");

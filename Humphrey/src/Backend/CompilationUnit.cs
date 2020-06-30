@@ -63,6 +63,11 @@ namespace Humphrey.Backend
             if (value != null)
                 return value;
 
+            // Check for global value
+            value = symbolTable.FetchGlobalValue(identifier);
+            if (value != null)
+                return new CompilationValue(builder.BackendValue.BuildLoad(value.BackendValue));
+
             throw new Exception($"Failed to find identifier {identifier}");
         }
 
@@ -102,6 +107,26 @@ namespace Humphrey.Backend
             }
 
             return cfunc;
+        }
+
+        public CompilationValue CreateGlobalVariable(CompilationType type, string identifier, CompilationValue initialiser = null)
+        {
+            if (symbolTable.FetchGlobalValue(identifier)!=null)
+                throw new Exception($"global value {identifier} already exists!");
+
+            var global = moduleRef.AddGlobal(type.BackendType, identifier);
+
+            if (initialiser != null)
+            {
+                global.Initializer = initialiser.BackendValue;
+            }
+
+            var globalValue = new CompilationValue(global);
+
+            if (!symbolTable.AddGlobalValue(identifier, globalValue))
+                throw new Exception($"global {identifier} failed to add symbol!");
+
+            return globalValue;
         }
 
         public CompilationParam CreateFunctionParameter(CompilationType type, string identifier)
