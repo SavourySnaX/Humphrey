@@ -129,14 +129,16 @@ namespace Humphrey.FrontEnd
         public AstBitType BitKeyword() { return AstItem(Tokens.KW_Bit, (e) => new AstBitType()) as AstBitType; }
         public IAst ReturnKeyword() { return AstItem(Tokens.KW_Return, (e) => new AstKeyword(e)); }
 
-        // add_operator : Plus
+        // add_operator : +
         public IAst AddOperator() { return AstItem(Tokens.O_Plus, (e) => new AstOperator(e)); }
-        // subtract_operator : Sub
+        // subtract_operator : -
         public IAst SubOperator() { return AstItem(Tokens.O_Subtract, (e) => new AstOperator(e)); }
-        // multiply_operator : Plus
+        // multiply_operator : *
         public IAst MultiplyOperator() { return AstItem(Tokens.O_Multiply, (e) => new AstOperator(e)); }
-        // divide_operator : Sub
+        // divide_operator : /
         public IAst DivideOperator() { return AstItem(Tokens.O_Divide, (e) => new AstOperator(e)); }
+        // modulus_operator : %
+        public IAst ModulusOperator() { return AstItem(Tokens.O_Modulus, (e) => new AstOperator(e)); }
 
         // equals_operator : Equals
         public IAst EqualsOperator() { return AstItem(Tokens.O_Equals, (e) => new AstOperator(e)); }
@@ -149,7 +151,7 @@ namespace Humphrey.FrontEnd
         public bool CloseCurlyBrace() { return Item(Tokens.S_CloseCurlyBrace).success; }
 
         public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator };
-        public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator };
+        public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnaryExpression, BinaryExpression };
         public AstItemDelegate[] Types => new AstItemDelegate[] { BitKeyword, Identifier, FunctionType/*, StructType*/ };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };

@@ -22,6 +22,8 @@ namespace Humphrey.FrontEnd
                         return 500;
                     case "-":
                         return 500;
+                    case "%":
+                        return 300;
                     case "*":
                         return 300;
                     case "/":

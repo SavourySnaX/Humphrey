@@ -22,6 +22,7 @@ namespace Humphrey.Tests.src
         [InlineData("-", Tokens.O_Subtract)]
         [InlineData("*", Tokens.O_Multiply)]
         [InlineData("/", Tokens.O_Divide)]
+        [InlineData("%", Tokens.O_Modulus)]
         [InlineData("=", Tokens.O_Equals)]
         [InlineData(":", Tokens.O_Colon)]
         public void CheckOperatorTokens(string input, Tokens expected)
@@ -34,6 +35,8 @@ namespace Humphrey.Tests.src
         [InlineData("}", Tokens.S_CloseCurlyBrace)]
         [InlineData("(", Tokens.S_OpenParanthesis)]
         [InlineData(")", Tokens.S_CloseParanthesis)]
+        [InlineData("[", Tokens.S_OpenSquareBracket)]
+        [InlineData("]", Tokens.S_CloseSquareBracket)]
         [InlineData(",", Tokens.S_Comma)]
         [InlineData(";", Tokens.S_SemiColon)]
         [InlineData("_", Tokens.S_Underscore)]
@@ -65,10 +68,12 @@ namespace Humphrey.Tests.src
         [Theory]
         [InlineData("0", Tokens.Number)]
         [InlineData("1", Tokens.Number)]
+        [InlineData("00", Tokens.Number)]
+        [InlineData("01", Tokens.Number)]
         [InlineData("1_000_000", Tokens.Number)]
-        [InlineData("$F", Tokens.Number)]
-        [InlineData("%1010", Tokens.Number)]
-        [InlineData("%1010_0011", Tokens.Number)]
+        [InlineData("0xF", Tokens.Number)]
+        [InlineData("0b1010", Tokens.Number)]
+        [InlineData("0b_1010_0011", Tokens.Number)]
         [InlineData(@"F\_16", Tokens.Number)]
         [InlineData("F₁₆", Tokens.Number)]
         [InlineData("DE_AD_BE_EF₁₆", Tokens.Number)]
@@ -91,10 +96,10 @@ namespace Humphrey.Tests.src
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var list = tokens.ToList();
-            Assert.True(list.Count == expected.Length);
+            Assert.True(list.Count == expected.Length, $"'{input}' Expected {expected.Length} items, got {list.Count}");
             for (int a = 0; a < list.Count; a++)
             {
-                Assert.True(list[a].Value == expected[a]);
+                Assert.True(list[a].Value == expected[a], $"'{input}' Expected {expected[a]} but got {list[a].Value}");
             }
         }
 

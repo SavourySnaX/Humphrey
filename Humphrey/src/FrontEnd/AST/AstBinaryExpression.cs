@@ -17,6 +17,8 @@ namespace Humphrey.FrontEnd
                     return new AstBinaryMultiply(left, right);
                 case "/":
                     return new AstBinaryDivide(left, right);
+                case "%":
+                    return new AstBinaryModulus(left, right);
                 default:
                     throw new NotImplementedException($"Unimplemented binary operator : {oper.Dump()}");
             }

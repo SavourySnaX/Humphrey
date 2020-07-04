@@ -54,6 +54,9 @@ namespace Humphrey.FrontEnd
 
         [Token(Category = "Operator", Example = "/", Precedance = 300, Associativity = TokenAttribute.EAssociativity.Left)]
         O_Divide,
+        
+        [Token(Category = "Operator", Example = "%", Precedance = 300, Associativity = TokenAttribute.EAssociativity.Left)]
+        O_Modulus,
 
         [Token(Category = "Operator", Example = "=", Precedance = 150, Associativity = TokenAttribute.EAssociativity.Left)]
         O_Equals,
@@ -75,6 +78,12 @@ namespace Humphrey.FrontEnd
 
         [Token(Category = "Syntax", Example =")")]
         S_CloseParanthesis,
+
+        [Token(Category = "Syntax", Example ="[")]
+        S_OpenSquareBracket,
+
+        [Token(Category = "Syntax", Example ="]")]
+        S_CloseSquareBracket,
 
         [Token(Category = "Syntax", Example =",")]
         S_Comma,
@@ -162,6 +171,7 @@ namespace Humphrey.FrontEnd
             ['-'] = Tokens.O_Subtract,
             ['*'] = Tokens.O_Multiply,
             ['/'] = Tokens.O_Divide,
+            ['%'] = Tokens.O_Modulus,
             [':'] = Tokens.O_Colon,
             ['='] = Tokens.O_Equals,
             [';'] = Tokens.S_SemiColon,
@@ -170,6 +180,8 @@ namespace Humphrey.FrontEnd
             ['}'] = Tokens.S_CloseCurlyBrace,
             ['('] = Tokens.S_OpenParanthesis,
             [')'] = Tokens.S_CloseParanthesis,
+            ['['] = Tokens.S_OpenSquareBracket,
+            [']'] = Tokens.S_CloseSquareBracket,
         };
 
         readonly Dictionary<string, Tokens> _keywords = new Dictionary<string, Tokens>
@@ -200,11 +212,12 @@ namespace Humphrey.FrontEnd
 
         protected static bool IsNumberOrIdentifierStart(char c)
         {
-            return char.IsLetterOrDigit(c) || c == '_' || c == '$' || c == '%';
+            return char.IsLetterOrDigit(c) || c == '_';
         }
 
         protected static Result<char> SkipToNotNumberOrIdentifier(char firstChar, TokenSpan span, out Tokens kind)
         {
+            char secondChar = '\0';
             bool operatorOnly = firstChar == '_';
             bool digitOnly = char.IsDigit(firstChar);
             var endNumber = 0;
@@ -234,12 +247,20 @@ namespace Humphrey.FrontEnd
                 }
                 else
                 {
-                    if (firstChar == '$')
+                    if (firstChar == '0' && secondChar=='\0' && (c=='x' || c=='b'))
+                    {
+                        // Handle x/b
+                        if (c == 'x')
+                            secondChar = 'x';
+                        else if (c=='b')
+                            secondChar = 'b';
+                    }
+                    else if (secondChar=='x')
                     {
                         if (!(char.IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || c=='_'))
                             break;
                     }
-                    else if (firstChar == '%')
+                    else if (secondChar == 'b')
                     {
                         if (!(c == '0' || c == '1' || c == '_'))
                             break;
@@ -270,7 +291,7 @@ namespace Humphrey.FrontEnd
             {
                 kind = Tokens.S_Underscore;
             }
-            else if (endNumber>0 || firstChar == '$' || firstChar == '%' || digitOnly)
+            else if (endNumber>0 || secondChar == 'x' || secondChar == 'b' || digitOnly)
             {
                 kind = Tokens.Number;
             }
@@ -336,8 +357,9 @@ namespace Humphrey.FrontEnd
 
             if (string.IsNullOrEmpty(number))
                 return null;
-            if (number[0] == '%' || number[0] == '$')
-                offset = 1;
+
+            if (number.Length >= 2 && (number[1] == 'b' || number[1] == 'x'))
+                offset = 2;
 
             int radix = 0;
             for (int c=offset;c<number.Length;c++)
@@ -364,23 +386,21 @@ namespace Humphrey.FrontEnd
                 }
             }
 
-            if (offset==1 || radix>0)
+            int radii = 10;
+            if (offset==2 || radix>0)
             {
-                int radii = 0;
-                if (offset == 1)
+                if (offset == 2)
                 {
-                    if (number[0] == '%')
+                    if (number[1] == 'b')
                         radii = 2;
                     else
                         radii = 16;
                 }
                 else
                     radii = int.Parse(builderR.ToString());
-
-                return Decimalise(builderN.ToString(), radii);
             }
 
-            return builderN.ToString();
+            return Decimalise(builderN.ToString(), radii);
         }
 
         protected bool IsLegalNumberFormat(string number)
