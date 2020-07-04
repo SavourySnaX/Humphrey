@@ -24,6 +24,10 @@ namespace Humphrey.Backend.tests
         [InlineData(@"global : bit = +1 Main : () (returnValue : bit) = { return global; } ","Main", 1)]
         [InlineData(@"global : bit = 1+0 Main : () (returnValue : bit) = { return global; } ","Main", 1)]
         [InlineData(@"global : bit = 1+1 Main : () (returnValue : bit) = { return global; } ","Main", 0)]
+        [InlineData(@"global : bit = 1-0 Main : () (returnValue : bit) = { return global; } ","Main", 1)]
+        [InlineData(@"global : bit = 1*1 Main : () (returnValue : bit) = { return global; } ","Main", 1)]
+        [InlineData(@"global : bit = 1/1 Main : () (returnValue : bit) = { return global; } ","Main", 1)]
+        [InlineData(@"global : bit = 1%1 Main : () (returnValue : bit) = { return global; } ","Main", 0)]
         public void CheckVoidExpectsBit(string input, string entryPointName, byte expected)
         {
             Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
