@@ -25,9 +25,9 @@ namespace Humphrey.FrontEnd
         {
             return temp;
         }
-        public CompilationValue ProcessConstantExpression(CompilationUnit unit)
+        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
-            throw new System.NotImplementedException($"Todo implement constant expression processing");
+            throw new System.NotImplementedException($"Todo implement constant expression processing for constant values");
         }
 
         public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)

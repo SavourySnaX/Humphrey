@@ -65,7 +65,7 @@ namespace Humphrey.FrontEnd
             return $"{ident.Dump()} : {type.Dump()} = {initialiser.Dump()}";
         }
 
-        public CompilationValue ProcessConstantExpression(CompilationUnit unit)
+        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
             throw new System.NotImplementedException($"Todo implement constant expression processing");
         }

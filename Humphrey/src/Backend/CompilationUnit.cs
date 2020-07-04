@@ -78,15 +78,43 @@ namespace Humphrey.Backend
             return new CompilationBuilder(builder, function);
         }
 
+        public CompilationValue CreateConstant(CompilationConstantValue constantValue)
+        {
+            var ival = constantValue.Constant;
+
+            uint numBits = 0;
+            int sign = ival.Sign;
+            switch (sign)
+            {
+                case -1:
+                case 1:
+                    var tVal = ival;
+                    if (sign==-1)
+                        tVal *= -1;
+
+                    while (tVal != BigInteger.Zero)
+                    {
+                        tVal /= 2;
+                        numBits++;
+                    }
+
+                    break;
+                case 0:
+                    numBits = 1;
+                    break;
+
+            }
+            return new CompilationValue(contextRef.GetIntType(numBits).CreateConstantValue(ival.ToString(), 10));
+        }
+
+        public CompilationValue CreateConstant(AstNumber decimalNumber)
+        {
+            return CreateConstant(new CompilationConstantValue(decimalNumber));
+        }
+
         public CompilationValue CreateConstant(string decimalNumber)
         {
-            // Compute constant into smallest available type
-            var ival = ulong.Parse(decimalNumber);
-            uint numBits = 1;
-            if (ival!=0)
-                numBits = (uint)System.Math.Log(ival, 2) + 1;
-
-            return new CompilationValue(contextRef.GetIntType(numBits).CreateConstantValue(decimalNumber, 10));
+            return CreateConstant(new AstNumber(decimalNumber));
         }
 
         public CompilationFunction CreateFunction(CompilationFunctionType type, string identifier)
@@ -109,7 +137,7 @@ namespace Humphrey.Backend
             return cfunc;
         }
 
-        public CompilationValue CreateGlobalVariable(CompilationType type, string identifier, CompilationValue initialiser = null)
+        public CompilationValue CreateGlobalVariable(CompilationType type, string identifier, CompilationConstantValue initialiser = null)
         {
             if (symbolTable.FetchGlobalValue(identifier)!=null)
                 throw new Exception($"global value {identifier} already exists!");
@@ -118,7 +146,7 @@ namespace Humphrey.Backend
 
             if (initialiser != null)
             {
-                global.Initializer = initialiser.BackendValue;
+                global.Initializer = CreateConstant(initialiser).BackendValue;
             }
 
             var globalValue = new CompilationValue(global);

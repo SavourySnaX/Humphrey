@@ -4,7 +4,7 @@ namespace Humphrey.FrontEnd
 {
     public interface IExpression : IAssignable
     {
-        CompilationValue ProcessConstantExpression(CompilationUnit unit);
+        CompilationConstantValue ProcessConstantExpression(CompilationUnit unit);
         CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder);
     }
 }

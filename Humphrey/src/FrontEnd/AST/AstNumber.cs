@@ -19,14 +19,14 @@ namespace Humphrey.FrontEnd
         {
             return temp;
         }
-        public CompilationValue ProcessConstantExpression(CompilationUnit unit)
+        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
-            return unit.CreateConstant(temp);
+            return new CompilationConstantValue(this);
         }
 
         public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            return unit.CreateConstant(temp);
+            return unit.CreateConstant(this);
         }
     }
 }

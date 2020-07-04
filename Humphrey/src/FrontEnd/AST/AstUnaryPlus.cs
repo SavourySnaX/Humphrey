@@ -19,9 +19,10 @@ namespace Humphrey.FrontEnd
             return $"+ {expr.Dump()}";
         }
 
-        public CompilationValue ProcessConstantExpression(CompilationUnit unit)
+        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
-            throw new System.NotImplementedException($"Todo implement constant expression processing");
+            // + is 0 + which is noop
+            return expr.ProcessConstantExpression(unit);
         }
 
         public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
