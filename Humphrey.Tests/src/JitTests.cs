@@ -13,7 +13,7 @@ namespace Humphrey.Backend.tests
         [InlineData(@" Main : () (returnValue : bit) = { return 1; } ","Main", 1)]
         [InlineData(@" Main : () (returnValue : bit) = { return +1; } ","Main", 1)]
         [InlineData(@" Main : () (returnValue : bit) = { return -1; } ","Main", 1)]
-        [InlineData(@" Main : () (returnValue : bit) = { return 1+1; } ","Main", 0)]
+        [InlineData(@" Main : () (returnValue : bit) = { return 1+0; } ","Main", 1)]
         [InlineData(@" Main : () (returnValue : bit) = { return 1-1; } ","Main", 0)]
         [InlineData(@" Main : () (returnValue : bit) = { return 1*1; } ","Main", 1)]
         [InlineData(@" Main : () (returnValue : bit) = { return 1/1; } ","Main", 1)]
@@ -76,6 +76,33 @@ namespace Humphrey.Backend.tests
             Assert.True(InputBitBitExpectsBitBitValue(CompileForTest(input, entryPointName), ival1, ival2, expected1, expected2), $"Test {entryPointName},{input}");
         }
 
+        [Theory]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a+b;}","Main", 128, 127, 255)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a+b;}","Main", 0, 127, 127)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a+b;}","Main", 55, 33, 88)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a+b;}","Main", 255, 255, 254)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a-b;}","Main", 128, 127, 1)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a-b;}","Main", 0, 127, 129)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a-b;}","Main", 55, 33, 22)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a-b;}","Main", 255, 255, 0)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a*b;}","Main", 2, 127, 254)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a*b;}","Main", 0, 127, 0)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a*b;}","Main", 55, 33, 23)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a*b;}","Main", 255, 255, 01)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a/b;}","Main", 128, 127, 1)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a/b;}","Main", 0, 127, 0)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a/b;}","Main", 55, 33, 1)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a/b;}","Main", 255, 255, 1)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a%b;}","Main", 128, 127, 1)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a%b;}","Main", 0, 127, 0)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a%b;}","Main", 55, 33, 22)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { return a%b;}","Main", 255, 255, 0)]
+        public void Check8Bit8BitExpects8Bit(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input}");
+        }
+
+
         public IntPtr CompileForTest(string input, string entryPointName)
         {
             var tokenise = new HumphreyTokeniser();
@@ -114,6 +141,16 @@ namespace Humphrey.Backend.tests
         delegate void InputBitBitOutputBit(byte inputVal1, byte inputVal2, byte* returnVal);
 
         public static bool InputBitBitExpectsBitValue(IntPtr ee, byte input1, byte input2, byte expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputBitBitOutputBit>(ee);
+            byte returnValue;
+            func(input1, input2, &returnValue);
+            return returnValue == expected;
+        }
+
+        delegate void Input8Bit8BitOutput8Bit(byte inputVal1, byte inputVal2, byte* returnVal);
+
+        public static bool Input8Bit8BitExpects8BitValue(IntPtr ee, byte input1, byte input2, byte expected)
         {
             var func = Marshal.GetDelegateForFunctionPointer<InputBitBitOutputBit>(ee);
             byte returnValue;

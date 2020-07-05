@@ -77,7 +77,11 @@ namespace Humphrey.FrontEnd.tests
 
         [Theory]
         [InlineData("bit","bit")]
+        [InlineData("[1] bit","[1] bit")]
+        [InlineData("[8] bit","[8] bit")]
+        [InlineData("[-8] bit","[- 8] bit")]
         [InlineData("a","a")]
+        [InlineData("[55] a","[55] a")]
         [InlineData("0",null)]
         public void CheckType(string input, string expected)
         {
@@ -89,7 +93,11 @@ namespace Humphrey.FrontEnd.tests
         
         [Theory]
         [InlineData("a : bit","a : bit")]
+        [InlineData("a : [1] bit","a : [1] bit")]
+        [InlineData("anInt : [-32] bit","anInt : [- 32] bit")]
+        [InlineData("aUInt : [32] bit","aUInt : [32] bit")]
         [InlineData("a : a","a : a")]       // Semantically incorrect
+        [InlineData("a : [1] a","a : [1] a")]       // Semantically incorrect
         [InlineData("0",null)]
         public void CheckParamDefinition(string input, string expected)
         {
@@ -103,11 +111,13 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("a:bit", "a : bit")]
         [InlineData("a:a", "a : a")]             // Semantically incorrect
         [InlineData("bitval   :bit= 1", "bitval : bit = 1")]
+        [InlineData("bitval   :[1]bit= 1", "bitval : [1] bit = 1")]
         [InlineData("bitval=1", "bitval = 1")]
         [InlineData("bitval=1*0", "bitval = * 1 0")]
         [InlineData("bitval=a", "bitval = a")]
         [InlineData("a:0", null)]
         [InlineData("a=bit", null)]
+        [InlineData("a=[1] bit", null)]
         [InlineData("FunctionPtr:()()=0", "FunctionPtr : () () = 0")]
         [InlineData("bit:()()=0", null)]
         [InlineData("Main:()(returnVal:bit)", "Main : () (returnVal : bit)")]
@@ -123,6 +133,7 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("a:bit",new []{"a : bit"})]
         [InlineData("a:bit,b:bit",new []{"a : bit","b : bit"})]
         [InlineData("a:bit,b:thing",new []{"a : bit","b : thing"})]
+        [InlineData("a:[8]bit,b:thing",new []{"a : [8] bit","b : thing"})]
         [InlineData("a:bit,b:0",null)]
         public void CheckParamDefinitionList(string input, string[] expected)
         {
@@ -135,6 +146,7 @@ namespace Humphrey.FrontEnd.tests
         [Theory]
         [InlineData("()","")]
         [InlineData("(a : bit)","a : bit")]
+        [InlineData("(a : [8] bit)","a : [8] bit")]
         [InlineData("(a:bit,b:bit)","a : bit , b : bit")]
         public void CheckParamList(string input, string expected)
         {
@@ -148,6 +160,7 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("()",null)]
         [InlineData("()()","() ()")]
         [InlineData("(a:bit)(b:bit,c:bit)","(a : bit) (b : bit , c : bit)")]
+        [InlineData("(a:[32]bit)(b:[32]bit,c:[32]bit)","(a : [32] bit) (b : [32] bit , c : [32] bit)")]
         public void CheckFunctionType(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();

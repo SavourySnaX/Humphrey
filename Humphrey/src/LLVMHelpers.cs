@@ -40,5 +40,10 @@ namespace Extensions
         {
             return LLVM.PointerType(elementType, addressSpace);
         }
+
+        public static LLVMTypeRef CreateArrayType(LLVMTypeRef elementType, uint numElements)
+        {
+            return LLVM.ArrayType(elementType, numElements);
+        }
     }
 }

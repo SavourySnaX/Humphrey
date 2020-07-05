@@ -149,11 +149,13 @@ namespace Humphrey.FrontEnd
         public bool CloseParenthesis() { return Item(Tokens.S_CloseParanthesis).success; }
         public bool OpenCurlyBrace() { return Item(Tokens.S_OpenCurlyBrace).success; }
         public bool CloseCurlyBrace() { return Item(Tokens.S_CloseCurlyBrace).success; }
+        public bool OpenSquareBracket() { return Item(Tokens.S_OpenSquareBracket).success; }
+        public bool CloseSquareBracket() { return Item(Tokens.S_CloseSquareBracket).success; }
 
         public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator };
         public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnaryExpression, BinaryExpression };
-        public AstItemDelegate[] Types => new AstItemDelegate[] { BitKeyword, Identifier, FunctionType/*, StructType*/ };
+        public AstItemDelegate[] Types => new AstItemDelegate[] { ArrayType, BitKeyword, Identifier, FunctionType/*, StructType*/ };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
         public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement };
 
@@ -369,6 +371,27 @@ namespace Humphrey.FrontEnd
 
             return new AstParamList(paramDefinitionList);
         }
+
+        // array_type : [ConstantExpr] bit|identifier|functionType|structType
+        public AstArrayType ArrayType()
+        {
+            if (!OpenSquareBracket())
+                return null;
+
+            var expr = ParseExpression();
+            if (expr==null)
+                return null;
+
+            if (!CloseSquareBracket())
+                return null;
+
+            var typeSpecifier = OneOf(Types);
+            if (typeSpecifier == null)
+                return null;
+
+            return new AstArrayType(expr, typeSpecifier as IType);
+        }
+
 
         // function_type : parameter_list parameter_list
         public AstFunctionType FunctionType()

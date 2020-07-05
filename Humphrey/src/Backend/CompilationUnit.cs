@@ -32,9 +32,25 @@ namespace Humphrey.Backend
             return moduleRef.PrintToString();
         }
 
-        public CompilationType FetchIntegerType(uint numBits)
+        public CompilationType FetchArrayType(CompilationConstantValue numElements, CompilationType elementType)
         {
-            return new CompilationType(contextRef.GetIntType(numBits));
+            return elementType.AsArray((uint)numElements.Constant);
+        }
+
+        public CompilationType FetchIntegerType(CompilationConstantValue numBits)
+        {
+            bool isSigned = false;
+            if (numBits.Constant<BigInteger.Zero)
+            {
+                numBits.Negate();
+                isSigned = true;
+            }
+            return new CompilationType(contextRef.GetIntType((uint)numBits.Constant), isSigned);
+        }
+
+        public CompilationType FetchIntegerType(uint numBits, bool isSigned=false)
+        {
+            return new CompilationType(contextRef.GetIntType(numBits), isSigned);
         }
 
         public CompilationFunctionType CreateFunctionType(CompilationParam[] inputs, CompilationParam[] outputs)
@@ -82,7 +98,7 @@ namespace Humphrey.Backend
         {
             var ival = constantValue.Constant;
 
-            uint numBits = 0;
+            uint numBits = 1;       // We create the values with extra bit for now
             int sign = ival.Sign;
             switch (sign)
             {
@@ -100,7 +116,6 @@ namespace Humphrey.Backend
 
                     break;
                 case 0:
-                    numBits = 1;
                     break;
 
             }
@@ -146,7 +161,8 @@ namespace Humphrey.Backend
 
             if (initialiser != null)
             {
-                global.Initializer = CreateConstant(initialiser).BackendValue;
+                var constant = CreateConstant(initialiser).BackendValue;
+                global.Initializer = constant;
             }
 
             var globalValue = new CompilationValue(global);

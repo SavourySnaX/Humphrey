@@ -6,7 +6,7 @@ namespace Humphrey.Backend
     {
         CompilationParam[] parameters;
         private uint outParameterOffset;
-        public CompilationFunctionType(LLVMTypeRef type, CompilationParam[] allParameters, uint outParamOffset) : base(type)
+        public CompilationFunctionType(LLVMTypeRef type, CompilationParam[] allParameters, uint outParamOffset) : base(type,false)
         {
             parameters = allParameters;
             outParameterOffset = outParamOffset;
