@@ -98,7 +98,7 @@ namespace Humphrey.Backend
         {
             var ival = constantValue.Constant;
 
-            uint numBits = 1;       // We create the values with extra bit for now
+            uint numBits = 0;       // We create the values with extra bit for now
             int sign = ival.Sign;
             switch (sign)
             {
@@ -116,6 +116,7 @@ namespace Humphrey.Backend
 
                     break;
                 case 0:
+                    numBits = 1;
                     break;
 
             }
