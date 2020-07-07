@@ -30,9 +30,7 @@ namespace Humphrey.FrontEnd
         {
             var value = expr.ProcessExpression(unit, builder);
 
-            var result = builder.BackendValue.BuildSub(unit.CreateConstant("0").BackendValue, value.BackendValue);
-
-            return new CompilationValue(result);
+            return builder.Sub(unit.CreateConstant("0"), value);
         }
     }
 }

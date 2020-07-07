@@ -27,11 +27,7 @@ namespace Humphrey.FrontEnd
 
         public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            var value = expr.ProcessExpression(unit, builder);
-
-            var result = builder.BackendValue.BuildAdd(unit.CreateConstant("0").BackendValue, value.BackendValue);
-            
-            return new CompilationValue(result);
+            return expr.ProcessExpression(unit, builder);
         }
     }
 }

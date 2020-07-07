@@ -24,6 +24,10 @@ namespace Humphrey.Backend
             return new CompilationType(CreateArrayType(typeRef, numElements), signedType);
         }
 
+        public bool IsIntegerType => typeRef.Kind == LLVMTypeKind.LLVMIntegerTypeKind;
+
+        public uint IntegerWidth => typeRef.IntWidth;
+
         public LLVMTypeRef BackendType => typeRef;
         public bool IsSigned => signedType;
     }

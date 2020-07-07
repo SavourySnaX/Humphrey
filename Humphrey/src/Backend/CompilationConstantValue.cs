@@ -39,7 +39,7 @@ namespace Humphrey.Backend
         {
             constant = constant % rhs.Constant;
         }
-        
+
         public BigInteger Constant => constant;
     }
 }

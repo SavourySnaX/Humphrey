@@ -82,7 +82,7 @@ namespace Humphrey.Backend
             // Check for global value
             value = symbolTable.FetchGlobalValue(identifier);
             if (value != null)
-                return new CompilationValue(builder.BackendValue.BuildLoad(value.BackendValue));
+                return new CompilationValue(builder.BackendValue.BuildLoad(value.BackendValue), value.Type );
 
             throw new Exception($"Failed to find identifier {identifier}");
         }
@@ -119,7 +119,9 @@ namespace Humphrey.Backend
                     break;
 
             }
-            return new CompilationValue(contextRef.GetIntType(numBits).CreateConstantValue(ival.ToString(), 10));
+            var constType = new CompilationType(contextRef.GetIntType(numBits), sign == -1);
+
+            return new CompilationValue(constType.BackendType.CreateConstantValue(ival.ToString(), 10), constType);
         }
 
         public CompilationValue CreateConstant(AstNumber decimalNumber)
@@ -146,7 +148,7 @@ namespace Humphrey.Backend
 
             for (int p = 0; p < type.Parameters.Length; p++)
             {
-                symbolTable.AddFunctionParam(type.Parameters[p].Identifier, cfunc, new CompilationValue(cfunc.BackendValue.Params[p]));
+                symbolTable.AddFunctionParam(type.Parameters[p].Identifier, cfunc, new CompilationValue(cfunc.BackendValue.Params[p], type.Parameters[p].Type));
             }
 
             return cfunc;
@@ -165,7 +167,7 @@ namespace Humphrey.Backend
                 global.Initializer = constant;
             }
 
-            var globalValue = new CompilationValue(global);
+            var globalValue = new CompilationValue(global, type);
 
             if (!symbolTable.AddGlobalValue(identifier, globalValue))
                 throw new Exception($"global {identifier} failed to add symbol!");

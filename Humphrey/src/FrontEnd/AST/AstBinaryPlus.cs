@@ -34,12 +34,9 @@ namespace Humphrey.FrontEnd
 
         public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            var valueLeft = lhs.ProcessExpression(unit, builder);
-            var valueRight = rhs.ProcessExpression(unit, builder);
+            var (valueLeft, valueRight) = AstBinaryExpression.FixupBinaryExpressionInputs(unit, builder, lhs, rhs);
 
-            var result = builder.BackendValue.BuildAdd(valueLeft.BackendValue, valueRight.BackendValue);
-            
-            return new CompilationValue(result);
+            return builder.Add(valueLeft, valueRight);
         }
     }
 }

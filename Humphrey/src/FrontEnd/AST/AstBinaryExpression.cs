@@ -23,6 +23,30 @@ namespace Humphrey.FrontEnd
                     throw new NotImplementedException($"Unimplemented binary operator : {oper.Dump()}");
             }
         }
+
+        public static (CompilationValue lhs, CompilationValue rhs) FixupBinaryExpressionInputs(CompilationUnit unit, CompilationBuilder builder, IExpression lhs, IExpression rhs)
+        {
+            var left = lhs.ProcessExpression(unit, builder);
+            var right = rhs.ProcessExpression(unit, builder);
+            
+            // Always promote integer type to largest of two sizes if not matching
+            if (left.Type.IsIntegerType == true && right.Type.IsIntegerType == true)
+            {
+                if (left.Type.IntegerWidth == right.Type.IntegerWidth)
+                {
+                    if (left.Type.IsSigned == right.Type.IsSigned)
+                    {
+                        return (left, right);
+                    }
+
+                    throw new NotImplementedException($"TODO - signed/unsigned mismatch");
+                }
+
+                throw new NotImplementedException($"TODO - Integer Bit width does not match");
+            }
+
+            throw new NotImplementedException($"TODO - Non integer types in promotion?");
+        }
     }
 }
 
