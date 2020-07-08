@@ -164,8 +164,9 @@ namespace Humphrey.Backend
 
             if (initialiser != null)
             {
-                var constant = CreateConstant(initialiser).BackendValue;
-                global.Initializer = constant;
+                var constant = CreateConstant(initialiser);//.BackendValue;
+                var constantValue = AstUnaryExpression.EnsureTypeOk(this, constant, type);
+                global.Initializer = constantValue.BackendValue;
             }
 
             var globalValue = new CompilationValue(global, type);

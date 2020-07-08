@@ -29,7 +29,7 @@ namespace Humphrey.FrontEnd
             var left = lhs.ProcessExpression(unit, builder);
             var right = rhs.ProcessExpression(unit, builder);
             
-            // Always promote integer type to largest of two sizes if not matching
+            // Always promote integer type to largest of two sizes if not matching is the current rule..
             if (left.Type.IsIntegerType == true && right.Type.IsIntegerType == true)
             {
                 if (left.Type.IntegerWidth == right.Type.IntegerWidth)
@@ -48,5 +48,7 @@ namespace Humphrey.FrontEnd
             throw new NotImplementedException($"TODO - Non integer types in promotion?");
         }
     }
+
+
 }
 

@@ -15,9 +15,12 @@ namespace Humphrey.FrontEnd
             uint outParamIdx = function.OutParamOffset;
             foreach (var expr in exprList)
             {
-                var value = expr.ProcessExpression(unit, builder);
+                var paramType = function.FunctionType.Parameters[outParamIdx].Type;
+                var exprValue = expr.ProcessExpression(unit, builder);
+                var value = AstUnaryExpression.EnsureTypeOk(unit, exprValue, paramType);
 
                 var parameter = function.BackendValue.GetParam(outParamIdx++);
+
                 builder.BackendValue.BuildStore(value.BackendValue, parameter);
             }
 
