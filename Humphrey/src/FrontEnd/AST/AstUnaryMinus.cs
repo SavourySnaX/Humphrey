@@ -26,11 +26,16 @@ namespace Humphrey.FrontEnd
             return result;
         }
 
-        public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
+        public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             var value = expr.ProcessExpression(unit, builder);
-
-            return builder.Sub(unit.CreateConstant("0"), value);
+            if (value is CompilationConstantValue constantValue)
+            {
+                constantValue.Negate();
+                return constantValue;
+            }
+            else
+                return builder.Negate(value as CompilationValue);
         }
     }
 }

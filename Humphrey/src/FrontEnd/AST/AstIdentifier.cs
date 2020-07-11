@@ -30,7 +30,7 @@ namespace Humphrey.FrontEnd
             throw new System.NotImplementedException($"Todo implement constant expression processing for constant values");
         }
 
-        public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
+        public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             return unit.FetchValue(temp, builder);
         }

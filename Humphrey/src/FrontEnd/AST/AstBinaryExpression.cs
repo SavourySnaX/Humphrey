@@ -24,11 +24,8 @@ namespace Humphrey.FrontEnd
             }
         }
 
-        public static (CompilationValue lhs, CompilationValue rhs) FixupBinaryExpressionInputs(CompilationUnit unit, CompilationBuilder builder, IExpression lhs, IExpression rhs)
+        public static (CompilationValue lhs, CompilationValue rhs) FixupBinaryExpressionInputs(CompilationUnit unit, CompilationBuilder builder, CompilationValue left, CompilationValue right)
         {
-            var left = lhs.ProcessExpression(unit, builder);
-            var right = rhs.ProcessExpression(unit, builder);
-            
             // Always promote integer type to largest of two sizes if not matching is the current rule..
             if (left.Type.IsIntegerType == true && right.Type.IsIntegerType == true)
             {

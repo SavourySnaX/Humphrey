@@ -24,9 +24,9 @@ namespace Humphrey.FrontEnd
             return new CompilationConstantValue(this);
         }
 
-        public CompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
+        public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            return unit.CreateConstant(this);
+            return new CompilationConstantValue(this);
         }
     }
 }

@@ -53,6 +53,24 @@ namespace Humphrey.Backend
         {
             return new CompilationValue(builderRef.BuildSub(left.BackendValue, right.BackendValue), left.Type);
         }
+
+        public CompilationValue Negate(CompilationValue src)
+        {
+            return new CompilationValue(builderRef.BuildNeg(src.BackendValue), src.Type);
+        }
+
+        public CompilationValue Ext(CompilationValue src, CompilationType toType)
+        {
+            if (toType.IsIntegerType && src.Type.IsIntegerType)
+            {
+                if (src.Type.IsSigned)
+                    return new CompilationValue(builderRef.BuildSExt(src.BackendValue,toType.BackendType), toType);
+                else
+                    return new CompilationValue(builderRef.BuildZExt(src.BackendValue,toType.BackendType), toType);
+            }
+            throw new NotImplementedException($"Unhandled type in extension");
+        }
+
         public LLVMBuilderRef BackendValue => builderRef;
         public CompilationFunction Function => function;
     }

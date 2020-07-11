@@ -16,21 +16,33 @@ namespace Humphrey.FrontEnd
                     throw new NotImplementedException($"Unimplemented unary operator : {oper.Dump()}");
             }
         }
-        // Todo find better place for this
-        public static CompilationValue EnsureTypeOk(CompilationUnit unit, CompilationValue left, CompilationType destType)
+        public static CompilationValue EnsureTypeOk(CompilationUnit unit, CompilationBuilder builder, IExpression expr, CompilationType destType)
         {
-            
-            // Always promote integer type to largest of two sizes if not matching is the current rule..
-            if (left.Type.IsIntegerType == true && destType.IsIntegerType == true)
+            var result = expr.ProcessExpression(unit, builder);
+            CompilationValue src = default;
+            if (result is CompilationConstantValue constantResult)
             {
-                if (left.Type.IntegerWidth == destType.IntegerWidth)
+                src = constantResult.GetCompilationValue(unit, destType);
+            }
+            else
+                src = result as CompilationValue;
+
+            // Always promote integer type to largest of two sizes if not matching is the current rule..
+            if (src.Type.IsIntegerType == true && destType.IsIntegerType == true)
+            {
+                if (src.Type.IntegerWidth == destType.IntegerWidth)
                 {
-                    if (left.Type.IsSigned == destType.IsSigned)
+                    if (src.Type.IsSigned == destType.IsSigned)
                     {
-                        return left;
+                        return src;
                     }
 
                     throw new NotImplementedException($"TODO - signed/unsigned mismatch");
+                }
+                else if (src.Type.IntegerWidth < destType.IntegerWidth)
+                {
+                    // For integers, if the the size is strictly less, then the assignment is always allowed (we just upcast the value to the new bitwidth)
+                    return builder.Ext(src, destType);
                 }
 
                 throw new NotImplementedException($"TODO - Integer Bit width does not match");

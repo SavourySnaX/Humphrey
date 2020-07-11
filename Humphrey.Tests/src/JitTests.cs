@@ -12,7 +12,6 @@ namespace Humphrey.Backend.tests
         [InlineData(@" Main : () (returnValue : bit) = { return 0; } ","Main", 0)]
         [InlineData(@" Main : () (returnValue : bit) = { return 1; } ","Main", 1)]
         [InlineData(@" Main : () (returnValue : bit) = { return +1; } ","Main", 1)]
-        [InlineData(@" Main : () (returnValue : bit) = { return -1; } ","Main", 1)]
         [InlineData(@" Main : () (returnValue : bit) = { return 1+0; } ","Main", 1)]
         [InlineData(@" Main : () (returnValue : bit) = { return 1-1; } ","Main", 0)]
         [InlineData(@" Main : () (returnValue : bit) = { return 1*1; } ","Main", 1)]
@@ -33,6 +32,28 @@ namespace Humphrey.Backend.tests
             Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
         }
         
+        [Theory]
+        [InlineData(@" Main : () (returnValue : [8]bit) = { return 0; } ","Main", 0)]
+        [InlineData(@" Main : () (returnValue : [8]bit) = { return 1; } ","Main", 1)]
+        [InlineData(@" Main : () (returnValue : [8]bit) = { return -1; } ","Main", 255)]
+        [InlineData(@" Main : () (returnValue : [8]bit) = { return -63; } ","Main", 193)]
+        [InlineData(@" Main : () (returnValue : [8]bit) = { return 128; } ","Main", 128)]
+        [InlineData(@" Main : () (returnValue : [8]bit) = { return 255; } ","Main", 255)]
+        public void CheckVoidExpects8Bit(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
+        }
+
+        [Theory]
+        [InlineData(@" Main : () (returnValue : [-8]bit) = { return 0; } ","Main", 0)]
+        [InlineData(@" Main : () (returnValue : [-8]bit) = { return 1; } ","Main", 1)]
+        [InlineData(@" Main : () (returnValue : [-8]bit) = { return -1; } ","Main", -1)]
+        [InlineData(@" Main : () (returnValue : [-8]bit) = { return -63; } ","Main", -63)]
+        public void CheckVoidExpectsS8Bit(string input, string entryPointName, sbyte expected)
+        {
+            Assert.True(InputVoidExpectsS8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
+        }
+
         [Theory]
         [InlineData(@"Main : (a : bit) (returnValue : bit) = { return a;}","Main", 0, 0)]
         [InlineData(@"Main : (a : bit) (returnValue : bit) = { return a;}","Main", 1, 1)]
@@ -148,6 +169,25 @@ namespace Humphrey.Backend.tests
         {
             var func = Marshal.GetDelegateForFunctionPointer<InputVoidOutputBit>(ee);
             byte returnValue;
+            func(&returnValue);
+            return returnValue == expected;
+        }
+        delegate void InputVoidOutput8Bit(byte* returnVal);
+
+        public static bool InputVoidExpects8BitValue(IntPtr ee, byte expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputVoidOutput8Bit>(ee);
+            byte returnValue;
+            func(&returnValue);
+            return returnValue == expected;
+        }
+
+        delegate void InputVoidOutputS8Bit(sbyte* returnVal);
+
+        public static bool InputVoidExpectsS8BitValue(IntPtr ee, sbyte expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputVoidOutputS8Bit>(ee);
+            sbyte returnValue;
             func(&returnValue);
             return returnValue == expected;
         }

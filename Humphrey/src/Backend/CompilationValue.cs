@@ -2,7 +2,7 @@ using LLVMSharp.Interop;
 
 namespace Humphrey.Backend
 {
-    public class CompilationValue
+    public class CompilationValue : ICompilationValue
     {
         LLVMValueRef valueRef;
         CompilationType typeRef;

@@ -94,40 +94,19 @@ namespace Humphrey.Backend
             return new CompilationBuilder(builder, function);
         }
 
-        public CompilationValue CreateConstant(CompilationConstantValue constantValue)
+        public CompilationValue CreateConstant(CompilationConstantValue constantValue, uint numBits, bool isSigned)
         {
-            var ival = constantValue.Constant;
+            var constType = new CompilationType(contextRef.GetIntType(numBits), isSigned);
 
-            uint numBits = 0;       // We create the values with extra bit for now
-            int sign = ival.Sign;
-            switch (sign)
-            {
-                case -1:
-                case 1:
-                    var tVal = ival;
-                    if (sign==-1)
-                        tVal *= -1;
-
-                    while (tVal != BigInteger.Zero)
-                    {
-                        tVal /= 2;
-                        numBits++;
-                    }
-
-                    break;
-                case 0:
-                    numBits = 1;
-                    break;
-
-            }
-            var constType = new CompilationType(contextRef.GetIntType(numBits), sign == -1);
-
-            return new CompilationValue(constType.BackendType.CreateConstantValue(ival.ToString(), 10), constType);
+            return new CompilationValue(constType.BackendType.CreateConstantValue(constantValue.Constant.ToString(), 10), constType);
         }
 
         public CompilationValue CreateConstant(AstNumber decimalNumber)
         {
-            return CreateConstant(new CompilationConstantValue(decimalNumber));
+            var constantValue = new CompilationConstantValue(decimalNumber);
+            var (numBits, isSigned) = constantValue.ComputeKind();
+
+            return CreateConstant(constantValue, numBits, isSigned);
         }
 
         public CompilationValue CreateConstant(string decimalNumber)
@@ -164,8 +143,7 @@ namespace Humphrey.Backend
 
             if (initialiser != null)
             {
-                var constant = CreateConstant(initialiser);//.BackendValue;
-                var constantValue = AstUnaryExpression.EnsureTypeOk(this, constant, type);
+                var constantValue = initialiser.GetCompilationValue(this, type);
                 global.Initializer = constantValue.BackendValue;
             }
 

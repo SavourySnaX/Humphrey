@@ -16,8 +16,7 @@ namespace Humphrey.FrontEnd
             foreach (var expr in exprList)
             {
                 var paramType = function.FunctionType.Parameters[outParamIdx].Type;
-                var exprValue = expr.ProcessExpression(unit, builder);
-                var value = AstUnaryExpression.EnsureTypeOk(unit, exprValue, paramType);
+                var value = AstUnaryExpression.EnsureTypeOk(unit, builder, expr, paramType);
 
                 var parameter = function.BackendValue.GetParam(outParamIdx++);
 
