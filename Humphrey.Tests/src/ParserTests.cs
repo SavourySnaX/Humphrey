@@ -170,6 +170,34 @@ namespace Humphrey.FrontEnd.tests
         }
 
         [Theory]
+        [InlineData("[8]bit", "[8] bit")]
+        [InlineData("[8][8]bit", "[8] [8] bit")]
+        [InlineData("[8]{}}", "[8] { }")]
+        [InlineData("[8]bob", "[8] bob")]
+        [InlineData("[8]()()", null)]
+        public void CheckArrayType(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.ArrayType(), expected);
+        }
+
+        [Theory]
+        [InlineData("{}","{ }")]
+        [InlineData("{bob:bit}","{ bob : bit}")]
+        [InlineData("{bob:bit squee:[8]bit}","{ bob : bit squee : [8] bit}")]
+        [InlineData("{bob:apple}","{ bob : apple}")]
+        [InlineData("{bob:()()}", null)]
+        public void CheckStructType(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.StructType(), expected);
+        }
+
+        [Theory]
         [InlineData("5+2", new [] {"+ 5 2"})]
         [InlineData("5+2,6-3", new []{"+ 5 2","- 6 3"})]
         [InlineData("a,b,c,d,55", new [] {"a","b","c","d","55"})]

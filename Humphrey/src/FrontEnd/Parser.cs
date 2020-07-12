@@ -156,10 +156,12 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator };
         public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnaryExpression, BinaryExpression };
-        public AstItemDelegate[] Types => new AstItemDelegate[] { ArrayType, BitKeyword, Identifier, FunctionType/*, StructType*/ };
+        public AstItemDelegate[] Types => new AstItemDelegate[] { ArrayType, BitKeyword, Identifier, FunctionType, StructType };
+        public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { ArrayType, BitKeyword, Identifier, StructType };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
         public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement };
 
+        public AstItemDelegate[] StructDefinitions => new AstItemDelegate[] { StructElement };
         public AstItemDelegate[] GlobalDefinition => new AstItemDelegate[] { Definition };
 
         // terminal : Number | Identifier | BracketedExpression
@@ -386,13 +388,12 @@ namespace Humphrey.FrontEnd
             if (!CloseSquareBracket())
                 return null;
 
-            var typeSpecifier = OneOf(Types);
+            var typeSpecifier = OneOf(NonFunctionTypes);
             if (typeSpecifier == null)
                 return null;
 
             return new AstArrayType(expr, typeSpecifier as IType);
         }
-
 
         // function_type : parameter_list parameter_list
         public AstFunctionType FunctionType()
@@ -407,16 +408,75 @@ namespace Humphrey.FrontEnd
 
             return new AstFunctionType(inputs, outputs);
         }
+        
+        // struct_type : { struct_element* }
+        public AstStructureType StructType()
+        {
+            if (!OpenCurlyBrace())
+                return null;
+
+            var definitionList = new List<AstStructElement>();
+            AstStructElement def = null;
+            do
+            {
+                def = OneOf(StructDefinitions) as AstStructElement;
+                if (def != null)
+                    definitionList.Add(def);
+            } while (def != null);
+
+            if (!CloseCurlyBrace())
+                return null;
+
+            return new AstStructureType(definitionList.ToArray());
+        }
 
         // type : bit                       // builtin
         //      | identifier                // type
         //      | struct_type               // struct
         //      | function_type             // function
         public IType Type() { return OneOf(Types) as IType; }
+        public IType NonFunctionType() { return OneOf(NonFunctionTypes) as IType; }
 
         // assignable : { statements }      // function body
         //            | expression
         public IAssignable Assignable() { return OneOf(Assignables) as IAssignable; }
+
+        // struct_element : identifier : non_function_type
+        //                | identifier = assignable
+        //                | identifier : non_function_type = assignable
+        public AstStructElement StructElement()
+        {
+            var identifier = Identifier();
+            if (identifier == null)
+                return null;
+
+            bool hadType = false;
+            bool hadValue = false;
+
+            IType typeSpecifier = null;
+            IAssignable assignable = null;
+
+            if (ColonOperator() != null)
+            {
+                hadType = true;
+                typeSpecifier = NonFunctionType();
+                if (typeSpecifier == null)
+                    return null;
+            }
+
+            if (EqualsOperator() != null)
+            {
+                hadValue = true;
+                assignable = Assignable();
+                if (assignable == null)
+                    return null;
+            }
+
+            if (!hadType && !hadValue)
+                return null;
+
+            return new AstStructElement(identifier, typeSpecifier, assignable);
+        }
 
         // definition : identifier : type
         //            | identifier = assignable
