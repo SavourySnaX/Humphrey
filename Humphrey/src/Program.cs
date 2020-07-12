@@ -30,7 +30,7 @@ namespace Humphrey.Experiments
             # identifier : type = value         is a variable definition
             # identifier : type = _             is a variable definition whose value is don't care
 
-            BootBoot :              # TODO - this is currently creating a global but shouldn't! it should create a type
+            BootBoot :
             {
                 magic           : [32]bit
                 size            : [32]bit
@@ -54,7 +54,7 @@ namespace Humphrey.Experiments
                 unused          : [256]bit  # Would be preferable here to use _ : [256]bit   since we don't need a name
             }
 
-            bootboot    : BootBoot = _
+            bootboot    : *BootBoot = _
 
 #!
             bootboot    : *BootBoot = (*BootBoot) 0xFFFFFFFFFFE00000

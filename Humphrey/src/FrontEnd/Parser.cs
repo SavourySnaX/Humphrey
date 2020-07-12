@@ -152,12 +152,13 @@ namespace Humphrey.FrontEnd
         public bool OpenSquareBracket() { return Item(Tokens.S_OpenSquareBracket).success; }
         public bool CloseSquareBracket() { return Item(Tokens.S_CloseSquareBracket).success; }
         public bool UnderscoreOperator() { return Item(Tokens.S_Underscore).success; }
+        public bool PointerOperator() { return Item(Tokens.O_Multiply).success; }
 
         public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator };
         public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
-        public AstItemDelegate[] Types => new AstItemDelegate[] { ArrayType, BitKeyword, Identifier, FunctionType, StructType };
-        public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { ArrayType, BitKeyword, Identifier, StructType };
+        public AstItemDelegate[] Types => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
+        public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
         public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement };
 
@@ -384,6 +385,19 @@ namespace Humphrey.FrontEnd
                 return null;
 
             return new AstParamList(paramDefinitionList);
+        }
+
+        // pointer_type : * bit|identifier|functionType|structType
+        public AstPointerType PointerType()
+        {
+            if (!PointerOperator())
+                return null;
+
+            var typeSpecifier = OneOf(NonFunctionTypes);
+            if (typeSpecifier == null)
+                return null;
+
+            return new AstPointerType(typeSpecifier as IType);
         }
 
         // array_type : [ConstantExpr] bit|identifier|functionType|structType

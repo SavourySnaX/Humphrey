@@ -79,6 +79,8 @@ namespace Humphrey.FrontEnd.tests
 
         [Theory]
         [InlineData("bit","bit")]
+        [InlineData("*bit","* bit")]
+        [InlineData("*[8]bit","* [8] bit")]
         [InlineData("[1] bit","[1] bit")]
         [InlineData("[8] bit","[8] bit")]
         [InlineData("[-8] bit","[- 8] bit")]
@@ -95,6 +97,7 @@ namespace Humphrey.FrontEnd.tests
         
         [Theory]
         [InlineData("a : bit","a : bit")]
+        [InlineData("a : *bit","a : * bit")]
         [InlineData("a : [1] bit","a : [1] bit")]
         [InlineData("anInt : [-32] bit","anInt : [- 32] bit")]
         [InlineData("aUInt : [32] bit","aUInt : [32] bit")]
