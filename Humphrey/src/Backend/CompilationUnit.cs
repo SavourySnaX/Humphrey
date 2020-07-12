@@ -45,12 +45,22 @@ namespace Humphrey.Backend
                 numBits.Negate();
                 isSigned = true;
             }
-            return new CompilationType(contextRef.GetIntType((uint)numBits.Constant), isSigned);
+            return new CompilationType(contextRef.GetIntType((uint)numBits.Constant), isSigned, false);
         }
 
-        public CompilationType FetchIntegerType(uint numBits, bool isSigned=false)
+        public CompilationType FetchIntegerType(uint numBits, bool isSigned = false)
         {
-            return new CompilationType(contextRef.GetIntType(numBits), isSigned);
+            return new CompilationType(contextRef.GetIntType(numBits), isSigned, false);
+        }
+
+        public CompilationType FetchNamedType(string identifier)
+        {
+            return symbolTable.FetchType(identifier);
+        }
+
+        public void CreateNamedType(string identifier, CompilationType type)
+        {
+            symbolTable.AddType(identifier, type);
         }
 
         public CompilationType FetchStructType(CompilationType[] elements)
@@ -60,7 +70,7 @@ namespace Humphrey.Backend
             foreach(var element in elements)
                 types[idx++] = element.BackendType;
 
-            return new CompilationType(contextRef.GetStructType(types, true), false);
+            return new CompilationType(contextRef.GetStructType(types, true), false, false);
         }
 
         public CompilationFunctionType CreateFunctionType(CompilationParam[] inputs, CompilationParam[] outputs)
@@ -106,7 +116,7 @@ namespace Humphrey.Backend
 
         public CompilationValue CreateConstant(CompilationConstantValue constantValue, uint numBits, bool isSigned)
         {
-            var constType = new CompilationType(contextRef.GetIntType(numBits), isSigned);
+            var constType = new CompilationType(contextRef.GetIntType(numBits), isSigned, false);
 
             return new CompilationValue(constType.BackendType.CreateConstantValue(constantValue.Constant.ToString(), 10), constType);
         }
@@ -122,6 +132,11 @@ namespace Humphrey.Backend
         public CompilationValue CreateConstant(string decimalNumber)
         {
             return CreateConstant(new AstNumber(decimalNumber));
+        }
+
+        public CompilationValue CreateUndef(CompilationType type)
+        {
+            return new CompilationValue(type.BackendType.Undef, type);
         }
 
         public CompilationFunction CreateFunction(CompilationFunctionType type, string identifier)

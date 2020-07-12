@@ -23,14 +23,11 @@ namespace Humphrey.FrontEnd
         {
             var ct = type.CreateOrFetchType(unit);
 
-
-            if (type.IsFunctionType && initialiser==null)
+            if (ct.IsFunctionType && initialiser==null)
             {
-                // functionptr as global variable
-                //unit.CreateGlobalVariable(type, ident.Dump());
-                throw new System.NotImplementedException($"TODO functionptr type");
+                unit.CreateNamedType(ident.Dump(), ct);
             }
-            else if (type.IsFunctionType && initialiser!=null)
+            else if (ct.IsFunctionType && initialiser!=null)
             {
                 var newFunction = unit.CreateFunction(ct as CompilationFunctionType, ident.Dump());
 
@@ -40,7 +37,7 @@ namespace Humphrey.FrontEnd
             }
             else if (initialiser==null)
             {
-                var newGlobal = unit.CreateGlobalVariable(ct, ident.Dump());
+                unit.CreateNamedType(ident.Dump(), ct);
             }
             else
             {

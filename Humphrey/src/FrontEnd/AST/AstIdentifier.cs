@@ -12,7 +12,7 @@ namespace Humphrey.FrontEnd
     
         public CompilationType CreateOrFetchType(CompilationUnit unit)
         {
-            throw new System.NotImplementedException($"Unimplemented Type create/fetch");
+            return unit.FetchNamedType(temp);
         }
     
         public bool Compile(CompilationUnit unit)

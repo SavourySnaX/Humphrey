@@ -7,11 +7,13 @@ namespace Humphrey.FrontEnd.tests
     {
         [Theory]
         [InlineData("main", new[] { "main" })]
+        [InlineData("main_routine", new[] { "main_routine" })]
         [InlineData("main bob", new[] { "main", "bob" })]
         [InlineData("a     b c d    e", new[] { "a", "b","c","d","e" })]
         [InlineData("main + bob", new[] { "main" })]
         [InlineData("+", new string[]{})]
         [InlineData("return bit", new string[]{})]
+        [InlineData("_", new string[]{})]
         public void CheckIdentifierList(string input, string[] expected)
         {
             var tokenise = new HumphreyTokeniser();

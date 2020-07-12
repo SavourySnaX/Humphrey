@@ -8,10 +8,18 @@ namespace Humphrey.Backend
     public class CompilationConstantValue : ICompilationValue
     {
         BigInteger constant;
+        bool undefValue;
 
+        public CompilationConstantValue()
+        {
+            undefValue = true;
+            constant = BigInteger.Zero;
+        }
+        
         public CompilationConstantValue(AstNumber val)
         {
             constant = BigInteger.Parse(val.Dump());
+            undefValue = false;
         }
 
         public (uint numBits, bool isSigned) ComputeKind()
@@ -48,6 +56,9 @@ namespace Humphrey.Backend
 
         public CompilationValue GetCompilationValue(CompilationUnit unit, CompilationType destType)
         {
+            if (undefValue)
+                return unit.CreateUndef(destType);
+
             var (numBits, isSigned) = ComputeKind();
 
             if (destType.IsIntegerType)

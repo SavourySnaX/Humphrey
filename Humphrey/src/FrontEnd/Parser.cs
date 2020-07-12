@@ -140,7 +140,6 @@ namespace Humphrey.FrontEnd
         public IAst DivideOperator() { return AstItem(Tokens.O_Divide, (e) => new AstOperator(e)); }
         // modulus_operator : %
         public IAst ModulusOperator() { return AstItem(Tokens.O_Modulus, (e) => new AstOperator(e)); }
-
         // equals_operator : Equals
         public IAst EqualsOperator() { return AstItem(Tokens.O_Equals, (e) => new AstOperator(e)); }
         public IAst ColonOperator() { return AstItem(Tokens.O_Colon, (e) => new AstOperator(e)); }
@@ -152,10 +151,11 @@ namespace Humphrey.FrontEnd
         public bool CloseCurlyBrace() { return Item(Tokens.S_CloseCurlyBrace).success; }
         public bool OpenSquareBracket() { return Item(Tokens.S_OpenSquareBracket).success; }
         public bool CloseSquareBracket() { return Item(Tokens.S_CloseSquareBracket).success; }
+        public bool UnderscoreOperator() { return Item(Tokens.S_Underscore).success; }
 
         public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator };
         public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator };
-        public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnaryExpression, BinaryExpression };
+        public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
         public AstItemDelegate[] Types => new AstItemDelegate[] { ArrayType, BitKeyword, Identifier, FunctionType, StructType };
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { ArrayType, BitKeyword, Identifier, StructType };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
@@ -271,6 +271,17 @@ namespace Humphrey.FrontEnd
             }
 
             return null;
+        }
+
+        // underscore_expression : underscore_operator 
+        public IExpression UnderscoreExpression()
+        {
+            if (!UnderscoreOperator())
+                return null;
+
+            var operand = new AstUnderscoreExpression();
+            operands.Push(operand);
+            return operand;
         }
 
         // unary_expression : unary_operator expression

@@ -228,6 +228,7 @@ namespace Humphrey.FrontEnd
                 var c = next.Value;
                 if (endNumber>0)
                 {
+                    operatorOnly = false;
                     if (endNumber==1)
                     {
                         if (!(c >= '₀' && c <= '₉'))
@@ -267,8 +268,6 @@ namespace Humphrey.FrontEnd
                     }
                     else if (c != '_')
                     {
-                        operatorOnly = false;
-
                         if (c >= '₀' && c <= '₉')    // end of a number reached parse radix
                         {
                             endNumber = 1;
@@ -281,6 +280,7 @@ namespace Humphrey.FrontEnd
                         {
                             if (!char.IsLetterOrDigit(c))
                                 break;
+                            operatorOnly = false;
                             digitOnly = false;
                         }
                     }

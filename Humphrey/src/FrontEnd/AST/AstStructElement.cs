@@ -29,8 +29,6 @@ namespace Humphrey.FrontEnd
             {
                 throw new System.NotImplementedException($"TODO structure value on allocation");
             }
-
-            return false;
         }
     
         public string Dump()

@@ -33,6 +33,7 @@ namespace Humphrey.Backend.tests
         }
         
         [Theory]
+        [InlineData(@" MainType : () (returnValue:[8]bit) Main : MainType = { return 0; } ","Main", 0)]
         [InlineData(@" Main : () (returnValue : [8]bit) = { return 0; } ","Main", 0)]
         [InlineData(@" Main : () (returnValue : [8]bit) = { return 1; } ","Main", 1)]
         [InlineData(@" Main : () (returnValue : [8]bit) = { return -1; } ","Main", 255)]
