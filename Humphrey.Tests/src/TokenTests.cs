@@ -86,6 +86,9 @@ namespace Humphrey.Tests.src
 
         [Theory]
         [InlineData("__", new[] { Tokens.S_Underscore, Tokens.S_Underscore })]
+        [InlineData("#!!#_", new[] { Tokens.MultiLineComment, Tokens.S_Underscore })]
+        [InlineData("#!#!!#!#", new[] { Tokens.MultiLineComment })]
+        [InlineData("#!!##!!#", new[] { Tokens.MultiLineComment, Tokens.MultiLineComment })]
         public void CheckOutliers(string input, Tokens[] tokens)
         {
             TokenTest(input, tokens);

@@ -139,6 +139,7 @@ namespace Humphrey.Backend.tests
         [InlineData(@"Main : (a : [-8]bit, b : [-8]bit) (returnValue : [-8]bit) = { return a/b;}","Main", -127, -127, 1)]
         [InlineData(@"Main : (a : [-8]bit, b : [-8]bit) (returnValue : [-8]bit) = { return a/b;}","Main", 0, -127, 0)]
         [InlineData(@"Main : (a : [-8]bit, b : [-8]bit) (returnValue : [-8]bit) = { return a/b;}","Main", 55, -33, -1)]
+        [InlineData(@"Main : (a : [-8]bit, b : [-8]bit) (returnValue : [-8]bit) = { return a/b;}","Main", -55, 33, -1)]
         [InlineData(@"Main : (a : [-8]bit, b : [-8]bit) (returnValue : [-8]bit) = { return a/b;}","Main", 127, 127, 1)]
         [InlineData(@"Main : (a : [-8]bit, b : [-8]bit) (returnValue : [-8]bit) = { return a%b;}","Main", -127, -127, 0)]
         [InlineData(@"Main : (a : [-8]bit, b : [-8]bit) (returnValue : [-8]bit) = { return a%b;}","Main", 0, 127, 0)]

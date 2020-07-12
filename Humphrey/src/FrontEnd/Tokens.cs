@@ -322,7 +322,7 @@ namespace Humphrey.FrontEnd
                     next = next.Remainder.ConsumeChar();
                     if (!next.HasValue)
                         break;
-                    if (next.Value == '!')
+                    if (next.Value == '#')
                         blockCommentDepth--;
                 }
                 next = next.Remainder.ConsumeChar();
@@ -438,7 +438,7 @@ namespace Humphrey.FrontEnd
                         c = next.Value;
                         if (c == '!')
                         {
-                            next = SkipToEndCommentBlock(start);
+                            next = SkipToEndCommentBlock(next.Remainder);
                             yield return new Result<Tokens>(Tokens.MultiLineComment, start, next.Location);
                         }
                         else
