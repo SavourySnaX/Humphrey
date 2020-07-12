@@ -17,9 +17,11 @@ namespace Humphrey.FrontEnd
 
     public class HumphreyParser
     {
+        IEnumerator<Result<Tokens>> tokens;
+
         public HumphreyParser(IEnumerable<Result<Tokens>> toParse)
         {
-            tokens = new Queue<Result<Tokens>>(toParse);
+            tokens = toParse.GetEnumerator();
             NextToken();
         }
 
@@ -32,14 +34,13 @@ namespace Humphrey.FrontEnd
         {
             do
             {
-                if (tokens.Count != 0)
-                    lookahead = tokens.Dequeue();
+                if (tokens.MoveNext())
+                    lookahead = tokens.Current;
                 else
                     lookahead = new Result<Tokens>();
             } while (lookahead.HasValue && IsSkippableToken(lookahead.Value));
         }
 
-        Queue<Result<Tokens>> tokens;
         Result<Tokens> lookahead;
 
         (bool success, string item) Item(Tokens kind)
