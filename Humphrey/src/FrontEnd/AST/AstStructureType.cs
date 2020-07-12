@@ -12,12 +12,12 @@ namespace Humphrey.FrontEnd
     
         public CompilationType CreateOrFetchType(CompilationUnit unit)
         {
-/*            var inputs = inputList.FetchParamList(unit);
-            var outputs = outputList.FetchParamList(unit);
+            var elementTypes = new CompilationType[definitions.Length];
+            int idx = 0;
+            foreach(var element in definitions)
+                elementTypes[idx++] = element.Type.CreateOrFetchType(unit);
 
-            return unit.CreateFunctionType(inputs, outputs);
-*/
-            throw new System.NotImplementedException($"Unimplemented Type create/fetch");
+            return unit.FetchStructType(elementTypes);
         }
     
         public bool Compile(CompilationUnit unit)
@@ -40,6 +40,8 @@ namespace Humphrey.FrontEnd
             s.Append("}");
             return s.ToString();
         }
+
+        public AstStructElement[] Elements => definitions;
     }
 }
 

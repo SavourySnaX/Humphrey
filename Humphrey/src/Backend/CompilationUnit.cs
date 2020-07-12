@@ -53,6 +53,16 @@ namespace Humphrey.Backend
             return new CompilationType(contextRef.GetIntType(numBits), isSigned);
         }
 
+        public CompilationType FetchStructType(CompilationType[] elements)
+        {
+            var types = new LLVMTypeRef[elements.Length];
+            int idx = 0;
+            foreach(var element in elements)
+                types[idx++] = element.BackendType;
+
+            return new CompilationType(contextRef.GetStructType(types, true), false);
+        }
+
         public CompilationFunctionType CreateFunctionType(CompilationParam[] inputs, CompilationParam[] outputs)
         {
             var allParams = new CompilationParam[inputs.Length + outputs.Length];
