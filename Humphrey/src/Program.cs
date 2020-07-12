@@ -13,15 +13,68 @@ namespace Humphrey.Experiments
     {
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int Add(int a, int b);
+            
+        static readonly string test = @"
+
+            #!
+            public enum FrameBufferType : byte
+            {
+                ARGB=0,
+                RGBA=1,
+                ABGR=2,
+                BGRA=3
+            }
+            !#
+
+            # identifier : type                 is a type definition
+            # identifier : type = value         is a variable definition
+            # identifier : type = _             is a variable definition whose value is don't care
+
+            BootBoot :              # TODO - this is currently creating a global but shouldn't! it should create a type
+            {
+                magic           : [32]bit
+                size            : [32]bit
+                protocol        : [8]bit
+                fbType          : [8]bit    # Todo enum
+                numCores        : [16]bit
+                bootstrapAPICId : [16]bit
+                timezone        : [-16]bit
+                dateTime        : [64]bit
+                initRDPtr       : [64]bit
+                initRDSize      : [64]bit
+                fbPtr           : [64]bit
+                fbSize          : [32]bit
+                fbWidth         : [32]bit
+                fbHeight        : [32]bit
+                fbScanline      : [32]bit
+                acpiPtr         : [64]bit
+                smbiPtr         : [64]bit
+                efiPtr          : [64]bit
+                mpPtr           : [64]bit
+                unused          : [256]bit  # Would be preferable here to use _ : [256]bit   since we don't need a name
+            }
+
+#!
+            bootboot    : *BootBoot = (*BootBoot) 0xFFFFFFFFFFE00000;
+            environment : *[8]bit   = (*[8]bit)   0xFFFFFFFFFFE01000;
+            framBuffer  : *[8]bit   = (*[8]bit)   0xFFFFFFFFFFC00000;
+
+            Main : ()() =
+            {
+                localBoot = *bootboot;
+            }
+!#        
+        
+        ";
 
         static void LangTest()
         {
-            string test = "initialised : [-8] bit = 0 Main:()(returnValue:[-8]bit)={return initialised;}";
+            //string test = "initialised : [-8] bit = 0 Main:()(returnValue:[-8]bit)={return initialised;}";
             //string newType = "u8:{_:bit[8];}Main:()(returnValue:u8)={return 51;}";
 
             var tokeniser = new HumphreyTokeniser();
 
-            var tokens = tokeniser.Tokenize(test).ToList();
+            var tokens = tokeniser.Tokenize(test);
 
             var parse = new HumphreyParser(tokens).File();
 
