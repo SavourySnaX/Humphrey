@@ -117,9 +117,9 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("a:a", "a : a")]             // Semantically incorrect
         [InlineData("bitval   :bit= 1", "bitval : bit = 1")]
         [InlineData("bitval   :[1]bit= 1", "bitval : [1] bit = 1")]
-        [InlineData("bitval=1", "bitval = 1")]
-        [InlineData("bitval=1*0", "bitval = * 1 0")]
-        [InlineData("bitval=a", "bitval = a")]
+        [InlineData("bitval:=1", "bitval = 1")]
+        [InlineData("bitval:=1*0", "bitval = * 1 0")]
+        [InlineData("bitval:=a", "bitval = a")]
         [InlineData("a:0", null)]
         [InlineData("a=bit", null)]
         [InlineData("a=[1] bit", null)]

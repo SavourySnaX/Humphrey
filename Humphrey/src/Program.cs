@@ -29,6 +29,9 @@ namespace Humphrey.Experiments
             # identifier : type                 is a type definition
             # identifier : type = value         is a variable definition
             # identifier : type = _             is a variable definition whose value is don't care
+            # identifier := expr                is a variable definition whose type reflects the type of the expression
+            #
+            # identifier = expr                 is an assignment (not a decleration)
 
             BootBoot :
             {
@@ -63,7 +66,7 @@ namespace Humphrey.Experiments
 
             Main : ()() =
             {
-                localBoot = *bootboot;
+                localBoot := *bootboot;
             }
 !#        
         

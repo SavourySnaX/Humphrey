@@ -467,7 +467,7 @@ namespace Humphrey.FrontEnd
         public IAssignable Assignable() { return OneOf(Assignables) as IAssignable; }
 
         // struct_element : identifier : non_function_type
-        //                | identifier = assignable
+        //                | identifier := assignable
         //                | identifier : non_function_type = assignable
         public AstStructElement StructElement()
         {
@@ -475,36 +475,29 @@ namespace Humphrey.FrontEnd
             if (identifier == null)
                 return null;
 
-            bool hadType = false;
-            bool hadValue = false;
-
             IType typeSpecifier = null;
             IAssignable assignable = null;
 
-            if (ColonOperator() != null)
-            {
-                hadType = true;
-                typeSpecifier = NonFunctionType();
-                if (typeSpecifier == null)
-                    return null;
-            }
+            if (ColonOperator() == null)        // Todo need to rollback to allow non definition checks - ie needs an additional look ahead
+                return null;
+
+            typeSpecifier = NonFunctionType();
 
             if (EqualsOperator() != null)
             {
-                hadValue = true;
                 assignable = Assignable();
                 if (assignable == null)
                     return null;
             }
 
-            if (!hadType && !hadValue)
+            if (typeSpecifier==null && assignable==null)
                 return null;
 
             return new AstStructElement(identifier, typeSpecifier, assignable);
         }
 
         // definition : identifier : type
-        //            | identifier = assignable
+        //            | identifier := assignable
         //            | identifier : type = assignable
         public AstDefinition Definition()
         {
@@ -512,29 +505,22 @@ namespace Humphrey.FrontEnd
             if (identifier == null)
                 return null;
 
-            bool hadType = false;
-            bool hadValue = false;
-
             IType typeSpecifier = null;
             IAssignable assignable = null;
 
-            if (ColonOperator() != null)
-            {
-                hadType = true;
-                typeSpecifier = Type();
-                if (typeSpecifier == null)
-                    return null;
-            }
+            if (ColonOperator() == null)        // Todo need to rollback to allow non definition checks - ie needs an additional look ahead
+                return null;
+
+            typeSpecifier = Type();
 
             if (EqualsOperator() != null)
             {
-                hadValue = true;
                 assignable = Assignable();
                 if (assignable == null)
                     return null;
             }
 
-            if (!hadType && !hadValue)
+            if (typeSpecifier==null && assignable==null)
                 return null;
 
             return new AstDefinition(identifier, typeSpecifier, assignable);
