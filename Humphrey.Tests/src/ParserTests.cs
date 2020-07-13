@@ -126,12 +126,12 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("FunctionPtr:()()=0", "FunctionPtr : () () = 0")]
         [InlineData("bit:()()=0", null)]
         [InlineData("Main:()(returnVal:bit)", "Main : () (returnVal : bit)")]
-        public void CheckDefinition(string input, string expected)
+        public void CheckGlobalDefinition(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            CheckAst(input, parser.Definition(), expected);
+            CheckAst(input, parser.GlobalScopeDefinition(), expected);
         }
 
         [Theory]

@@ -162,8 +162,9 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
         public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement };
 
-        public AstItemDelegate[] StructDefinitions => new AstItemDelegate[] { StructElement };
-        public AstItemDelegate[] GlobalDefinition => new AstItemDelegate[] { Definition };
+        public AstItemDelegate[] StructDefinitions => new AstItemDelegate[] { StructElementDefinition };
+        public AstItemDelegate[] LocalDefinition => new AstItemDelegate[] { LocalScopeDefinition };
+        public AstItemDelegate[] GlobalDefinition => new AstItemDelegate[] { GlobalScopeDefinition };
 
         // terminal : Number | Identifier | BracketedExpression
         public AstItemDelegate[] Terminal => new AstItemDelegate[] { Number, Identifier, BracketedExpression };
@@ -466,64 +467,70 @@ namespace Humphrey.FrontEnd
         //            | expression
         public IAssignable Assignable() { return OneOf(Assignables) as IAssignable; }
 
-        // struct_element : identifier : non_function_type
-        //                | identifier := assignable
-        //                | identifier : non_function_type = assignable
-        public AstStructElement StructElement()
+        // struct_element_definition : identifier : non_function_type
+        //                           | identifier := assignable
+        //                           | identifier : non_function_type = assignable
+        public AstStructElement StructElementDefinition()
         {
-            var identifier = Identifier();
-            if (identifier == null)
+            var (ok, identifier, typeSpecifier, assignable) = Definition(Identifier, NonFunctionType, Assignable);
+            if (!ok)
                 return null;
-
-            IType typeSpecifier = null;
-            IAssignable assignable = null;
-
-            if (ColonOperator() == null)        // Todo need to rollback to allow non definition checks - ie needs an additional look ahead
-                return null;
-
-            typeSpecifier = NonFunctionType();
-
-            if (EqualsOperator() != null)
-            {
-                assignable = Assignable();
-                if (assignable == null)
-                    return null;
-            }
-
-            if (typeSpecifier==null && assignable==null)
-                return null;
-
             return new AstStructElement(identifier, typeSpecifier, assignable);
+        }
+
+        // global_definition : identifier : non_function_type
+        //                   | identifier := assignable
+        //                   | identifier : non_function_type = assignable
+        public AstGlobalDefinition GlobalScopeDefinition()
+        {
+            var (ok, identifier, typeSpecifier, assignable) = Definition(Identifier, Type, Assignable);
+            if (!ok)
+                return null;
+            return new AstGlobalDefinition(identifier, typeSpecifier, assignable);
+        }
+
+        // local_definition  : identifier : non_function_type
+        //                   | identifier := assignable
+        //                   | identifier : non_function_type = assignable
+        public AstLocalDefinition LocalScopeDefinition()
+        {
+            var (ok, identifier, typeSpecifier, assignable) = Definition(Identifier, Type, Assignable);
+            if (!ok)
+                return null;
+            return new AstLocalDefinition(identifier, typeSpecifier, assignable);
         }
 
         // definition : identifier : type
         //            | identifier := assignable
         //            | identifier : type = assignable
-        public AstDefinition Definition()
+        public (bool ok, AstIdentifier identifier,IType typeSpecifier, IAssignable assignable) Definition(AstItemDelegate identifierDelegate,AstItemDelegate typeDelegate, AstItemDelegate assignableDelegate)
         {
-            var identifier = Identifier();
+            var identifier = identifierDelegate() as AstIdentifier;
             if (identifier == null)
-                return null;
+                return (false, null, null, null);
 
             IType typeSpecifier = null;
             IAssignable assignable = null;
 
-            if (ColonOperator() == null)        // Todo need to rollback to allow non definition checks - ie needs an additional look ahead
-                return null;
+            if (ColonOperator() == null)
+                return (false, null, null, null);
 
-            typeSpecifier = Type();
+            typeSpecifier = typeDelegate() as IType;
 
-            if (EqualsOperator() != null)
+            if (assignableDelegate != null)
             {
-                assignable = Assignable();
-                if (assignable == null)
-                    return null;
+                if (EqualsOperator() != null)
+                {
+                    assignable = assignableDelegate() as IAssignable;
+                    if (assignable == null)
+                        return (false, null, null, null);
+                }
             }
 
             if (typeSpecifier==null && assignable==null)
-                return null;
+                return (false, null, null, null);
 
-            return new AstDefinition(identifier, typeSpecifier, assignable);
+            return (true, identifier, typeSpecifier, assignable);
         }
 
         // return_statement : return [expression_list] ;

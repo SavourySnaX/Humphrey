@@ -2,12 +2,12 @@ using Humphrey.Backend;
 namespace Humphrey.FrontEnd
 {
     // May need splitting up into AstGlobalDefinition / AstLocalDefinition
-    public class AstDefinition : IExpression, IStatement
+    public class AstGlobalDefinition : IExpression, IStatement
     {
         AstIdentifier ident;
         IType type;
         IAssignable initialiser;
-        public AstDefinition(AstIdentifier identifier, IType itype, IAssignable init)
+        public AstGlobalDefinition(AstIdentifier identifier, IType itype, IAssignable init)
         {
             ident = identifier;
             type = itype;
