@@ -57,18 +57,14 @@ namespace Humphrey.Experiments
                 unused          : [256]bit  # Would be preferable here to use _ : [256]bit   since we don't need a name
             }
 
-            bootboot    : *BootBoot = _
-
-#!
-            bootboot    : *BootBoot = (*BootBoot) 0xFFFFFFFFFFE00000
-            environment : *[8]bit   = (*[8]bit)   0xFFFFFFFFFFE01000
-            framBuffer  : *[8]bit   = (*[8]bit)   0xFFFFFFFFFFC00000
+            bootboot    : *BootBoot = 0xFFFFFFFFFFE00000 as *BootBoot
+            environment : *[8]bit   = 0xFFFFFFFFFFE01000 as *[8]bit
+            framBuffer  : *[8]bit   = 0xFFFFFFFFFFC00000 as *[8]bit
 
             Main : ()() =
             {
-                localBoot := *bootboot;
+                # localBoot := *bootboot;
             }
-!#        
         
         ";
 

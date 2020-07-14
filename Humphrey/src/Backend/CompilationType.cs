@@ -33,5 +33,7 @@ namespace Humphrey.Backend
         public LLVMTypeRef BackendType => typeRef;
         public bool IsSigned => signedType;
         public bool IsFunctionType => functionType;
+
+        public bool IsPointer => typeRef.Kind == LLVMTypeKind.LLVMPointerTypeKind;
     }
 }

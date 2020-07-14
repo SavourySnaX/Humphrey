@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Humphrey.FrontEnd
 {
@@ -21,6 +19,8 @@ namespace Humphrey.FrontEnd
 
         public HumphreyParser(IEnumerable<Result<Tokens>> toParse)
         {
+            operators = new Stack<(bool binary, IOperator item)>();
+            operands = new Stack<IAst>();
             tokens = toParse.GetEnumerator();
             NextToken();
         }
@@ -140,6 +140,8 @@ namespace Humphrey.FrontEnd
         public IAst DivideOperator() { return AstItem(Tokens.O_Divide, (e) => new AstOperator(e)); }
         // modulus_operator : %
         public IAst ModulusOperator() { return AstItem(Tokens.O_Modulus, (e) => new AstOperator(e)); }
+        // as_opetator : %
+        public IAst AsOperator() { return AstItem(Tokens.O_As, (e) => new AstOperator(e)); }
         // equals_operator : Equals
         public IAst EqualsOperator() { return AstItem(Tokens.O_Equals, (e) => new AstOperator(e)); }
         public IAst ColonOperator() { return AstItem(Tokens.O_Colon, (e) => new AstOperator(e)); }
@@ -155,7 +157,7 @@ namespace Humphrey.FrontEnd
         public bool PointerOperator() { return Item(Tokens.O_Multiply).success; }
 
         public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator };
-        public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator };
+        public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator, AsOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
         public AstItemDelegate[] Types => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
@@ -184,12 +186,10 @@ namespace Humphrey.FrontEnd
         }
 
         Stack<(bool binary, IOperator item)> operators;
-        Stack<IExpression> operands;
+        Stack<IAst> operands;
 
         public IExpression ParseExpression()
         {
-            operators = new Stack<(bool binary, IOperator item)>();
-            operands = new Stack<IExpression>();
             PushSentinel();
             var expr = Expression();
             if (expr == null)
@@ -211,11 +211,16 @@ namespace Humphrey.FrontEnd
             {
                 var i2 = operands.Pop();
                 var i1 = operands.Pop();
-                operands.Push(AstBinaryExpression.FetchBinaryExpression(operators.Pop().item, i1, i2));
+                if (operators.Peek().item.RhsType)
+                {
+                    operands.Push(AstBinaryExpression.FetchBinaryExpressionRhsType(operators.Pop().item, i1 as IExpression, i2 as IType));
+                }
+                else
+                    operands.Push(AstBinaryExpression.FetchBinaryExpression(operators.Pop().item, i1 as IExpression, i2 as IExpression));
             }
             else
             {
-                operands.Push(AstUnaryExpression.FetchUnaryExpression(operators.Pop().item, operands.Pop()));
+                operands.Push(AstUnaryExpression.FetchUnaryExpression(operators.Pop().item, operands.Pop() as IExpression));
             }
         }
 
@@ -228,7 +233,7 @@ namespace Humphrey.FrontEnd
         {
             if (operators.Pop().item != null)
                 return null;
-            return operands.Pop();
+            return operands.Pop() as IExpression;
         }
 
         public void PushOperator((bool binary, IOperator item) op)
@@ -251,7 +256,8 @@ namespace Humphrey.FrontEnd
         }
 
         // binary_expression : Terminal
-        //                   | Terminal operator expression
+        //                   | Terminal operator(+-/*%) expression
+        //                   | Terminal operator(as) type
         public IExpression BinaryExpression()
         {
             var terminal = OneOf(Terminal) as IExpression;
@@ -262,10 +268,23 @@ namespace Humphrey.FrontEnd
                 if (op != null)
                 {
                     PushOperator((true, op));
-                    var expr = Expression();
-                    if (expr != null)
-                        return AstBinaryExpression.FetchBinaryExpression(op, terminal, expr);
-
+                    if (op.RhsType)
+                    {
+                        var type = Type();
+                        if (type == null)
+                            return null;
+                        operands.Push(type);
+                        while (operators.Peek().item != null)
+                            PopOperator();
+                        if (type!=null)
+                            return AstBinaryExpression.FetchBinaryExpressionRhsType(op, terminal, type);
+                    }
+                    else
+                    {
+                        var expr = Expression();
+                        if (expr != null)
+                            return AstBinaryExpression.FetchBinaryExpression(op, terminal, expr);
+                    }
                     return null;
                 }
 

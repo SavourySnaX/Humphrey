@@ -32,8 +32,24 @@ namespace Humphrey.FrontEnd
                         return 150;
                     case ":":
                         return 100;
+                    case "as":
+                        return 900;
                     default:
-                        throw new ParseException($"Unimplemented Precadnce for operator : {temp}");
+                        throw new ParseException($"Unimplemented Precadence for operator : {temp}");
+                }
+            }
+        }
+
+        public bool RhsType
+        {
+            get
+            {
+                switch (temp)
+                {
+                    case "as":
+                        return true;
+                    default:
+                        return false;
                 }
             }
         }

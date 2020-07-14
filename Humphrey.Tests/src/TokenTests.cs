@@ -25,6 +25,7 @@ namespace Humphrey.Tests.src
         [InlineData("%", Tokens.O_Modulus)]
         [InlineData("=", Tokens.O_Equals)]
         [InlineData(":", Tokens.O_Colon)]
+        [InlineData("as", Tokens.O_As)]
         public void CheckOperatorTokens(string input, Tokens expected)
         {
             TokenTest(input, new[] { expected });

@@ -11,6 +11,11 @@ namespace Extensions
             return LLVM.ContextCreate();
         }
 
+        public static LLVMValueRef ConstIntToPtr(this LLVMValueRef valueRef, LLVMTypeRef typeRef)
+        {
+            return LLVM.ConstIntToPtr(valueRef, typeRef);
+        }
+
         public static LLVMValueRef CreateConstantValue(this LLVMTypeRef type, string value, int radix)
         {
             if (radix < 1 || radix > 255)

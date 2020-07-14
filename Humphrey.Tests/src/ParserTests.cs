@@ -69,6 +69,10 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("2*3+1","+ * 2 3 1")]
         [InlineData("1+2%3","+ 1 % 2 3")]
         [InlineData("01₂+10₂+100₂","+ + 1 2 4")]
+        [InlineData("1 as bit","as 1 bit")]
+        [InlineData("b as c","as b c")]
+        [InlineData("b*d as c","as * b d c")]
+        [InlineData("01₂+10₂+100₂ as [3]bit","as + + 1 2 4 [3] bit")]
         public void CheckExpression(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();

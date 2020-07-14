@@ -64,6 +64,9 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Operator", Example = ":", Precedance = 100, Associativity = TokenAttribute.EAssociativity.Left)]
         O_Colon,
 
+        [Token(Category = "Operator", Example = "as", Precedance = 900, Associativity = TokenAttribute.EAssociativity.Left)]
+        O_As,
+
         [Token(Category = "Syntax", Example =";")]
         S_SemiColon,
 
@@ -186,6 +189,7 @@ namespace Humphrey.FrontEnd
 
         readonly Dictionary<string, Tokens> _keywords = new Dictionary<string, Tokens>
         {
+            ["as"] = Tokens.O_As,
             ["bit"] = Tokens.KW_Bit,
             ["return"] = Tokens.KW_Return,
         };

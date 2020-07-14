@@ -1,7 +1,8 @@
-using LLVMSharp.Interop;
 
 using Humphrey.FrontEnd;
 using System.Numerics;
+
+using Extensions;
 
 namespace Humphrey.Backend
 {
@@ -9,11 +10,13 @@ namespace Humphrey.Backend
     {
         BigInteger constant;
         bool undefValue;
+        IType resultType;
 
         public CompilationConstantValue()
         {
             undefValue = true;
             constant = BigInteger.Zero;
+            resultType = null;
         }
         
         public CompilationConstantValue(AstNumber val)
@@ -77,6 +80,16 @@ namespace Humphrey.Backend
                 }
                 throw new System.NotImplementedException($"TODO - Integer Bit width does not match");
             }
+            else if (destType.IsPointer)
+            {
+                var type = resultType.CreateOrFetchType(unit);
+                if (type != destType)
+                {
+                    // Create the constant
+                    var constant = unit.CreateConstant(this, numBits, isSigned);
+                    return new CompilationValue(constant.BackendValue.ConstIntToPtr(type.BackendType), type);
+                }
+            }
             throw new System.NotImplementedException($"TODO - Non integer types in promotion?");
         }
 
@@ -105,7 +118,10 @@ namespace Humphrey.Backend
         {
             constant = constant % rhs.Constant;
         }
-
+        public void Cast(IType type)
+        {
+            resultType = type;
+        }
         public BigInteger Constant => constant;
     }
 }
