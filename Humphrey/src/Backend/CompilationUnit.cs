@@ -228,5 +228,31 @@ namespace Humphrey.Backend
 
             return ee.GetPointerToGlobal(symbolTable.FetchFunction(identifier).BackendValue);
         }
+
+        public void EmitToFile(string filename)
+        {
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(LLVMTargetRef.DefaultTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
+
+            moduleRef.DataLayout = targetMachine.CreateTargetDataLayout();
+            moduleRef.Target = LLVMTargetRef.DefaultTriple;
+
+            var pm = LLVMPassManagerRef.Create();
+            var passes = PassManagerBuilderCreate();
+            passes.PopulateModulePassManager(pm);
+            passes.PopulateFunctionPassManager(pm);
+
+            moduleRef.Dump();
+
+            if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
+            {
+                Console.WriteLine($"Module Verification Failed : {message} {moduleRef.PrintToString()}");
+                return;
+            }
+
+            pm.Run(moduleRef);
+            moduleRef.Dump();
+
+            targetMachine.EmitToFile(moduleRef,filename, LLVMCodeGenFileType.LLVMObjectFile);
+        }
     }
 }

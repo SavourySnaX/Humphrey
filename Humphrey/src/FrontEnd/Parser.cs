@@ -190,7 +190,7 @@ namespace Humphrey.FrontEnd
         public bool UnderscoreOperator() { return Item(Tokens.S_Underscore).success; }
         public bool PointerOperator() { return Item(Tokens.O_Multiply).success; }
 
-        public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator };
+        public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator };
         public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator, AsOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
         public AstItemDelegate[] Types => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };

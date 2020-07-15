@@ -6,6 +6,11 @@ namespace Extensions
 {
     public unsafe static class Helpers
     {
+        public static LLVMPassManagerBuilderRef PassManagerBuilderCreate()
+        {
+            return LLVM.PassManagerBuilderCreate();
+        }
+
         public static LLVMContextRef CreateContext()
         {
             return LLVM.ContextCreate();

@@ -12,6 +12,8 @@ namespace Humphrey.FrontEnd
                     return new AstUnaryPlus(expression);
                 case "-":
                     return new AstUnaryMinus(expression);
+                case "*":
+                    return new AstUnaryDereference(expression);
                 default:
                     throw new NotImplementedException($"Unimplemented unary operator : {oper.Dump()}");
             }
@@ -47,6 +49,8 @@ namespace Humphrey.FrontEnd
 
                 throw new NotImplementedException($"TODO - Integer Bit width does not match");
             }
+            if (src.Type == destType)
+                return src;
 
             throw new NotImplementedException($"TODO - Non integer types in promotion?");
         }
