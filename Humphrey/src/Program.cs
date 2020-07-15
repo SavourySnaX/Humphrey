@@ -35,26 +35,25 @@ namespace Humphrey.Experiments
 
             BootBoot :
             {
-                magic           : [32]bit
-                size            : [32]bit
-                protocol        : [8]bit
-                fbType          : [8]bit    # Todo enum
-                numCores        : [16]bit
-                bootstrapAPICId : [16]bit
-                timezone        : [-16]bit
-                dateTime        : [64]bit
-                initRDPtr       : [64]bit
-                initRDSize      : [64]bit
-                fbPtr           : [64]bit
-                fbSize          : [32]bit
-                fbWidth         : [32]bit
-                fbHeight        : [32]bit
-                fbScanline      : [32]bit
-                acpiPtr         : [64]bit
-                smbiPtr         : [64]bit
-                efiPtr          : [64]bit
-                mpPtr           : [64]bit
-                unused          : [256]bit  # Would be preferable here to use _ : [256]bit   since we don't need a name
+                magic               : [32]bit
+                size                : [32]bit
+                protocol            : [8]bit
+                fbType              : [8]bit    # Todo enum
+                numCores            : [16]bit
+                bootstrapAPICId     : [16]bit
+                timezone            : [-16]bit
+                dateTime            : [64]bit
+                initRDPtr           : [64]bit
+                initRDSize          : [64]bit
+                fbPtr               : [64]bit
+                fbSize              : [32]bit
+                fbWidth , fbHeight  : [32]bit
+                fbScanline          : [32]bit
+                acpiPtr             : [64]bit
+                smbiPtr             : [64]bit
+                efiPtr              : [64]bit
+                mpPtr               : [64]bit
+                unused              : [256]bit  # Would be preferable here to use _ : [256]bit   since we don't need a name
             }
 
             bootboot    : *BootBoot = 0xFFFFFFFFFFE00000 as *BootBoot
@@ -63,7 +62,7 @@ namespace Humphrey.Experiments
 
             Main : ()() =
             {
-                # localBoot := *bootboot;
+                #localBoot := *bootboot;
             }
         
         ";

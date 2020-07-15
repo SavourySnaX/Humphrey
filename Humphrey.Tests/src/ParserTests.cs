@@ -8,12 +8,12 @@ namespace Humphrey.FrontEnd.tests
         [Theory]
         [InlineData("main", new[] { "main" })]
         [InlineData("main_routine", new[] { "main_routine" })]
-        [InlineData("main bob", new[] { "main", "bob" })]
-        [InlineData("a     b c d    e", new[] { "a", "b","c","d","e" })]
+        [InlineData("main, bob", new[] { "main", "bob" })]
+        [InlineData("a,     b, c, d,    e", new[] { "a", "b","c","d","e" })]
         [InlineData("main + bob", new[] { "main" })]
-        [InlineData("+", new string[]{})]
-        [InlineData("return bit", new string[]{})]
-        [InlineData("_", new string[]{})]
+        [InlineData("+", null)]
+        [InlineData("return bit", null)]
+        [InlineData("_", null)]
         public void CheckIdentifierList(string input, string[] expected)
         {
             var tokenise = new HumphreyTokeniser();
@@ -121,15 +121,17 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("a:a", "a : a")]             // Semantically incorrect
         [InlineData("bitval   :bit= 1", "bitval : bit = 1")]
         [InlineData("bitval   :[1]bit= 1", "bitval : [1] bit = 1")]
-        [InlineData("bitval:=1", "bitval = 1")]
-        [InlineData("bitval:=1*0", "bitval = * 1 0")]
-        [InlineData("bitval:=a", "bitval = a")]
+        [InlineData("bitval:=1", "bitval := 1")]
+        [InlineData("bitval:=1*0", "bitval := * 1 0")]
+        [InlineData("bitval,other:=1*0", "bitval , other := * 1 0")]
+        [InlineData("bitval:=a", "bitval := a")]
         [InlineData("a:0", null)]
         [InlineData("a=bit", null)]
         [InlineData("a=[1] bit", null)]
         [InlineData("FunctionPtr:()()=0", "FunctionPtr : () () = 0")]
         [InlineData("bit:()()=0", null)]
         [InlineData("Main:()(returnVal:bit)", "Main : () (returnVal : bit)")]
+        [InlineData("Main,ReturnsBit:()(returnVal:bit)", "Main , ReturnsBit : () (returnVal : bit)")]
         public void CheckGlobalDefinition(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();
@@ -195,7 +197,9 @@ namespace Humphrey.FrontEnd.tests
         [Theory]
         [InlineData("{}","{ }")]
         [InlineData("{bob:bit}","{ bob : bit}")]
+        [InlineData("{bob,carol:bit}","{ bob , carol : bit}")]
         [InlineData("{bob:bit squee:[8]bit}","{ bob : bit squee : [8] bit}")]
+        [InlineData("{bob,carol:bit squee,bees:[8]bit}","{ bob , carol : bit squee , bees : [8] bit}")]
         [InlineData("{bob:apple}","{ bob : apple}")]
         [InlineData("{bob:()()}", null)]
         public void CheckStructType(string input, string expected)

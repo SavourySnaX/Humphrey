@@ -1,17 +1,20 @@
+using System.Text;
 using Humphrey.Backend;
 namespace Humphrey.FrontEnd
 {
     public class AstStructElement : IExpression
     {
-        AstIdentifier ident;
+        AstIdentifier[] identifiers;
         IType type;
         IAssignable initialiser;
-        public AstStructElement(AstIdentifier identifier, IType itype, IAssignable init)
+        public AstStructElement(AstIdentifier[] identifierList, IType itype, IAssignable init)
         {
-            ident = identifier;
+            identifiers = identifierList;
             type = itype;
             initialiser = init;
         }
+
+        public int NumElements => identifiers.Length;
 
         public bool Compile(CompilationUnit unit)
         {
@@ -33,12 +36,21 @@ namespace Humphrey.FrontEnd
     
         public string Dump()
         {
+            var s = new StringBuilder();
+            for (int a=0;a<identifiers.Length;a++)
+            {
+                if (a!=0)
+                    s.Append(" , ");
+                s.Append(identifiers[a].Dump());
+            }
             if (type==null)
-                return $"{ident.Dump()} = {initialiser.Dump()}";
-            if (initialiser==null)
-                return $"{ident.Dump()} : {type.Dump()}";
+                s.Append($" := {initialiser.Dump()}");
+            else if (initialiser==null)
+                s.Append($" : {type.Dump()}");
+            else
+                s.Append($" : {type.Dump()} = {initialiser.Dump()}");
 
-            return $"{ident.Dump()} : {type.Dump()} = {initialiser.Dump()}";
+            return s.ToString();
         }
 
         public IType Type => type;

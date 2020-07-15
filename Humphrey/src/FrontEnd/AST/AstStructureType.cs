@@ -8,14 +8,23 @@ namespace Humphrey.FrontEnd
         public AstStructureType(AstStructElement[] defList)
         {
             definitions = defList;
+
         }
     
         public CompilationType CreateOrFetchType(CompilationUnit unit)
         {
-            var elementTypes = new CompilationType[definitions.Length];
+            int numElements = 0;
+            foreach (var element in definitions)
+                numElements += element.NumElements;
+            var elementTypes = new CompilationType[numElements];
             int idx = 0;
             foreach(var element in definitions)
-                elementTypes[idx++] = element.Type.CreateOrFetchType(unit);
+            {
+                for (int a = 0; a < element.NumElements; a++)
+                {
+                    elementTypes[idx++] = element.Type.CreateOrFetchType(unit);
+                }
+            }
 
             return unit.FetchStructType(elementTypes);
         }

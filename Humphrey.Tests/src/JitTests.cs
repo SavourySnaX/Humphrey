@@ -17,6 +17,12 @@ namespace Humphrey.Backend.tests
         [InlineData(@" Main : () (returnValue : bit) = { return 1*1; } ","Main", 1)]
         [InlineData(@" Main : () (returnValue : bit) = { return 1/1; } ","Main", 1)]
         [InlineData(@" Main : () (returnValue : bit) = { return 1%1; } ","Main", 0)]
+        public void CheckVoidExpectsBit(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
+        }
+        
+        [Theory]
         [InlineData(@"global : bit = 0 Main : () (returnValue : bit) = { return global; } ","Main", 0)]
         [InlineData(@"global : bit = 1 Main : () (returnValue : bit) = { return global; } ","Main", 1)]
         [InlineData(@"global : bit = +0 Main : () (returnValue : bit) = { return global; } ","Main", 0)]
@@ -27,7 +33,11 @@ namespace Humphrey.Backend.tests
         [InlineData(@"global : bit = 1*1 Main : () (returnValue : bit) = { return global; } ","Main", 1)]
         [InlineData(@"global : bit = 1/1 Main : () (returnValue : bit) = { return global; } ","Main", 1)]
         [InlineData(@"global : bit = 1%1 Main : () (returnValue : bit) = { return global; } ","Main", 0)]
-        public void CheckVoidExpectsBit(string input, string entryPointName, byte expected)
+        [InlineData(@"global1,global2 : bit = 0 Main : () (returnValue : bit) = { return global1+global2; } ","Main", 0)]
+        [InlineData(@"global1,global2 : bit = 1 Main : () (returnValue : bit) = { return global1+global2; } ","Main", 0)]
+        [InlineData(@"global1 : bit = 1 global2 : bit = 0 Main : () (returnValue : bit) = { return global1+global2; } ","Main", 1)]
+        [InlineData(@"global1 : bit = 0 global2 : bit = 1 Main : () (returnValue : bit) = { return global1+global2; } ","Main", 1)]
+        public void CheckGlobalsVoidExpectsBit(string input, string entryPointName, byte expected)
         {
             Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
         }

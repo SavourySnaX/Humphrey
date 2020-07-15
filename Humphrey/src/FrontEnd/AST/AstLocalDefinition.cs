@@ -1,15 +1,16 @@
+using System.Text;
 using Humphrey.Backend;
 namespace Humphrey.FrontEnd
 {
     // May need splitting up into AstGlobalDefinition / AstLocalDefinition
     public class AstLocalDefinition : IExpression, IStatement
     {
-        AstIdentifier ident;
+        AstIdentifier[] identifiers;
         IType type;
         IAssignable initialiser;
-        public AstLocalDefinition(AstIdentifier identifier, IType itype, IAssignable init)
+        public AstLocalDefinition(AstIdentifier[] identifierList, IType itype, IAssignable init)
         {
-            ident = identifier;
+            identifiers = identifierList;
             type = itype;
             initialiser = init;
         }
@@ -24,7 +25,7 @@ namespace Humphrey.FrontEnd
             var ct = type.CreateOrFetchType(unit);
 
             throw new System.NotSupportedException($"local definitions are not supported yet");
-            
+            /*
             if (ct.IsFunctionType && initialiser==null)
             {
                 unit.CreateNamedType(ident.Dump(), ct);
@@ -50,17 +51,26 @@ namespace Humphrey.FrontEnd
                 var newGlobal = unit.CreateGlobalVariable(ct, ident.Dump(), exprValue);
             }
 
-            return false;
+            return false;*/
         }
     
         public string Dump()
         {
+            var s = new StringBuilder();
+            for (int a=0;a<identifiers.Length;a++)
+            {
+                if (a!=0)
+                    s.Append(" , ");
+                s.Append(identifiers[a].Dump());
+            }
             if (type==null)
-                return $"{ident.Dump()} = {initialiser.Dump()}";
-            if (initialiser==null)
-                return $"{ident.Dump()} : {type.Dump()}";
+                s.Append($" := {initialiser.Dump()}");
+            else if (initialiser==null)
+                s.Append($" : {type.Dump()}");
+            else
+                s.Append($" : {type.Dump()} = {initialiser.Dump()}");
 
-            return $"{ident.Dump()} : {type.Dump()} = {initialiser.Dump()}";
+            return s.ToString();
         }
 
         public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)

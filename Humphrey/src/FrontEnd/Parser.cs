@@ -71,6 +71,28 @@ namespace Humphrey.FrontEnd
 
             return list.ToArray();
         }
+        
+        // + (1 or more)
+        protected T[] CommaSeperatedItemList<T>(AstItemDelegate kind) where T : class
+        {
+            var list = new List<T>();
+
+            T item = kind() as T;
+            if (item == null)
+                return null;
+            list.Add(item);
+
+            while (CommaSyntax())
+            {
+                item = kind() as T;
+                if (item == null)
+                    return null;
+                list.Add(item);
+            }
+
+            return list.ToArray();
+        }
+
 
         public delegate (bool success, string item) ItemDelegate();
         public delegate IAst AstItemDelegate();
@@ -124,7 +146,7 @@ namespace Humphrey.FrontEnd
         public IAst[] NumberList() { return ItemList(Number); }
 
         // identifer_list : Identifier*        
-        public IAst[] IdentifierList() { return ItemList(Identifier); }
+        public AstIdentifier[] IdentifierList() { return CommaSeperatedItemList<AstIdentifier>(Identifier); }
 
         // bit_keyword : bit
         public AstBitType BitKeyword() { return AstItem(Tokens.KW_Bit, (e) => new AstBitType()) as AstBitType; }
@@ -343,48 +365,14 @@ namespace Humphrey.FrontEnd
         //                       | param_definition , param_defitinition_list
         public AstParamDefinition[] ParamDefinitionList()
         {
-            var list = new List<AstParamDefinition>();
-
-            var param = ParamDefinition();
-            if (param == null)
-                return null;
-
-            list.Add(param);
-
-            while (CommaSyntax())
-            {
-                param = ParamDefinition();
-                if (param == null)
-                    return null;
-
-                list.Add(param);
-            }
-
-            return list.ToArray();
+            return CommaSeperatedItemList<AstParamDefinition>(ParamDefinition);
         }
 
         // expression_list : expr
         //                 | expr , expression_list
         public IExpression[] ExpressionList()
         {
-            var list = new List<IExpression>();
-
-            var expr = ParseExpression();
-            if (expr == null)
-                return null;
-
-            list.Add(expr);
-
-            while (CommaSyntax())
-            {
-                expr = ParseExpression();
-                if (expr == null)
-                    return null;
-
-                list.Add(expr);
-            }
-
-            return list.ToArray();
+            return CommaSeperatedItemList<IExpression>(ParseExpression);
         }
 
         // parameter_list : ( param_definition_list )
@@ -491,10 +479,10 @@ namespace Humphrey.FrontEnd
         //                           | identifier : non_function_type = assignable
         public AstStructElement StructElementDefinition()
         {
-            var (ok, identifier, typeSpecifier, assignable) = Definition(Identifier, NonFunctionType, Assignable);
+            var (ok, identifierList, typeSpecifier, assignable) = Definition(Identifier, NonFunctionType, Assignable);
             if (!ok)
                 return null;
-            return new AstStructElement(identifier, typeSpecifier, assignable);
+            return new AstStructElement(identifierList, typeSpecifier, assignable);
         }
 
         // global_definition : identifier : non_function_type
@@ -502,10 +490,10 @@ namespace Humphrey.FrontEnd
         //                   | identifier : non_function_type = assignable
         public AstGlobalDefinition GlobalScopeDefinition()
         {
-            var (ok, identifier, typeSpecifier, assignable) = Definition(Identifier, Type, Assignable);
+            var (ok, identifierList, typeSpecifier, assignable) = Definition(Identifier, Type, Assignable);
             if (!ok)
                 return null;
-            return new AstGlobalDefinition(identifier, typeSpecifier, assignable);
+            return new AstGlobalDefinition(identifierList, typeSpecifier, assignable);
         }
 
         // local_definition  : identifier : non_function_type
@@ -513,18 +501,18 @@ namespace Humphrey.FrontEnd
         //                   | identifier : non_function_type = assignable
         public AstLocalDefinition LocalScopeDefinition()
         {
-            var (ok, identifier, typeSpecifier, assignable) = Definition(Identifier, Type, Assignable);
+            var (ok, identifierList, typeSpecifier, assignable) = Definition(Identifier, Type, Assignable);
             if (!ok)
                 return null;
-            return new AstLocalDefinition(identifier, typeSpecifier, assignable);
+            return new AstLocalDefinition(identifierList, typeSpecifier, assignable);
         }
 
         // definition : identifier : type
         //            | identifier := assignable
         //            | identifier : type = assignable
-        public (bool ok, AstIdentifier identifier,IType typeSpecifier, IAssignable assignable) Definition(AstItemDelegate identifierDelegate,AstItemDelegate typeDelegate, AstItemDelegate assignableDelegate)
+        public (bool ok, AstIdentifier[] identifierList,IType typeSpecifier, IAssignable assignable) Definition(AstItemDelegate identifierDelegate,AstItemDelegate typeDelegate, AstItemDelegate assignableDelegate)
         {
-            var identifier = identifierDelegate() as AstIdentifier;
+            var identifier = CommaSeperatedItemList<AstIdentifier>(identifierDelegate);
             if (identifier == null)
                 return (false, null, null, null);
 
