@@ -123,12 +123,12 @@ namespace Humphrey.FrontEnd
         }
 
         // 0 or more ( | )
-        protected IAst[] ManyOf(AstItemDelegate[] kinds)
+        protected T[] ManyOf<T>(AstItemDelegate[] kinds) where T : class
         {
-            var list = new List<IAst>();
+            var list = new List<T>();
             while (true)
             {
-                var t = OneOf(kinds);
+                var t = OneOf(kinds) as T;
                 if (t != null)
                     list.Add(t);
                 else
@@ -196,7 +196,7 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] Types => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
-        public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement };
+        public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement, LocalScopeDefinition };
 
         public AstItemDelegate[] StructDefinitions => new AstItemDelegate[] { StructElementDefinition };
         public AstItemDelegate[] LocalDefinition => new AstItemDelegate[] { LocalScopeDefinition };
@@ -354,7 +354,7 @@ namespace Humphrey.FrontEnd
         }
 
         // Root
-        public IAst[] File() { return ManyOf(GlobalDefinition); }
+        public IGlobalDefinition[] File() { return ManyOf<IGlobalDefinition>(GlobalDefinition); }
 
         // param_definition : identifier : type
         public AstParamDefinition ParamDefinition()

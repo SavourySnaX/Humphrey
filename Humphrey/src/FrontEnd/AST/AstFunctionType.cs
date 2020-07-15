@@ -21,11 +21,6 @@ namespace Humphrey.FrontEnd
             throw new System.NotImplementedException($"Unimplemented Type create/fetch");
         }
     
-        public bool Compile(CompilationUnit unit)
-        {
-            return false;
-        }
-
         public bool IsFunctionType => true;
 
         public string Dump()

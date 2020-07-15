@@ -9,11 +9,6 @@ namespace Humphrey.FrontEnd
             expr = expression;
         }
     
-        public bool Compile(CompilationUnit unit)
-        {
-            return false;
-        }
-    
         public string Dump()
         {
             return $"+ {expr.Dump()}";

@@ -25,11 +25,6 @@ namespace Humphrey.FrontEnd
             return pList;
         }
 
-        public bool Compile(CompilationUnit unit)
-        {
-            return false;
-        }
-    
         public string Dump()
         {
             var s = new StringBuilder();

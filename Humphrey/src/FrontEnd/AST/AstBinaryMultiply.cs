@@ -13,11 +13,6 @@ namespace Humphrey.FrontEnd
             rhs = right;
         }
     
-        public bool Compile(CompilationUnit unit)
-        {
-            return false;
-        }
-
         public string Dump()
         {
             return $"* {lhs.Dump()} {rhs.Dump()}";

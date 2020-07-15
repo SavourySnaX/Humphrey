@@ -3,7 +3,7 @@ using Humphrey.Backend;
 namespace Humphrey.FrontEnd
 {
     // May need splitting up into AstGlobalDefinition / AstLocalDefinition
-    public class AstGlobalDefinition : IExpression, IStatement
+    public class AstGlobalDefinition : IExpression, IGlobalDefinition
     {
         AstIdentifier[] identifiers;
         IType type;
@@ -13,11 +13,6 @@ namespace Humphrey.FrontEnd
             identifiers = identifierList;
             type = itype;
             initialiser = init;
-        }
-
-        public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
-        {
-            throw new System.NotImplementedException();
         }
 
         public bool Compile(CompilationUnit unit)

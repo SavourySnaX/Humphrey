@@ -23,6 +23,20 @@ namespace Humphrey.Backend.tests
         }
         
         [Theory]
+        [InlineData(@" Main : () (returnValue : bit) = { local:bit=0 return local } ","Main", 0)]
+        [InlineData(@" Main : () (returnValue : bit) = { local:bit=+1 return local } ","Main", 1)]
+        [InlineData(@" Main : () (returnValue : bit) = { local:bit=1+0 return local } ","Main", 1)]
+        [InlineData(@" Main : () (returnValue : bit) = { local:bit= 1-1  return local} ","Main", 0)]
+        [InlineData(@" Main : () (returnValue : bit) = { local:bit=1*1 return local } ","Main", 1)]
+        [InlineData(@" Main : () (returnValue : bit) = { local:bit=1/1 return local} ","Main", 1)]
+        [InlineData(@" Main : () (returnValue : bit) = { local:bit=1%1 return local+1} ","Main", 1)]
+        [InlineData(@" Main : () (returnValue : bit) = { local1,local2:bit=1 return local1/local2} ","Main", 1)]
+        public void CheckVoidWithLocalExpectsBit(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
+        }
+        
+        [Theory]
         [InlineData(@"global : bit = 0 Main : () (returnValue : bit) = { return global } ","Main", 0)]
         [InlineData(@"global : bit = 1 Main : () (returnValue : bit) = { return global } ","Main", 1)]
         [InlineData(@"global : bit = +0 Main : () (returnValue : bit) = { return global } ","Main", 0)]

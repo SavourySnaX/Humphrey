@@ -28,11 +28,6 @@ namespace Humphrey.FrontEnd
             return true;
         }
 
-        public bool Compile(CompilationUnit unit)
-        {
-            return false;
-        }
-    
         public string Dump()
         {
             if (exprList.Length==0)

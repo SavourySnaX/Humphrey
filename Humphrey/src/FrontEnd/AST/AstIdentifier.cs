@@ -15,10 +15,6 @@ namespace Humphrey.FrontEnd
             return unit.FetchNamedType(temp);
         }
     
-        public bool Compile(CompilationUnit unit)
-        {
-            return false;
-        }
         public bool IsFunctionType => false;
     
         public string Dump()

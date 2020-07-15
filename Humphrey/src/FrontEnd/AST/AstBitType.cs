@@ -12,10 +12,6 @@ namespace Humphrey.FrontEnd
             return unit.FetchIntegerType(1);
         }
 
-        public bool Compile(CompilationUnit unit)
-        {
-            return false;
-        }
         public bool IsFunctionType => false;
     
         public string Dump()

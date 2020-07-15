@@ -29,11 +29,6 @@ namespace Humphrey.FrontEnd
             return unit.FetchStructType(elementTypes);
         }
     
-        public bool Compile(CompilationUnit unit)
-        {
-            return false;
-        }
-
         public bool IsFunctionType => false;
 
         public string Dump()

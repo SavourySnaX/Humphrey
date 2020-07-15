@@ -25,11 +25,6 @@ namespace Humphrey.FrontEnd
 
             return newBB;
         }
-
-        public bool Compile(CompilationUnit unit)
-        {
-            return false;
-        }
     
         public string Dump()
         {

@@ -7,6 +7,7 @@ namespace Humphrey.Backend
         private readonly Dictionary<string, CompilationType> typeTable;
         private readonly Dictionary<string, CompilationFunction> functionTable;
         private readonly Dictionary<string, CompilationValue> globalValueTable;
+        private readonly Dictionary<string, CompilationValue> localValueTable;      // Temporary, will become scoped type
         private readonly Dictionary<(string, CompilationFunction), CompilationValue> inputParamsTable;
 
         public SymbolTable()
@@ -14,6 +15,7 @@ namespace Humphrey.Backend
             typeTable = new Dictionary<string, CompilationType>();
             functionTable = new Dictionary<string, CompilationFunction>();
             globalValueTable = new Dictionary<string, CompilationValue>();
+            localValueTable = new Dictionary<string, CompilationValue>();
             inputParamsTable = new Dictionary<(string, CompilationFunction), CompilationValue>();
         }
 
@@ -76,5 +78,21 @@ namespace Humphrey.Backend
             globalValueTable.Add(identifier, value);
             return true;
         }
+
+        public CompilationValue FetchLocalValue(string identifier)
+        {
+            if (localValueTable.TryGetValue(identifier,out var result))
+                return result;
+            return null;
+        }
+
+        public bool AddLocalValue(string identifier, CompilationValue value)
+        {
+            if (localValueTable.ContainsKey(identifier))
+                return false;
+            localValueTable.Add(identifier, value);
+            return true;
+        }
+
     }
 }

@@ -16,11 +16,6 @@ namespace Humphrey.FrontEnd
             return unit.CreateFunctionParameter(type.CreateOrFetchType(unit), ident.Dump());
         }
 
-        public bool Compile(CompilationUnit unit)
-        {
-            return false;
-        }
-    
         public string Dump()
         {
             return $"{ident.Dump()} : {type.Dump()}";

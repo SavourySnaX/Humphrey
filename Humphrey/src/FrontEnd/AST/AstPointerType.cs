@@ -16,11 +16,6 @@ namespace Humphrey.FrontEnd
             return ct.AsPointer();
         }
     
-        public bool Compile(CompilationUnit unit)
-        {
-            return false;
-        }
-
         public bool IsFunctionType => false;
 
         public string Dump()

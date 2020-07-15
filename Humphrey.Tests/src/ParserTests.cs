@@ -141,6 +141,30 @@ namespace Humphrey.FrontEnd.tests
         }
 
         [Theory]
+        [InlineData("a:bit", "a : bit")]
+        [InlineData("a:a", "a : a")]             // Semantically incorrect
+        [InlineData("bitval   :bit= 1", "bitval : bit = 1")]
+        [InlineData("bitval   :[1]bit= 1", "bitval : [1] bit = 1")]
+        [InlineData("bitval:=1", "bitval := 1")]
+        [InlineData("bitval:=1*0", "bitval := * 1 0")]
+        [InlineData("bitval,other:=1*0", "bitval , other := * 1 0")]
+        [InlineData("bitval:=a", "bitval := a")]
+        [InlineData("a:0", null)]
+        [InlineData("a=bit", null)]
+        [InlineData("a=[1] bit", null)]
+        [InlineData("FunctionPtr:()()=0", "FunctionPtr : () () = 0")]
+        [InlineData("bit:()()=0", null)]
+        [InlineData("Main:()(returnVal:bit)", "Main : () (returnVal : bit)")]
+        [InlineData("Main,ReturnsBit:()(returnVal:bit)", "Main , ReturnsBit : () (returnVal : bit)")]
+        public void CheckLocalDefinition(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.LocalScopeDefinition(), expected);
+        }
+
+        [Theory]
         [InlineData("a:bit",new []{"a : bit"})]
         [InlineData("a:bit,b:bit",new []{"a : bit","b : bit"})]
         [InlineData("a:bit,b:thing",new []{"a : bit","b : thing"})]

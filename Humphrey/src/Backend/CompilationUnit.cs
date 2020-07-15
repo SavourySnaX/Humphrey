@@ -102,7 +102,12 @@ namespace Humphrey.Backend
             // Check for global value
             value = symbolTable.FetchGlobalValue(identifier);
             if (value != null)
-                return new CompilationValue(builder.BackendValue.BuildLoad(value.BackendValue), value.Type );
+                return builder.Load(value);
+
+            // Check for local value
+            value = symbolTable.FetchLocalValue(identifier);
+            if (value != null)
+                return builder.Load(value);
 
             throw new Exception($"Failed to find identifier {identifier}");
         }
@@ -180,6 +185,27 @@ namespace Humphrey.Backend
             return globalValue;
         }
 
+        public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationType type, string identifier, ICompilationValue initialiser)
+        {
+            if (symbolTable.FetchLocalValue(identifier)!=null)
+                throw new Exception($"global value {identifier} already exists!");
+
+            var local = builder.Alloca(type);
+
+            if (initialiser != null)
+            {
+                CompilationValue value = initialiser as CompilationValue;
+                if (initialiser is CompilationConstantValue ccv)
+                    value = ccv.GetCompilationValue(unit, type);
+
+                builder.Store(value, local);
+            }
+
+            if (!symbolTable.AddLocalValue(identifier, local))
+                throw new Exception($"local {identifier} failed to add symbol!");
+
+            return local;
+        }
         public CompilationParam CreateFunctionParameter(CompilationType type, string identifier)
         {
             return new CompilationParam(type, identifier);

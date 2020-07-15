@@ -62,7 +62,7 @@ namespace Humphrey.Experiments
 
             Main : ()() =
             {
-                #localBoot := *bootboot;
+                localBoot : *BootBoot = bootboot
             }
         
         ";

@@ -17,41 +17,39 @@ namespace Humphrey.FrontEnd
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
-            throw new System.NotImplementedException();
-        }
-
-        public bool Compile(CompilationUnit unit)
-        {
-            var ct = type.CreateOrFetchType(unit);
-
-            throw new System.NotSupportedException($"local definitions are not supported yet");
-            /*
-            if (ct.IsFunctionType && initialiser==null)
+            foreach (var ident in identifiers)
             {
-                unit.CreateNamedType(ident.Dump(), ct);
+                var ct = type.CreateOrFetchType(unit);
+
+                if (ct.IsFunctionType && initialiser == null)
+                {
+                    // should be scoped
+                    unit.CreateNamedType(ident.Dump(), ct);
+                }
+                else if (ct.IsFunctionType && initialiser != null)
+                {
+                    // should be scoped
+                    var newFunction = unit.CreateFunction(ct as CompilationFunctionType, ident.Dump());
+
+                    var codeBlock = initialiser as AstCodeBlock;
+
+                    codeBlock.CreateCodeBlock(unit, newFunction);
+                }
+                else if (initialiser == null)
+                {
+                    // should be scoped
+                    unit.CreateNamedType(ident.Dump(), ct);
+                }
+                else
+                {
+                    var expr = initialiser as IExpression;
+
+                    var exprValue = expr.ProcessExpression(unit, builder);
+
+                    var newGlobal = unit.CreateLocalVariable(unit, builder, ct, ident.Dump(), exprValue);
+                }
             }
-            else if (ct.IsFunctionType && initialiser!=null)
-            {
-                var newFunction = unit.CreateFunction(ct as CompilationFunctionType, ident.Dump());
-
-                var codeBlock = initialiser as AstCodeBlock;
-
-                codeBlock.CreateCodeBlock(unit, newFunction);
-            }
-            else if (initialiser==null)
-            {
-                unit.CreateNamedType(ident.Dump(), ct);
-            }
-            else
-            {
-                var expr = initialiser as IExpression;
-
-                var exprValue = expr.ProcessConstantExpression(unit);
-
-                var newGlobal = unit.CreateGlobalVariable(ct, ident.Dump(), exprValue);
-            }
-
-            return false;*/
+            return false;
         }
     
         public string Dump()

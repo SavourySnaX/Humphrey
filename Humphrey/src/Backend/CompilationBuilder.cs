@@ -18,6 +18,10 @@ namespace Humphrey.Backend
         {
             return new CompilationValue(builderRef.BuildLoad(value.BackendValue), value.Type);
         }
+        public CompilationValue Store(CompilationValue value, CompilationValue storeTo)
+        {
+            return new CompilationValue(builderRef.BuildStore(value.BackendValue, storeTo.BackendValue), value.Type);
+        }
 
         public CompilationValue UDiv(CompilationValue left, CompilationValue right)
         {
@@ -57,6 +61,11 @@ namespace Humphrey.Backend
         public CompilationValue Negate(CompilationValue src)
         {
             return new CompilationValue(builderRef.BuildNeg(src.BackendValue), src.Type);
+        }
+
+        public CompilationValue Alloca(CompilationType type)
+        {
+            return new CompilationValue(builderRef.BuildAlloca(type.BackendType), type);
         }
 
         public CompilationValue Ext(CompilationValue src, CompilationType toType)

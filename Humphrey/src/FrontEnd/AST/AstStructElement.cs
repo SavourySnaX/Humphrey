@@ -15,24 +15,6 @@ namespace Humphrey.FrontEnd
         }
 
         public int NumElements => identifiers.Length;
-
-        public bool Compile(CompilationUnit unit)
-        {
-            var ct = type.CreateOrFetchType(unit);
-
-            if (type.IsFunctionType)
-            {
-                throw new System.NotSupportedException($"functions are not members of structs");
-            }
-            else if (initialiser==null)
-            {
-                throw new System.NotImplementedException($"TODO elementType type");
-            }
-            else
-            {
-                throw new System.NotImplementedException($"TODO structure value on allocation");
-            }
-        }
     
         public string Dump()
         {
