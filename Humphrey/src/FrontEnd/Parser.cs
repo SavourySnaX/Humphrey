@@ -55,6 +55,17 @@ namespace Humphrey.FrontEnd
             }
             return (false, "");
         }
+        (bool success, string item) Peek(Tokens kind)
+        {
+            if (lookahead.HasValue && lookahead.Value == kind)
+            {
+                var v = lookahead.ToStringValue();
+                if (kind == Tokens.Number)
+                    v = HumphreyTokeniser.ConvertNumber(v);
+                return (true, v);
+            }
+            return (false, "");
+        }
 
         // * (0 or more)
         protected IAst[] ItemList(AstItemDelegate kind)
@@ -173,6 +184,7 @@ namespace Humphrey.FrontEnd
         public bool CloseParenthesis() { return Item(Tokens.S_CloseParanthesis).success; }
         public bool OpenCurlyBrace() { return Item(Tokens.S_OpenCurlyBrace).success; }
         public bool CloseCurlyBrace() { return Item(Tokens.S_CloseCurlyBrace).success; }
+        public bool PeekCloseCurlyBrace() { return Peek(Tokens.S_CloseCurlyBrace).success; }
         public bool OpenSquareBracket() { return Item(Tokens.S_OpenSquareBracket).success; }
         public bool CloseSquareBracket() { return Item(Tokens.S_CloseSquareBracket).success; }
         public bool UnderscoreOperator() { return Item(Tokens.S_Underscore).success; }
@@ -546,14 +558,14 @@ namespace Humphrey.FrontEnd
             if (ReturnKeyword() == null)
                 return null;
 
-            if (SemiColonSyntax())
+            if (PeekCloseCurlyBrace())      // Must be last statement in a code block
                 return new AstReturnStatement(new IExpression[] { });
 
             var expressionList = ExpressionList();
             if (expressionList==null)
                 return null;
 
-            if (!SemiColonSyntax())
+            if (!PeekCloseCurlyBrace())     // Must be last statement in a code block
                 return null;
 
             return new AstReturnStatement(expressionList);

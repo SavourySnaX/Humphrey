@@ -225,12 +225,11 @@ namespace Humphrey.FrontEnd.tests
 
         [Theory]
         [InlineData("{}","{ }")]
-        [InlineData("{return;}","{ return}")]
+        [InlineData("{return}","{ return}")]
         [InlineData("{{{}}",null)]
-        [InlineData("return;", "return")]
         [InlineData("return", null)]
-        [InlineData("return 5+2;", "return + 5 2")]
-        [InlineData("return 5+2,6-3;", "return + 5 2 , - 6 3")]
+        [InlineData("{return 5+2}", "{ return + 5 2}")]
+        [InlineData("{return 5+2,6-3}", "{ return + 5 2 , - 6 3}")]
         public void CheckStatement(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();
@@ -242,7 +241,7 @@ namespace Humphrey.FrontEnd.tests
         [Theory]
         [InlineData("{}","{ }")]
         [InlineData("{{{}}}","{ { { }}}")]
-        [InlineData("{{{}return;}}","{ { { }return}}")]
+        [InlineData("{{{}return}}","{ { { }return}}")]
         [InlineData("{{{}}",null)]
         public void CheckCodeBlock(string input, string expected)
         {
