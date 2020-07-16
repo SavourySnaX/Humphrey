@@ -15,7 +15,7 @@ namespace Humphrey.FrontEnd
         }
 
         public int NumElements => identifiers.Length;
-    
+        public AstIdentifier[] Identifiers => identifiers;
         public string Dump()
         {
             var s = new StringBuilder();

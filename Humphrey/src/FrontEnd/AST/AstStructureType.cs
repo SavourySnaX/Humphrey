@@ -22,7 +22,9 @@ namespace Humphrey.FrontEnd
             {
                 for (int a = 0; a < element.NumElements; a++)
                 {
-                    elementTypes[idx++] = element.Type.CreateOrFetchType(unit);
+                    var type = element.Type.CreateOrFetchType(unit);
+                    type.Identifier = element.Identifiers[a].Dump();
+                    elementTypes[idx++] = type;
                 }
             }
 
