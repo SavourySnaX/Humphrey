@@ -40,12 +40,13 @@ namespace Humphrey.FrontEnd
 
             foreach (var ident in identifiers)
             {
-                if (ct.IsFunctionType && initialiser == null)
+                var functionType = ct is CompilationFunctionType;
+                if (functionType && initialiser == null)
                 {
                     // should be scoped
                     unit.CreateNamedType(ident.Dump(), ct);
                 }
-                else if (ct.IsFunctionType && initialiser != null)
+                else if (functionType && initialiser != null)
                 {
                     // should be scoped
                     var newFunction = unit.CreateFunction(ct as CompilationFunctionType, ident.Dump());

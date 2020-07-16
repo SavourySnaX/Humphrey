@@ -34,7 +34,8 @@ namespace Humphrey.Backend
 
         public CompilationType FetchArrayType(CompilationConstantValue numElements, CompilationType elementType)
         {
-            return elementType.AsArray((uint)numElements.Constant);
+            uint num = (uint)numElements.Constant;
+            return new CompilationArrayType(CreateArrayType(elementType.BackendType,num), elementType, num);
         }
 
         public CompilationType FetchIntegerType(CompilationConstantValue numBits)
@@ -45,12 +46,13 @@ namespace Humphrey.Backend
                 numBits.Negate();
                 isSigned = true;
             }
-            return new CompilationType(contextRef.GetIntType((uint)numBits.Constant), isSigned, false);
+            var num = (uint)numBits.Constant;
+            return new CompilationIntegerType(contextRef.GetIntType(num), isSigned);
         }
 
         public CompilationType FetchIntegerType(uint numBits, bool isSigned = false)
         {
-            return new CompilationType(contextRef.GetIntType(numBits), isSigned, false);
+            return new CompilationIntegerType(contextRef.GetIntType(numBits), isSigned);
         }
 
         public CompilationType FetchNamedType(string identifier)
@@ -60,6 +62,7 @@ namespace Humphrey.Backend
 
         public void CreateNamedType(string identifier, CompilationType type)
         {
+            type.Identifier = identifier;
             symbolTable.AddType(identifier, type);
         }
 
@@ -70,7 +73,7 @@ namespace Humphrey.Backend
             foreach(var element in elements)
                 types[idx++] = element.BackendType;
 
-            return new CompilationType(contextRef.GetStructType(types, true), false, false);
+            return new CompilationStructureType(contextRef.GetStructType(types, true), elements);
         }
 
         public CompilationFunctionType CreateFunctionType(CompilationParam[] inputs, CompilationParam[] outputs)
@@ -86,7 +89,7 @@ namespace Humphrey.Backend
             foreach(var o in outputs)
             {
                 //outputs need to be considered to be by ref
-                allBackendParams[paramIdx] = o.Type.AsPointer().BackendType;
+                allBackendParams[paramIdx] = CreatePointerType(o.Type.BackendType);
                 allParams[paramIdx++] = o;
             }
             return new CompilationFunctionType(Extensions.Helpers.CreateFunctionType(contextRef.VoidType, allBackendParams, false), allParams, (uint)inputs.Length);
@@ -121,7 +124,7 @@ namespace Humphrey.Backend
 
         public CompilationValue CreateConstant(CompilationConstantValue constantValue, uint numBits, bool isSigned)
         {
-            var constType = new CompilationType(contextRef.GetIntType(numBits), isSigned, false);
+            var constType = new CompilationIntegerType(contextRef.GetIntType(numBits), isSigned);
 
             return new CompilationValue(constType.BackendType.CreateConstantValue(constantValue.Constant.ToString(), 10), constType);
         }

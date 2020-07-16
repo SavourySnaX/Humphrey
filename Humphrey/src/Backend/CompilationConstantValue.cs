@@ -67,15 +67,15 @@ namespace Humphrey.Backend
             if (destType==null)
                 return unit.CreateConstant(this, numBits, isSigned);
 
-            if (destType.IsIntegerType)
+            if (destType is CompilationIntegerType destIntType)
             {
-                if (numBits < destType.IntegerWidth)
+                if (numBits < destIntType.IntegerWidth)
                 {
-                    return unit.CreateConstant(this, destType.IntegerWidth, destType.IsSigned);
+                    return unit.CreateConstant(this, destIntType.IntegerWidth, destIntType.IsSigned);
                 }
-                else if (numBits == destType.IntegerWidth)
+                else if (numBits == destIntType.IntegerWidth)
                 {
-                    if (isSigned == destType.IsSigned)
+                    if (isSigned == destIntType.IsSigned)
                     {
                         return unit.CreateConstant(this, numBits, isSigned);
                     }
@@ -83,10 +83,10 @@ namespace Humphrey.Backend
                 }
                 throw new System.NotImplementedException($"TODO - Integer Bit width does not match");
             }
-            else if (destType.IsPointer)
+            else if (destType is CompilationPointerType destPtrType)
             {
                 var type = resultType.CreateOrFetchType(unit);
-                if (type != destType)
+                if (type.Same(destType))
                 {
                     // Create the constant
                     var constant = unit.CreateConstant(this, numBits, isSigned);

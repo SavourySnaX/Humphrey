@@ -1,44 +1,21 @@
-using static Extensions.Helpers;
-
 using LLVMSharp.Interop;
 
 namespace Humphrey.Backend
 {
-    public class CompilationType
+    public abstract class CompilationType
     {
-        bool signedType;
-        bool functionType;
-        private LLVMTypeRef typeRef;
-        public CompilationType(LLVMTypeRef type, bool isSigned, bool isFunction)
+        string identifier;
+        LLVMTypeRef typeRef;
+
+        public CompilationType(LLVMTypeRef type)
         {
             typeRef = type;
-            signedType = isSigned;
-            functionType = isFunction;
+            identifier = "";
         }
-
-        public CompilationType AsPointer()
-        {
-            return new CompilationType(CreatePointerType(typeRef), false, false);
-        }
-
-        public CompilationType AsArray(uint numElements)
-        {
-            return new CompilationType(CreateArrayType(typeRef, numElements), signedType, functionType);
-        }
-
-        public CompilationType RemovePointer()
-        {
-            return new CompilationType(typeRef.ElementType, false, false);
-        }
-
-        public bool IsIntegerType => typeRef.Kind == LLVMTypeKind.LLVMIntegerTypeKind;
-
-        public uint IntegerWidth => typeRef.IntWidth;
 
         public LLVMTypeRef BackendType => typeRef;
-        public bool IsSigned => signedType;
-        public bool IsFunctionType => functionType;
 
-        public bool IsPointer => typeRef.Kind == LLVMTypeKind.LLVMPointerTypeKind;
+        public abstract bool Same(CompilationType t);
+        public string Identifier { get { return identifier; } set { identifier = value; } }
     }
 }

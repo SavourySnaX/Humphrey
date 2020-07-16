@@ -70,9 +70,12 @@ namespace Humphrey.Backend
 
         public CompilationValue Ext(CompilationValue src, CompilationType toType)
         {
-            if (toType.IsIntegerType && src.Type.IsIntegerType)
+            var srcIntType = src.Type as CompilationIntegerType;
+            var toIntType = toType as CompilationIntegerType;
+
+            if (srcIntType != null && toIntType != null)
             {
-                if (src.Type.IsSigned)
+                if (srcIntType.IsSigned)
                     return new CompilationValue(builderRef.BuildSExt(src.BackendValue,toType.BackendType), toType);
                 else
                     return new CompilationValue(builderRef.BuildZExt(src.BackendValue,toType.BackendType), toType);

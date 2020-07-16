@@ -29,10 +29,11 @@ namespace Humphrey.FrontEnd
             else
             {
                 var compilationValue = value as CompilationValue;
-                if (!compilationValue.Type.IsPointer)
+                var compilationPointerType = compilationValue.Type as CompilationPointerType;
+                if (compilationPointerType == null)
                     throw new System.Exception($"Cannot derefence a non pointer type");
                 var dereferenced = builder.Load(compilationValue);
-                return new CompilationValue(dereferenced.BackendValue, dereferenced.Type.RemovePointer());
+                return new CompilationValue(dereferenced.BackendValue, compilationPointerType.ElementType);
             }
         }
     }

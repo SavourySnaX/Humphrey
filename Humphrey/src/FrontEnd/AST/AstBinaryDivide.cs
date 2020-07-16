@@ -44,7 +44,10 @@ namespace Humphrey.FrontEnd
 
             var (valueLeft, valueRight) = AstBinaryExpression.FixupBinaryExpressionInputs(unit, builder, vlhs, vrhs);
 
-            if (valueLeft.Type.IsSigned || valueRight.Type.IsSigned)
+            var leftIntType = valueLeft.Type as CompilationIntegerType;
+            var rightIntType = valueRight.Type as CompilationIntegerType;
+
+            if (leftIntType.IsSigned || rightIntType.IsSigned)
                 return builder.SDiv(valueLeft, valueRight);
 
             return builder.UDiv(valueLeft, valueRight);

@@ -1,4 +1,4 @@
-using System.Text;
+using static Extensions.Helpers;
 using Humphrey.Backend;
 namespace Humphrey.FrontEnd
 {
@@ -13,7 +13,7 @@ namespace Humphrey.FrontEnd
         public CompilationType CreateOrFetchType(CompilationUnit unit)
         {
             var ct = elementType.CreateOrFetchType(unit);
-            return ct.AsPointer();
+            return new CompilationPointerType(CreatePointerType(ct.BackendType), ct);
         }
     
         public bool IsFunctionType => false;

@@ -38,11 +38,13 @@ namespace Humphrey.FrontEnd
         public static (CompilationValue lhs, CompilationValue rhs) FixupBinaryExpressionInputs(CompilationUnit unit, CompilationBuilder builder, CompilationValue left, CompilationValue right)
         {
             // Always promote integer type to largest of two sizes if not matching is the current rule..
-            if (left.Type.IsIntegerType == true && right.Type.IsIntegerType == true)
+            var leftIntType = left.Type as CompilationIntegerType;
+            var rightIntType = right.Type as CompilationIntegerType;
+            if (leftIntType != null && rightIntType != null)
             {
-                if (left.Type.IntegerWidth == right.Type.IntegerWidth)
+                if (leftIntType.IntegerWidth == rightIntType.IntegerWidth)
                 {
-                    if (left.Type.IsSigned == right.Type.IsSigned)
+                    if (leftIntType.IsSigned == rightIntType.IsSigned)
                     {
                         return (left, right);
                     }

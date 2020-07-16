@@ -23,22 +23,24 @@ namespace Humphrey.FrontEnd
             var result = expr.ProcessExpression(unit, builder);
             CompilationValue src = Expression.ResolveExpressionToValue(unit, result, destType);
 
-            if (src.Type.BackendType == destType.BackendType)       // Todo fix our type system is incomplete
+            if (src.Type.Same(destType))
                 return src;
 
             // Always promote integer type to largest of two sizes if not matching is the current rule..
-            if (src.Type.IsIntegerType == true && destType.IsIntegerType == true)
+            var srcIntType = src.Type as CompilationIntegerType;
+            var destIntType = destType as CompilationIntegerType;
+            if (srcIntType != null && destIntType != null)
             {
-                if (src.Type.IntegerWidth == destType.IntegerWidth)
+                if (srcIntType.IntegerWidth == destIntType.IntegerWidth)
                 {
-                    if (src.Type.IsSigned == destType.IsSigned)
+                    if (srcIntType.IsSigned == destIntType.IsSigned)
                     {
                         return src;
                     }
 
                     throw new NotImplementedException($"TODO - signed/unsigned mismatch");
                 }
-                else if (src.Type.IntegerWidth < destType.IntegerWidth)
+                else if (srcIntType.IntegerWidth < destIntType.IntegerWidth)
                 {
                     // For integers, if the the size is strictly less, then the assignment is always allowed (we just upcast the value to the new bitwidth)
                     return builder.Ext(src, destType);
