@@ -57,6 +57,26 @@ namespace Humphrey.Backend.tests
         }
         
         [Theory]
+        [InlineData(@"global := 0 Main : () (returnValue : bit) = { return global } ","Main", 0)]
+        [InlineData(@"global := 1 Main : () (returnValue : bit) = { return global } ","Main", 1)]
+        [InlineData(@"global := +0 Main : () (returnValue : bit) = { return global } ","Main", 0)]
+        [InlineData(@"global := +1 Main : () (returnValue : bit) = { return global } ","Main", 1)]
+        [InlineData(@"global := 0+1 Main : () (returnValue : bit) = { return global } ","Main", 1)]
+        [InlineData(@"global := 0+0 Main : () (returnValue : bit) = { return global } ","Main", 0)]
+        [InlineData(@"global := 1-0 Main : () (returnValue : bit) = { return global } ","Main", 1)]
+        [InlineData(@"global := 1*1 Main : () (returnValue : bit) = { return global } ","Main", 1)]
+        [InlineData(@"global := 1/1 Main : () (returnValue : bit) = { return global } ","Main", 1)]
+        [InlineData(@"global := 1%1 Main : () (returnValue : bit) = { return global } ","Main", 0)]
+        [InlineData(@"global1,global2 := 0 Main : () (returnValue : bit) = { return global1+global2 } ","Main", 0)]
+        [InlineData(@"global1,global2 := 1 Main : () (returnValue : bit) = { return global1+global2 } ","Main", 0)]
+        [InlineData(@"global1 := 1 global2 := 0 Main : () (returnValue : bit) = { return global1+global2 } ","Main", 1)]
+        [InlineData(@"global1 := 0 global2 := 1 Main : () (returnValue : bit) = { return global1+global2 } ","Main", 1)]
+        public void CheckGlobalsAutoTypeVoidExpectsBit(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
+        }
+
+        [Theory]
         [InlineData(@" MainType : () (returnValue:[8]bit) Main : MainType = { return 0 } ","Main", 0)]
         [InlineData(@" Main : () (returnValue : [8]bit) = { return 0 } ","Main", 0)]
         [InlineData(@" Main : () (returnValue : [8]bit) = { return 1 } ","Main", 1)]

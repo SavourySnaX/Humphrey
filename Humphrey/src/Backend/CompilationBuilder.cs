@@ -14,9 +14,9 @@ namespace Humphrey.Backend
             function = func;
         }
 
-        public CompilationValue Load(CompilationValue value)
+        public CompilationValue Load(CompilationValue loadFrom)
         {
-            return new CompilationValue(builderRef.BuildLoad(value.BackendValue), value.Type);
+            return new CompilationValue(builderRef.BuildLoad(loadFrom.BackendValue), loadFrom.Type);
         }
         public CompilationValue Store(CompilationValue value, CompilationValue storeTo)
         {

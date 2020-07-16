@@ -188,16 +188,13 @@ namespace Humphrey.Backend
         public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationType type, string identifier, ICompilationValue initialiser)
         {
             if (symbolTable.FetchLocalValue(identifier)!=null)
-                throw new Exception($"global value {identifier} already exists!");
+                throw new Exception($"local value {identifier} already exists!");
 
             var local = builder.Alloca(type);
 
             if (initialiser != null)
             {
-                CompilationValue value = initialiser as CompilationValue;
-                if (initialiser is CompilationConstantValue ccv)
-                    value = ccv.GetCompilationValue(unit, type);
-
+                var value = Expression.ResolveExpressionToValue(unit, initialiser, type);
                 builder.Store(value, local);
             }
 

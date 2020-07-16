@@ -31,7 +31,8 @@ namespace Humphrey.FrontEnd
                 var compilationValue = value as CompilationValue;
                 if (!compilationValue.Type.IsPointer)
                     throw new System.Exception($"Cannot derefence a non pointer type");
-                return builder.Load(compilationValue);
+                var dereferenced = builder.Load(compilationValue);
+                return new CompilationValue(dereferenced.BackendValue, dereferenced.Type.RemovePointer());
             }
         }
     }

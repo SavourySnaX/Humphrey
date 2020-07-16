@@ -58,11 +58,34 @@ namespace Humphrey.Experiments
 
             bootboot    : *BootBoot = 0xFFFFFFFFFFE00000 as *BootBoot
             environment : *[8]bit   = 0xFFFFFFFFFFE01000 as *[8]bit
-            framBuffer  : *[8]bit   = 0xFFFFFFFFFFC00000 as *[8]bit
+            framBuffer  : *[32]bit   = 0xFFFFFFFFFFC00000 as *[32]bit
 
             Main : ()(result:BootBoot) =
             {
-                localBoot : BootBoot = *bootboot
+                localBoot := *bootboot
+                x,y : [32]bit = 0
+
+#!
+                s := localBoot.fbScanline
+                w := localBoot.fbWidth
+                h := localBoot.fbHeight
+
+                for y in 0..h
+                {
+                    frameBuffer[s*y+w/2] = 0x00FFFFFF
+                }
+                for x in 0..w
+                {
+                    frameBuffer[s*(h/2)+x] = 0x00FFFFFF
+                }
+
+                for y,x in 20..40,20..40
+                {
+                    frameBuffer[s*y+(x+ 0)] = 0x00FF0000
+                    frameBuffer[s*y+(x+30)] = 0x0000FF00
+                    frameBuffer[s*y+(x+50)] = 0x000000FF
+                }
+!#
                 return localBoot
             }
         

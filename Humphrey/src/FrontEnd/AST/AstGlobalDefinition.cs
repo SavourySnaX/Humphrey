@@ -17,9 +17,29 @@ namespace Humphrey.FrontEnd
 
         public bool Compile(CompilationUnit unit)
         {
+            // Resolve common things
+            var codeBlock = initialiser as AstCodeBlock;
+            var expr = initialiser as IExpression;
+            var exprValue = expr?.ProcessConstantExpression(unit);
+            CompilationType ct = null;
+
+            if (type == null)
+            {
+                // Need to compute type from initialiser
+                if (expr != null)
+                {
+                    ct = Expression.ResolveExpressionToValue(unit, exprValue, null).Type;
+                }
+                else
+                {
+                    throw new System.Exception($"Type is not computable for functions!");
+                }
+            }
+            else 
+                ct = type.CreateOrFetchType(unit);
+
             foreach (var ident in identifiers)
             {
-                var ct = type.CreateOrFetchType(unit);
                 if (ct.IsFunctionType && initialiser==null)
                 {
                     unit.CreateNamedType(ident.Dump(), ct);
@@ -27,8 +47,6 @@ namespace Humphrey.FrontEnd
                 else if (ct.IsFunctionType && initialiser != null)
                 {
                     var newFunction = unit.CreateFunction(ct as CompilationFunctionType, ident.Dump());
-
-                    var codeBlock = initialiser as AstCodeBlock;
 
                     codeBlock.CreateCodeBlock(unit, newFunction);
                 }
@@ -39,10 +57,6 @@ namespace Humphrey.FrontEnd
                 else
                 {
                     // todo this needs to be a constant/computable value for LLVM so we ideally need a semantic pass soon
-                    var expr = initialiser as IExpression;
-
-                    var exprValue = expr.ProcessConstantExpression(unit);
-
                     var newGlobal = unit.CreateGlobalVariable(ct, ident.Dump(), exprValue);
                 }
             }

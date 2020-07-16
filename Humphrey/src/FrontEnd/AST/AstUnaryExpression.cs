@@ -21,13 +21,10 @@ namespace Humphrey.FrontEnd
         public static CompilationValue EnsureTypeOk(CompilationUnit unit, CompilationBuilder builder, IExpression expr, CompilationType destType)
         {
             var result = expr.ProcessExpression(unit, builder);
-            CompilationValue src = default;
-            if (result is CompilationConstantValue constantResult)
-            {
-                src = constantResult.GetCompilationValue(unit, destType);
-            }
-            else
-                src = result as CompilationValue;
+            CompilationValue src = Expression.ResolveExpressionToValue(unit, result, destType);
+
+            if (src.Type.BackendType == destType.BackendType)       // Todo fix our type system is incomplete
+                return src;
 
             // Always promote integer type to largest of two sizes if not matching is the current rule..
             if (src.Type.IsIntegerType == true && destType.IsIntegerType == true)
@@ -49,9 +46,6 @@ namespace Humphrey.FrontEnd
 
                 throw new NotImplementedException($"TODO - Integer Bit width does not match");
             }
-            if (src.Type == destType)
-                return src;
-
             throw new NotImplementedException($"TODO - Non integer types in promotion?");
         }
     }

@@ -17,10 +17,29 @@ namespace Humphrey.FrontEnd
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
+            // Resolve common things
+            var codeBlock = initialiser as AstCodeBlock;
+            var expr = initialiser as IExpression;
+            var exprValue = expr?.ProcessExpression(unit, builder);
+            CompilationType ct = null;
+
+            if (type == null)
+            {
+                // Need to compute type from initialiser
+                if (expr != null)
+                {
+                    ct = Expression.ResolveExpressionToValue(unit, exprValue, null).Type;
+                }
+                else
+                {
+                    throw new System.Exception($"Type is not computable for functions!");
+                }
+            }
+            else 
+                ct = type.CreateOrFetchType(unit);
+
             foreach (var ident in identifiers)
             {
-                var ct = type.CreateOrFetchType(unit);
-
                 if (ct.IsFunctionType && initialiser == null)
                 {
                     // should be scoped
@@ -30,9 +49,6 @@ namespace Humphrey.FrontEnd
                 {
                     // should be scoped
                     var newFunction = unit.CreateFunction(ct as CompilationFunctionType, ident.Dump());
-
-                    var codeBlock = initialiser as AstCodeBlock;
-
                     codeBlock.CreateCodeBlock(unit, newFunction);
                 }
                 else if (initialiser == null)
@@ -42,11 +58,7 @@ namespace Humphrey.FrontEnd
                 }
                 else
                 {
-                    var expr = initialiser as IExpression;
-
-                    var exprValue = expr.ProcessExpression(unit, builder);
-
-                    var newGlobal = unit.CreateLocalVariable(unit, builder, ct, ident.Dump(), exprValue);
+                    var newLocal = unit.CreateLocalVariable(unit, builder, ct, ident.Dump(), exprValue);
                 }
             }
             return false;

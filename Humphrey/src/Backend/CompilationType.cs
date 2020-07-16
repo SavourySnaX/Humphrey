@@ -26,6 +26,11 @@ namespace Humphrey.Backend
             return new CompilationType(CreateArrayType(typeRef, numElements), signedType, functionType);
         }
 
+        public CompilationType RemovePointer()
+        {
+            return new CompilationType(typeRef.ElementType, false, false);
+        }
+
         public bool IsIntegerType => typeRef.Kind == LLVMTypeKind.LLVMIntegerTypeKind;
 
         public uint IntegerWidth => typeRef.IntWidth;

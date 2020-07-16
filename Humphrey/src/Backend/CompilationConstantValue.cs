@@ -64,6 +64,9 @@ namespace Humphrey.Backend
 
             var (numBits, isSigned) = ComputeKind();
 
+            if (destType==null)
+                return unit.CreateConstant(this, numBits, isSigned);
+
             if (destType.IsIntegerType)
             {
                 if (numBits < destType.IntegerWidth)
