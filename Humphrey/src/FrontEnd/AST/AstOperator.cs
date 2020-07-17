@@ -34,22 +34,26 @@ namespace Humphrey.FrontEnd
                         return 100;
                     case "as":
                         return 900;
+                    case ".":
+                        return 1000;
                     default:
                         throw new ParseException($"Unimplemented Precadence for operator : {temp}");
                 }
             }
         }
 
-        public bool RhsType
+        public IOperator.OperatorKind RhsKind
         {
             get
             {
                 switch (temp)
                 {
                     case "as":
-                        return true;
+                        return IOperator.OperatorKind.ExpressionType;
+                    case ".":
+                        return IOperator.OperatorKind.ExpressionIdentifier;
                     default:
-                        return false;
+                        return IOperator.OperatorKind.ExpressionExpression;
                 }
             }
         }

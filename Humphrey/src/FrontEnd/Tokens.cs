@@ -16,14 +16,6 @@ namespace Humphrey.FrontEnd
 
         public string Category { get; set; }
         public string Example { get; set; }
-        public int Precedance { get; set; }
-
-        public EAssociativity Associativity { get; set; }
-        public enum EAssociativity
-        {
-            Left,
-            Right
-        }
     }
 
 
@@ -37,34 +29,37 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Number", Example = "1234")]
         Number, 
 
-        [Token(Category = "Keyword")]
+        [Token(Category = "Keyword", Example = "bit")]
         KW_Bit,
 
-        [Token(Category = "Keyword")]
+        [Token(Category = "Keyword", Example = "return")]
         KW_Return,
 
-        [Token(Category = "Operator", Example = "+", Precedance = 500, Associativity = TokenAttribute.EAssociativity.Left)]
+        [Token(Category = "Operator", Example = "+")]
         O_Plus,
 
-        [Token(Category = "Operator", Example = "-", Precedance = 500, Associativity = TokenAttribute.EAssociativity.Left)]
+        [Token(Category = "Operator", Example = "-")]
         O_Subtract,
         
-        [Token(Category = "Operator", Example = "*", Precedance = 300, Associativity = TokenAttribute.EAssociativity.Left)]
+        [Token(Category = "Operator", Example = "*")]
         O_Multiply,
 
-        [Token(Category = "Operator", Example = "/", Precedance = 300, Associativity = TokenAttribute.EAssociativity.Left)]
+        [Token(Category = "Operator", Example = "/")]
         O_Divide,
         
-        [Token(Category = "Operator", Example = "%", Precedance = 300, Associativity = TokenAttribute.EAssociativity.Left)]
+        [Token(Category = "Operator", Example = "%")]
         O_Modulus,
 
-        [Token(Category = "Operator", Example = "=", Precedance = 150, Associativity = TokenAttribute.EAssociativity.Left)]
+        [Token(Category = "Operator", Example = "=")]
         O_Equals,
 
-        [Token(Category = "Operator", Example = ":", Precedance = 100, Associativity = TokenAttribute.EAssociativity.Left)]
+        [Token(Category = "Operator", Example = ".")]
+        O_Dot,
+
+        [Token(Category = "Operator", Example = ":")]
         O_Colon,
 
-        [Token(Category = "Operator", Example = "as", Precedance = 900, Associativity = TokenAttribute.EAssociativity.Left)]
+        [Token(Category = "Operator", Example = "as")]
         O_As,
 
         [Token(Category = "Syntax", Example =";")]
@@ -176,6 +171,7 @@ namespace Humphrey.FrontEnd
             ['/'] = Tokens.O_Divide,
             ['%'] = Tokens.O_Modulus,
             [':'] = Tokens.O_Colon,
+            ['.'] = Tokens.O_Dot,
             ['='] = Tokens.O_Equals,
             [';'] = Tokens.S_SemiColon,
             [','] = Tokens.S_Comma,

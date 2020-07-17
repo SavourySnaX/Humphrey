@@ -73,6 +73,9 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("b as c","as b c")]
         [InlineData("b*d as c","as * b d c")]
         [InlineData("01₂+10₂+100₂ as [3]bit","as + + 1 2 4 [3] bit")]
+        [InlineData("b.c",". b c")]
+        [InlineData("(b).c",". b c")]
+        [InlineData("(b).5",null)]
         public void CheckExpression(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();

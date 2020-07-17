@@ -173,8 +173,10 @@ namespace Humphrey.FrontEnd
         public IAst DivideOperator() { return AstItem(Tokens.O_Divide, (e) => new AstOperator(e)); }
         // modulus_operator : %
         public IAst ModulusOperator() { return AstItem(Tokens.O_Modulus, (e) => new AstOperator(e)); }
-        // as_opetator : %
+        // as_operator : %
         public IAst AsOperator() { return AstItem(Tokens.O_As, (e) => new AstOperator(e)); }
+        // reference_operator : .
+        public IAst ReferenceOperator() { return AstItem(Tokens.O_Dot, (e) => new AstOperator(e)); }
         // equals_operator : Equals
         public IAst EqualsOperator() { return AstItem(Tokens.O_Equals, (e) => new AstOperator(e)); }
         public IAst ColonOperator() { return AstItem(Tokens.O_Colon, (e) => new AstOperator(e)); }
@@ -191,7 +193,7 @@ namespace Humphrey.FrontEnd
         public bool PointerOperator() { return Item(Tokens.O_Multiply).success; }
 
         public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator };
-        public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator, AsOperator };
+        public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator, AsOperator, ReferenceOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
         public AstItemDelegate[] Types => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
@@ -245,12 +247,18 @@ namespace Humphrey.FrontEnd
             {
                 var i2 = operands.Pop();
                 var i1 = operands.Pop();
-                if (operators.Peek().item.RhsType)
+                switch (operators.Peek().item.RhsKind)
                 {
-                    operands.Push(AstBinaryExpression.FetchBinaryExpressionRhsType(operators.Pop().item, i1 as IExpression, i2 as IType));
+                    case IOperator.OperatorKind.ExpressionExpression:
+                        operands.Push(AstBinaryExpression.FetchBinaryExpression(operators.Pop().item, i1 as IExpression, i2 as IExpression));
+                        break;
+                    case IOperator.OperatorKind.ExpressionType:
+                        operands.Push(AstBinaryExpression.FetchBinaryExpressionRhsType(operators.Pop().item, i1 as IExpression, i2 as IType));
+                        break;
+                    case IOperator.OperatorKind.ExpressionIdentifier:
+                        operands.Push(AstBinaryExpression.FetchBinaryExpressionRhsIdentifer(operators.Pop().item, i1 as IExpression, i2 as AstIdentifier));
+                        break;
                 }
-                else
-                    operands.Push(AstBinaryExpression.FetchBinaryExpression(operators.Pop().item, i1 as IExpression, i2 as IExpression));
             }
             else
             {
@@ -289,9 +297,30 @@ namespace Humphrey.FrontEnd
             return expr;
         }
 
+        // expression_type : Type
+        public IType ExpressionType()
+        {
+            var type = Type();
+            operands.Push(type);
+            while (operators.Peek().item != null)
+                PopOperator();
+            return type;
+        }
+        
+        // expression_identifier : identifier
+        public AstIdentifier ExpressionIdentifier()
+        {
+            var ident = Identifier();
+            operands.Push(ident);
+            while (operators.Peek().item != null)
+                PopOperator();
+            return ident;
+        }
+
         // binary_expression : Terminal
         //                   | Terminal operator(+-/*%) expression
-        //                   | Terminal operator(as) type
+        //                   | Terminal operator(as) expression_type
+        //                   | Terminal operator(.) expression_identifier
         public IExpression BinaryExpression()
         {
             var terminal = OneOf(Terminal) as IExpression;
@@ -302,22 +331,23 @@ namespace Humphrey.FrontEnd
                 if (op != null)
                 {
                     PushOperator((true, op));
-                    if (op.RhsType)
+                    switch (op.RhsKind)
                     {
-                        var type = Type();
-                        if (type == null)
-                            return null;
-                        operands.Push(type);
-                        while (operators.Peek().item != null)
-                            PopOperator();
-                        if (type!=null)
-                            return AstBinaryExpression.FetchBinaryExpressionRhsType(op, terminal, type);
-                    }
-                    else
-                    {
-                        var expr = Expression();
-                        if (expr != null)
-                            return AstBinaryExpression.FetchBinaryExpression(op, terminal, expr);
+                        case IOperator.OperatorKind.ExpressionExpression:
+                            var expr = Expression();
+                            if (expr!=null)
+                                return AstBinaryExpression.FetchBinaryExpression(op, terminal, expr);
+                            break;
+                        case IOperator.OperatorKind.ExpressionType:
+                            var type = ExpressionType();
+                            if (type!=null)
+                                return AstBinaryExpression.FetchBinaryExpressionRhsType(op, terminal, type);
+                            break;
+                        case IOperator.OperatorKind.ExpressionIdentifier:
+                            var ident = ExpressionIdentifier();
+                            if (ident!=null)
+                                return AstBinaryExpression.FetchBinaryExpressionRhsIdentifer(op, terminal, ident);
+                            break;
                     }
                     return null;
                 }

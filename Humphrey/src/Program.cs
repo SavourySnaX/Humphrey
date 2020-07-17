@@ -65,10 +65,10 @@ namespace Humphrey.Experiments
                 localBoot := *bootboot
                 x,y : [32]bit = 0
 
-#!
                 s := localBoot.fbScanline
                 w := localBoot.fbWidth
                 h := localBoot.fbHeight
+#!
 
                 for y in 0..h
                 {

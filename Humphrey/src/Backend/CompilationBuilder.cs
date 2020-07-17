@@ -68,6 +68,11 @@ namespace Humphrey.Backend
             return new CompilationValue(builderRef.BuildAlloca(type.BackendType), type);
         }
 
+        public CompilationValue ExtractValue(CompilationValue src, CompilationType indexType, uint index)
+        {
+            return new CompilationValue(builderRef.BuildExtractValue(src.BackendValue, index), indexType);
+        }
+
         public CompilationValue Ext(CompilationValue src, CompilationType toType)
         {
             var srcIntType = src.Type as CompilationIntegerType;

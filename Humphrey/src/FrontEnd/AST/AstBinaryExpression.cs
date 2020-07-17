@@ -5,6 +5,17 @@ namespace Humphrey.FrontEnd
 {
     public static class AstBinaryExpression
     {
+        public static IExpression FetchBinaryExpressionRhsIdentifer(IOperator oper, IExpression left, AstIdentifier right)
+        {
+            switch (oper.Dump())
+            {
+                case ".":
+                    return new AstBinaryReference(left,right);
+                default:
+                    throw new NotImplementedException($"Unimplemented binary operator rhs identifer : {oper.Dump()}");
+            }
+        }
+
         public static IExpression FetchBinaryExpressionRhsType(IOperator oper, IExpression left, IType right)
         {
             switch (oper.Dump())
@@ -14,8 +25,8 @@ namespace Humphrey.FrontEnd
                 default:
                     throw new NotImplementedException($"Unimplemented binary operator rhs type : {oper.Dump()}");
             }
-            
         }
+
         public static IExpression FetchBinaryExpression(IOperator oper, IExpression left, IExpression right)
         {
             switch (oper.Dump())

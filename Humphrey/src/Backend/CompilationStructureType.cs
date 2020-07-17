@@ -25,5 +25,19 @@ namespace Humphrey.Backend
             return Identifier == check.Identifier;
         }
 
+        public CompilationValue LoadElement(CompilationUnit unit, CompilationBuilder builder, CompilationValue src, string identifier)
+        {
+            // Find identifier in elements
+            uint idx=0;
+            foreach (var i in elementTypes)
+            {
+                if (i.Identifier==identifier)
+                    break;
+                idx++;
+            }
+
+            return builder.ExtractValue(src,elementTypes[idx], idx);
+        }
+
     }
 }
