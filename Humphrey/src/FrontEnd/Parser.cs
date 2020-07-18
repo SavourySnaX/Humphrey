@@ -16,11 +16,17 @@ namespace Humphrey.FrontEnd
     public class HumphreyParser
     {
         IEnumerator<Result<Tokens>> tokens;
+        Result<Tokens> lookahead;
+
+        Queue<Result<Tokens>> searchResetQueue;
+        Queue<Result<Tokens>> searchResetBuffer;
 
         public HumphreyParser(IEnumerable<Result<Tokens>> toParse)
         {
-            operators = new Stack<(bool binary, IOperator item)>();
-            operands = new Stack<IAst>();
+            operators = new Stack<(bool binary, IOperator item)>(32);
+            searchResetQueue = new Queue<Result<Tokens>>(32);
+            searchResetBuffer = new Queue<Result<Tokens>>(32);
+            operands = new Stack<IAst>(32);
             tokens = toParse.GetEnumerator();
             NextToken();
         }
@@ -34,14 +40,33 @@ namespace Humphrey.FrontEnd
         {
             do
             {
-                if (tokens.MoveNext())
-                    lookahead = tokens.Current;
+                if (searchResetQueue.Count == 0)
+                {
+                    if (tokens.MoveNext())
+                        lookahead = tokens.Current;
+                    else
+                        lookahead = new Result<Tokens>();
+                }
                 else
-                    lookahead = new Result<Tokens>();
+                {
+                    lookahead = searchResetQueue.Dequeue();
+                }
             } while (lookahead.HasValue && IsSkippableToken(lookahead.Value));
         }
 
-        Result<Tokens> lookahead;
+        void SaveNextToken()
+        {
+            searchResetBuffer.Enqueue(lookahead);
+            NextToken();
+        }
+
+        void RestoreTokens()
+        {
+            searchResetBuffer.Enqueue(lookahead);
+            searchResetQueue = searchResetBuffer;
+            searchResetBuffer = new Queue<Result<Tokens>>(32);
+            NextToken();
+        }
 
         (bool success, string item) Item(Tokens kind)
         {
@@ -55,6 +80,7 @@ namespace Humphrey.FrontEnd
             }
             return (false, "");
         }
+
         (bool success, string item) Peek(Tokens kind)
         {
             if (lookahead.HasValue && lookahead.Value == kind)
@@ -152,6 +178,8 @@ namespace Humphrey.FrontEnd
 
         // identifier : Identifier
         public AstIdentifier Identifier() { return AstItem(Tokens.Identifier, (e) => new AstIdentifier(e)) as AstIdentifier; }
+        // identifier : Identifier
+        public bool PeekIdentifier() { return Peek(Tokens.Identifier).success; }
         // loadable_identifier : Identifier
         public AstLoadableIdentifier LoadableIdentifier() { return AstItem(Tokens.Identifier, (e) => new AstLoadableIdentifier(e)) as AstLoadableIdentifier; }
 
@@ -186,7 +214,9 @@ namespace Humphrey.FrontEnd
         // equals_operator : Equals
         public IAst EqualsOperator() { return AstItem(Tokens.O_Equals, (e) => new AstOperator(e)); }
         public IAst ColonOperator() { return AstItem(Tokens.O_Colon, (e) => new AstOperator(e)); }
+        public bool PeekColonOperator() { return Peek(Tokens.O_Colon).success; }
         public bool CommaSyntax() { return Item(Tokens.S_Comma).success; }
+        public bool PeekCommaSyntax() { return Peek(Tokens.S_Comma).success; }
         public bool SemiColonSyntax() { return Item(Tokens.S_SemiColon).success; }
         public bool OpenParanthesis() { return Item(Tokens.S_OpenParanthesis).success; }
         public bool PeekOpenParanthesis() { return Peek(Tokens.S_OpenParanthesis).success; }
@@ -206,7 +236,7 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] Types => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
-        public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement, LocalScopeDefinition };
+        public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement, CouldBeLocalScopeDefinitionOrAssignment };
 
         public AstItemDelegate[] StructDefinitions => new AstItemDelegate[] { StructElementDefinition };
         public AstItemDelegate[] LocalDefinition => new AstItemDelegate[] { LocalScopeDefinition };
@@ -369,6 +399,32 @@ namespace Humphrey.FrontEnd
             return exprList;
         }
 
+        // Used to distinguish between localscope definition or an assignment without requiring significant lookaheads
+        public IStatement CouldBeLocalScopeDefinitionOrAssignment()
+        {
+            if (PeekCloseCurlyBrace())
+                return null;
+                
+            if (!PeekIdentifier())
+            {
+                //Must be an assignment
+                return Assignment();
+            }
+            SaveNextToken();
+
+            var isScopeDef = PeekColonOperator() || PeekCommaSyntax();
+                
+            RestoreTokens();
+
+            if (isScopeDef)
+            {
+                return LocalScopeDefinition();
+            }
+
+            return Assignment();
+        }
+
+
         // expression_function_call_arguments :  function_call_arguments
         public IExpression ExpressionFunctionCallArguments()
         {
@@ -422,6 +478,20 @@ namespace Humphrey.FrontEnd
                 return BinaryOperatorProcess(terminal, op);
             }
             return terminal;
+        }
+
+        public AstAssignmentStatement Assignment()
+        {
+            var exprList = ExpressionList();
+            if (exprList == null)
+                return null;
+            if (EqualsOperator()==null)
+                return null;
+            var assignable = Assignable();
+            if (assignable == null)
+                return null;
+
+            return new AstAssignmentStatement(exprList, assignable);
         }
 
         public IExpression BinaryOperatorProcess(IExpression terminal, IOperator op)

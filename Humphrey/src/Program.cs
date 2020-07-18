@@ -69,8 +69,11 @@ namespace Humphrey.Experiments
                 w := localBoot.fbWidth
                 h := localBoot.fbHeight
 
-                pixel := frameBuffer[s*(h/2)+w/2]
+                pixel :[32]bit= s*w*h
+
+
 #!
+                pixel = frameBuffer[s*(h/2)+w/2]
 
 
                 for y in 0..h

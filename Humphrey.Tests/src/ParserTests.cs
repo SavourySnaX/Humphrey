@@ -102,6 +102,22 @@ namespace Humphrey.FrontEnd.tests
         }
 
         [Theory]
+        [InlineData("a=1","a = 1")]
+        [InlineData("a={}","a = { }")]
+        [InlineData("a[15]=1","a [ 15 ] = 1")]
+        [InlineData("a()=1","a ( ) = 1")]
+        [InlineData("a[15]()=1","a [ 15 ] ( ) = 1")]
+        [InlineData("a,x,y=1","a , x , y = 1")]
+        [InlineData("a,x,y=function()","a , x , y = function ( )")]
+        public void CheckAssignment(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.Assignment(), expected);
+        }
+
+        [Theory]
         [InlineData("bit","bit")]
         [InlineData("*bit","* bit")]
         [InlineData("*[8]bit","* [8] bit")]
