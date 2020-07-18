@@ -20,6 +20,10 @@ namespace Extensions
         {
             return LLVM.ConstIntToPtr(valueRef, typeRef);
         }
+        public static LLVMValueRef CreateConstantValue(this LLVMTypeRef type, UInt64 value)
+        {
+            return CreateConstantValue(type, value.ToString(), 10);
+        }
 
         public static LLVMValueRef CreateConstantValue(this LLVMTypeRef type, string value, int radix)
         {

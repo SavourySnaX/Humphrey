@@ -73,6 +73,14 @@ namespace Humphrey.Backend
             return new CompilationValue(builderRef.BuildExtractValue(src.BackendValue, index), indexType);
         }
 
+        public CompilationValue InBoundsGEP(CompilationValue ptr, LLVMValueRef[] indices)
+        {
+            var ptrType = ptr.Type as CompilationPointerType;
+            if (ptrType==null)
+                throw new System.ArgumentException($"GEP requires a pointer value");
+            return new CompilationValue(builderRef.BuildInBoundsGEP(ptr.BackendValue, indices), ptrType);
+        }
+
         public CompilationValue Ext(CompilationValue src, CompilationType toType)
         {
             var srcIntType = src.Type as CompilationIntegerType;

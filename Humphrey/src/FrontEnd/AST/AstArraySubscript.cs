@@ -43,7 +43,27 @@ namespace Humphrey.FrontEnd
 
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            throw new System.NotImplementedException($"Todo implement expression for subscript...");
+            var rlhs = expr.ProcessExpression(unit, builder);
+            var rrhs = subscriptIdx.ProcessExpression(unit, builder);
+            if (rlhs is CompilationConstantValue clhs && rrhs is CompilationConstantValue crhs)
+                return ProcessConstantExpression(unit);
+
+            var vlhs = rlhs as CompilationValue;
+            var vrhs = rrhs as CompilationValue;
+
+            if (vlhs is null)
+                vlhs = (rlhs as CompilationConstantValue).GetCompilationValue(unit, vrhs.Type);
+            if (vrhs is null)
+                vrhs = (rrhs as CompilationConstantValue).GetCompilationValue(unit, unit.FetchIntegerType(64));
+
+            if (vlhs.Type is CompilationPointerType pointerType)
+            {
+                var gep = builder.InBoundsGEP(vlhs, new LLVMSharp.Interop.LLVMValueRef[] { builder.Ext(vrhs, unit.FetchIntegerType(64)).BackendValue });
+                var dereferenced = builder.Load(gep);
+                return new CompilationValue(dereferenced.BackendValue, pointerType.ElementType);
+            }
+
+            throw new System.NotImplementedException($"Todo implement expression for subscript of array type...");
         }
     }
 }

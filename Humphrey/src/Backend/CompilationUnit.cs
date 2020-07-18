@@ -122,6 +122,12 @@ namespace Humphrey.Backend
             return new CompilationBuilder(builder, function);
         }
 
+        public LLVMValueRef CreateI64Constant(UInt64 value)
+        {
+            var i64Type = contextRef.GetIntType(64);
+            return i64Type.CreateConstantValue(value);
+        }
+
         public CompilationValue CreateConstant(CompilationConstantValue constantValue, uint numBits, bool isSigned)
         {
             var constType = new CompilationIntegerType(contextRef.GetIntType(numBits), isSigned);
