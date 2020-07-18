@@ -2,10 +2,10 @@ using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
-    public class AstIdentifier : IExpression,IType
+    public class AstLoadableIdentifier : IExpression,IType,ILoadValue
     {
         string temp;
-        public AstIdentifier(string value)
+        public AstLoadableIdentifier(string value)
         {
             temp = value;
         }
@@ -28,7 +28,8 @@ namespace Humphrey.FrontEnd
 
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            throw new System.NotImplementedException($"Todo implement expression processing for non loadable identifier");
+            return unit.FetchValue(temp, builder);
         }
     }
 }
+

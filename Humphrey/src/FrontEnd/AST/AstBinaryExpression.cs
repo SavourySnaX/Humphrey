@@ -16,6 +16,28 @@ namespace Humphrey.FrontEnd
             }
         }
 
+        public static IExpression FetchBinaryExpressionRhsExpressionContinuation(IOperator oper, IExpression left, IExpression right)
+        {
+            switch (oper.Dump())
+            {
+                case "[":
+                    return new AstArraySubscript(left,right);
+                default:
+                    throw new NotImplementedException($"Unimplemented binary operator rhs identifer : {oper.Dump()}");
+            }
+        }
+
+        public static IExpression FetchBinaryExpressionRhsExpressionList(IOperator oper, IExpression left, AstExpressionList right)
+        {
+            switch (oper.Dump())
+            {
+                case "(":
+                    return new AstFunctionCall(left,right);
+                default:
+                    throw new NotImplementedException($"Unimplemented binary operator rhs identifer : {oper.Dump()}");
+            }
+        }
+
         public static IExpression FetchBinaryExpressionRhsType(IOperator oper, IExpression left, IType right)
         {
             switch (oper.Dump())

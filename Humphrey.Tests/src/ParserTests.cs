@@ -75,7 +75,24 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("01₂+10₂+100₂ as [3]bit","as + + 1 2 4 [3] bit")]
         [InlineData("b.c",". b c")]
         [InlineData("(b).c",". b c")]
+        [InlineData("(b).c.d",". . b c d")]
+        [InlineData("b.c+a.d","+ . b c . a d")]
+        [InlineData("function()", "function ( )")]
+        [InlineData("function(5,2)", "function ( 5 , 2 )")]
+        [InlineData("function(5+2,2-1)", "function ( + 5 2 , - 2 1 )")]
+        [InlineData("function(another(2),other(2-1))", "function ( another ( 2 ) , other ( - 2 1 ) )")]
+        [InlineData("a(b).c",". a ( b ) c")]
+        [InlineData("array[5]", "array [ 5 ]")]
+        [InlineData("arrays[5][1]", "arrays [ 5 ] [ 1 ]")]
+        [InlineData("array[15+2]", "array [ + 15 2 ]")]
+        [InlineData("array[15+2]+7", "+ array [ + 15 2 ] 7")]
+        [InlineData("array[15+2]+getArray()[1]", "+ array [ + 15 2 ] getArray ( ) [ 1 ]")]
+        [InlineData("array[getIdx()]", "array [ getIdx ( ) ]")]
+        [InlineData("function(array[0], array[1])", "function ( array [ 0 ] , array [ 1 ] )")]
         [InlineData("(b).5",null)]
+        [InlineData("()",null)]
+        [InlineData("[]",null)]
+        [InlineData("(]",null)]
         public void CheckExpression(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();
@@ -247,7 +264,7 @@ namespace Humphrey.FrontEnd.tests
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            CheckAst(input, parser.ExpressionList(), expected);
+            CheckAst(input, parser.ExpressionList()?.Expressions, expected);
         }
 
         [Theory]
@@ -276,6 +293,55 @@ namespace Humphrey.FrontEnd.tests
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
             CheckAst(input, parser.CodeBlock(), expected);
+        }
+        
+        [Theory]
+        [InlineData("()", "")]
+        [InlineData("(5)", "5")]
+        [InlineData("(5,2)", "5 , 2")]
+        [InlineData("(5+3,2-1)", "+ 5 3 , - 2 1")]
+        [InlineData("((5+3),(2-1))", "+ 5 3 , - 2 1")]
+        [InlineData("(a(5+3),b(2-1),0)", "a ( + 5 3 ) , b ( - 2 1 ) , 0")]
+        [InlineData("(a(5+3),b(2-1),c)", "a ( + 5 3 ) , b ( - 2 1 ) , c")]
+        [InlineData("(())", null)]
+        public void CheckFunctionArguments(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, CheckFunctionArgumentsHelper(parser), expected);
+        }
+
+        [Theory]
+        [InlineData("[]", null)]
+        [InlineData("[5]", "5")]
+        [InlineData("[5,2]", null)]
+        [InlineData("[5+3]", "+ 5 3")]
+        [InlineData("[(5+3)]", "+ 5 3")]
+        [InlineData("[getIdx()]", "getIdx ( )")]
+        [InlineData("[()]", null)]
+        public void CheckArraySubscript(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, CheckArraySubscriptHelper(parser), expected);
+        }
+        IAst CheckArraySubscriptHelper(HumphreyParser parser)
+        {
+            if (parser.OpenSquareBracket())
+            {
+                return parser.ArraySubscript();
+            }
+            return null;
+        }
+        IAst CheckFunctionArgumentsHelper(HumphreyParser parser)
+        {
+            if (parser.OpenParanthesis())
+            {
+                return parser.FunctionCallArguments();
+            }
+            return null;
         }
 
         void CheckAst(string input, IAst result, string expected)

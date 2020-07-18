@@ -7,6 +7,8 @@ namespace Humphrey.FrontEnd
             ExpressionExpression,
             ExpressionType,
             ExpressionIdentifier,
+            ExpressionExpressionList,
+            ExpressionExpressionContinuation,
         }
 
         int Precedance { get; }

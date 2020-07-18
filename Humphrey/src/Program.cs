@@ -58,9 +58,9 @@ namespace Humphrey.Experiments
 
             bootboot    : *BootBoot = 0xFFFFFFFFFFE00000 as *BootBoot
             environment : *[8]bit   = 0xFFFFFFFFFFE01000 as *[8]bit
-            framBuffer  : *[32]bit   = 0xFFFFFFFFFFC00000 as *[32]bit
+            frameBuffer : *[32]bit   = 0xFFFFFFFFFFC00000 as *[32]bit
 
-            Main : ()(result:BootBoot) =
+            Main : ()(result:[32]bit) =
             {
                 localBoot := *bootboot
                 x,y : [32]bit = 0
@@ -68,7 +68,10 @@ namespace Humphrey.Experiments
                 s := localBoot.fbScanline
                 w := localBoot.fbWidth
                 h := localBoot.fbHeight
+
 #!
+                pixel := frameBuffer[s*(h/2)+w/2]
+
 
                 for y in 0..h
                 {
@@ -86,7 +89,7 @@ namespace Humphrey.Experiments
                     frameBuffer[s*y+(x+50)] = 0x000000FF
                 }
 !#
-                return localBoot
+                return w
             }
         
         ";

@@ -33,9 +33,13 @@ namespace Humphrey.FrontEnd
                     case ":":
                         return 100;
                     case "as":
-                        return 900;
-                    case ".":
                         return 1000;
+                    case ".":
+                        return 100;
+                    case "(":
+                        return 100;
+                    case "[":
+                        return 100;
                     default:
                         throw new ParseException($"Unimplemented Precadence for operator : {temp}");
                 }
@@ -52,6 +56,10 @@ namespace Humphrey.FrontEnd
                         return IOperator.OperatorKind.ExpressionType;
                     case ".":
                         return IOperator.OperatorKind.ExpressionIdentifier;
+                    case "(":
+                        return IOperator.OperatorKind.ExpressionExpressionList;
+                    case "[":
+                        return IOperator.OperatorKind.ExpressionExpressionContinuation;
                     default:
                         return IOperator.OperatorKind.ExpressionExpression;
                 }

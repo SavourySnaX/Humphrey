@@ -152,6 +152,8 @@ namespace Humphrey.FrontEnd
 
         // identifier : Identifier
         public AstIdentifier Identifier() { return AstItem(Tokens.Identifier, (e) => new AstIdentifier(e)) as AstIdentifier; }
+        // loadable_identifier : Identifier
+        public AstLoadableIdentifier LoadableIdentifier() { return AstItem(Tokens.Identifier, (e) => new AstLoadableIdentifier(e)) as AstLoadableIdentifier; }
 
         // number_list : Number*
         public IAst[] NumberList() { return ItemList(Number); }
@@ -177,23 +179,29 @@ namespace Humphrey.FrontEnd
         public IAst AsOperator() { return AstItem(Tokens.O_As, (e) => new AstOperator(e)); }
         // reference_operator : .
         public IAst ReferenceOperator() { return AstItem(Tokens.O_Dot, (e) => new AstOperator(e)); }
+        // function_call_operator : (
+        public IAst FunctionCallOperator() { return AstItem(Tokens.S_OpenParanthesis, (e) => new AstOperator(e)); }
+        // function_call_operator : [
+        public IAst ArraySubscriptOperator() { return AstItem(Tokens.S_OpenSquareBracket, (e) => new AstOperator(e)); }
         // equals_operator : Equals
         public IAst EqualsOperator() { return AstItem(Tokens.O_Equals, (e) => new AstOperator(e)); }
         public IAst ColonOperator() { return AstItem(Tokens.O_Colon, (e) => new AstOperator(e)); }
         public bool CommaSyntax() { return Item(Tokens.S_Comma).success; }
         public bool SemiColonSyntax() { return Item(Tokens.S_SemiColon).success; }
         public bool OpenParanthesis() { return Item(Tokens.S_OpenParanthesis).success; }
+        public bool PeekOpenParanthesis() { return Peek(Tokens.S_OpenParanthesis).success; }
         public bool CloseParenthesis() { return Item(Tokens.S_CloseParanthesis).success; }
         public bool OpenCurlyBrace() { return Item(Tokens.S_OpenCurlyBrace).success; }
         public bool CloseCurlyBrace() { return Item(Tokens.S_CloseCurlyBrace).success; }
         public bool PeekCloseCurlyBrace() { return Peek(Tokens.S_CloseCurlyBrace).success; }
         public bool OpenSquareBracket() { return Item(Tokens.S_OpenSquareBracket).success; }
+        public bool PeekOpenSquareBracket() { return Peek(Tokens.S_OpenSquareBracket).success; }
         public bool CloseSquareBracket() { return Item(Tokens.S_CloseSquareBracket).success; }
         public bool UnderscoreOperator() { return Item(Tokens.S_Underscore).success; }
         public bool PointerOperator() { return Item(Tokens.O_Multiply).success; }
 
         public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator };
-        public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator, AsOperator, ReferenceOperator };
+        public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator, AsOperator, ReferenceOperator, FunctionCallOperator, ArraySubscriptOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
         public AstItemDelegate[] Types => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
@@ -204,8 +212,8 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] LocalDefinition => new AstItemDelegate[] { LocalScopeDefinition };
         public AstItemDelegate[] GlobalDefinition => new AstItemDelegate[] { GlobalScopeDefinition };
 
-        // terminal : Number | Identifier | BracketedExpression
-        public AstItemDelegate[] Terminal => new AstItemDelegate[] { Number, Identifier, BracketedExpression };
+        // terminal : Number | IdentifierTerminal | BracketedExpression
+        public AstItemDelegate[] Terminal => new AstItemDelegate[] { Number, IdentifierTerminal, BracketedExpression };
 
         // bracketed_expresson : ( Expression )
         public IAst BracketedExpression()
@@ -221,15 +229,25 @@ namespace Humphrey.FrontEnd
             return PopSentinel();
         }
 
+
+        // identifier_terminal : identifier                         # variable
+        public ILoadValue IdentifierTerminal()
+        {
+            return LoadableIdentifier();
+        }
+
         Stack<(bool binary, IOperator item)> operators;
         Stack<IAst> operands;
 
+        // expression = expression
+        //            | 
         public IExpression ParseExpression()
         {
             PushSentinel();
             var expr = Expression();
             if (expr == null)
                 return null;
+            //
             return PopSentinel();
         }
 
@@ -258,6 +276,14 @@ namespace Humphrey.FrontEnd
                     case IOperator.OperatorKind.ExpressionIdentifier:
                         operands.Push(AstBinaryExpression.FetchBinaryExpressionRhsIdentifer(operators.Pop().item, i1 as IExpression, i2 as AstIdentifier));
                         break;
+                    case IOperator.OperatorKind.ExpressionExpressionList:
+                        operands.Push(AstBinaryExpression.FetchBinaryExpressionRhsExpressionList(operators.Pop().item, i1 as IExpression, i2 as AstExpressionList));
+                        break;
+                    case IOperator.OperatorKind.ExpressionExpressionContinuation:
+                        operands.Push(AstBinaryExpression.FetchBinaryExpressionRhsExpressionContinuation(operators.Pop().item, i1 as IExpression, i2 as IExpression));
+                        break;
+                    default:
+                        throw new System.NotImplementedException($"Unhandled RhsKind");
                 }
             }
             else
@@ -292,6 +318,8 @@ namespace Humphrey.FrontEnd
         public IExpression Expression()
         {
             var expr = OneOf(ExpressionKind) as IExpression;
+            if (expr == null)
+                return null;
             while (operators.Peek().item != null)
                 PopOperator();
             return expr;
@@ -306,15 +334,119 @@ namespace Humphrey.FrontEnd
                 PopOperator();
             return type;
         }
-        
-        // expression_identifier : identifier
-        public AstIdentifier ExpressionIdentifier()
+
+        // [ has already popped at this point
+        // array_subscript : expression ]
+        public IExpression ArraySubscript()
+        {
+            var expr = ParseExpression();
+            if (expr == null)
+                return null;
+            if (!CloseSquareBracket())
+                return null;
+            return expr;
+        }
+
+        // ( has already popped at this point
+        // function_call_arguments : )
+        //                         | expression_list )
+        public AstExpressionList FunctionCallArguments()
+        {
+            AstExpressionList exprList;
+
+            if (CloseParenthesis())
+            {
+                exprList = new AstExpressionList();
+            }
+            else
+            {
+                exprList = ExpressionList();
+                if (exprList == null)
+                    return null;
+                if (!CloseParenthesis())
+                    return null;
+            }
+            return exprList;
+        }
+
+        // expression_function_call_arguments :  function_call_arguments
+        public IExpression ExpressionFunctionCallArguments()
+        {
+            AstExpressionList exprList = FunctionCallArguments();
+            if (exprList == null)
+                return null;
+            operands.Push(exprList);
+            while (operators.Peek().item != null)
+                PopOperator();
+            var op = OneOf(BinaryOperators) as IOperator;
+            var functionCall = operands.Peek() as IExpression;
+            if (op!=null)
+            {
+                return BinaryOperatorProcess(functionCall, op);
+            }
+            return functionCall;
+        }
+
+        // expression_array_subscript : array_subscript
+        public IExpression ExpressionArraySubscript()
+        {
+            IExpression subscript = ArraySubscript();
+            if (subscript == null)
+                return null;
+            operands.Push(subscript);
+            while (operators.Peek().item != null)
+                PopOperator();
+            var op = OneOf(BinaryOperators) as IOperator;
+            var arrayidx = operands.Peek() as IExpression;
+            if (op!=null)
+            {
+                return BinaryOperatorProcess(arrayidx, op);
+            }
+            return arrayidx;
+        }
+
+
+        // expression_identifier : identifier_terminal
+        public IExpression ExpressionIdentifier()
         {
             var ident = Identifier();
+            if (ident == null)
+                return null;
             operands.Push(ident);
             while (operators.Peek().item != null)
                 PopOperator();
-            return ident;
+            var op = OneOf(BinaryOperators) as IOperator;
+            var terminal = operands.Peek() as IExpression;
+            if (op!=null)
+            {
+                return BinaryOperatorProcess(terminal, op);
+            }
+            return terminal;
+        }
+
+        public IExpression BinaryOperatorProcess(IExpression terminal, IOperator op)
+        {
+            PushOperator((true, op));
+            switch (op.RhsKind)
+            {
+                case IOperator.OperatorKind.ExpressionExpression:
+                    var expr = Expression();
+                    if (expr != null)
+                        return AstBinaryExpression.FetchBinaryExpression(op, terminal, expr);
+                    break;
+                case IOperator.OperatorKind.ExpressionType:
+                    var type = ExpressionType();
+                    if (type != null)
+                        return AstBinaryExpression.FetchBinaryExpressionRhsType(op, terminal, type);
+                    break;
+                case IOperator.OperatorKind.ExpressionIdentifier:
+                    return ExpressionIdentifier();
+                case IOperator.OperatorKind.ExpressionExpressionList:
+                    return ExpressionFunctionCallArguments();
+                case IOperator.OperatorKind.ExpressionExpressionContinuation:
+                    return ExpressionArraySubscript();
+            }
+            return null;
         }
 
         // binary_expression : Terminal
@@ -330,26 +462,7 @@ namespace Humphrey.FrontEnd
                 var op = OneOf(BinaryOperators) as IOperator;
                 if (op != null)
                 {
-                    PushOperator((true, op));
-                    switch (op.RhsKind)
-                    {
-                        case IOperator.OperatorKind.ExpressionExpression:
-                            var expr = Expression();
-                            if (expr!=null)
-                                return AstBinaryExpression.FetchBinaryExpression(op, terminal, expr);
-                            break;
-                        case IOperator.OperatorKind.ExpressionType:
-                            var type = ExpressionType();
-                            if (type!=null)
-                                return AstBinaryExpression.FetchBinaryExpressionRhsType(op, terminal, type);
-                            break;
-                        case IOperator.OperatorKind.ExpressionIdentifier:
-                            var ident = ExpressionIdentifier();
-                            if (ident!=null)
-                                return AstBinaryExpression.FetchBinaryExpressionRhsIdentifer(op, terminal, ident);
-                            break;
-                    }
-                    return null;
+                    return BinaryOperatorProcess(terminal, op);
                 }
 
                 return terminal;
@@ -412,9 +525,12 @@ namespace Humphrey.FrontEnd
 
         // expression_list : expr
         //                 | expr , expression_list
-        public IExpression[] ExpressionList()
+        public AstExpressionList ExpressionList()
         {
-            return CommaSeperatedItemList<IExpression>(ParseExpression);
+            var exprList = CommaSeperatedItemList<IExpression>(ParseExpression);
+            if (exprList == null)
+                return null;
+            return new AstExpressionList(exprList);
         }
 
         // parameter_list : ( param_definition_list )
@@ -589,7 +705,7 @@ namespace Humphrey.FrontEnd
                 return null;
 
             if (PeekCloseCurlyBrace())      // Must be last statement in a code block
-                return new AstReturnStatement(new IExpression[] { });
+                return new AstReturnStatement(new AstExpressionList());
 
             var expressionList = ExpressionList();
             if (expressionList==null)
