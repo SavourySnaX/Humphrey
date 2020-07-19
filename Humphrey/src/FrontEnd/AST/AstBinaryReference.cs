@@ -2,7 +2,7 @@ using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
-    public class AstBinaryReference : IExpression
+    public class AstBinaryReference : IExpression, IStorable
     {
         IExpression lhs;
         AstIdentifier rhs;
@@ -22,7 +22,8 @@ namespace Humphrey.FrontEnd
             throw new System.NotImplementedException($"ProcessConstantExpression for reference operator is not implemented");
         }
 
-        public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
+
+        public (CompilationStructureType type, CompilationValue value) CommonProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             var rlhs = lhs.ProcessExpression(unit, builder);
             var vlhs = rlhs as CompilationValue;
@@ -34,7 +35,21 @@ namespace Humphrey.FrontEnd
             if (type==null)
                 throw new System.NotImplementedException($"Attempt to reference a structure member of a non structure type!");
 
-            return type.LoadElement(unit, builder, vlhs, rhs.Dump());
+            return (type, vlhs);
+        }
+        
+        public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
+        {
+            var (type, value) = CommonProcessExpression(unit, builder);
+
+            return type.LoadElement(unit, builder, value, rhs.Dump());
+        }
+
+        public void ProcessExpressionForStore(CompilationUnit unit, CompilationBuilder builder, IExpression value)
+        {
+            var (type, dst) = CommonProcessExpression(unit, builder);
+
+            type.StoreElement(unit, builder, dst, value, rhs.Dump());
         }
     }
 }

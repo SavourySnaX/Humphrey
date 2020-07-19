@@ -115,6 +115,21 @@ namespace Humphrey.Backend
             throw new Exception($"Failed to find identifier {identifier}");
         }
 
+        public CompilationValue FetchLocation(string identifier, CompilationBuilder builder)
+        {
+            // Check for global value
+            var value = symbolTable.FetchGlobalValue(identifier);
+            if (value != null)
+                return value.Storage;
+                            
+            // Check for local value
+            value = symbolTable.FetchLocalValue(identifier);
+            if (value != null)
+                return value.Storage;
+
+            throw new Exception($"Failed to find identifier {identifier}");
+        }
+
         public CompilationBuilder CreateBuilder(CompilationFunction function, CompilationBlock bb)
         {
             var builder = contextRef.CreateBuilder();
@@ -187,6 +202,7 @@ namespace Humphrey.Backend
             }
 
             var globalValue = new CompilationValue(global, type);
+            globalValue.Storage = new CompilationValue(global, new CompilationPointerType(CreatePointerType(type.BackendType), type));
 
             if (!symbolTable.AddGlobalValue(identifier, globalValue))
                 throw new Exception($"global {identifier} failed to add symbol!");
@@ -206,6 +222,7 @@ namespace Humphrey.Backend
                 var value = Expression.ResolveExpressionToValue(unit, initialiser, type);
                 builder.Store(value, local);
             }
+            local.Storage = new CompilationValue(local.BackendValue, new CompilationPointerType(CreatePointerType(type.BackendType), type));
 
             if (!symbolTable.AddLocalValue(identifier, local))
                 throw new Exception($"local {identifier} failed to add symbol!");

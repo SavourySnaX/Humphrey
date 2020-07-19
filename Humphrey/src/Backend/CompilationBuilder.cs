@@ -16,7 +16,9 @@ namespace Humphrey.Backend
 
         public CompilationValue Load(CompilationValue loadFrom)
         {
-            return new CompilationValue(builderRef.BuildLoad(loadFrom.BackendValue), loadFrom.Type);
+            var loadedValue = new CompilationValue(builderRef.BuildLoad(loadFrom.BackendValue), loadFrom.Type);
+            loadedValue.Storage = loadFrom.Storage;
+            return loadedValue;
         }
         public CompilationValue Store(CompilationValue value, CompilationValue storeTo)
         {
@@ -72,6 +74,12 @@ namespace Humphrey.Backend
         {
             return new CompilationValue(builderRef.BuildExtractValue(src.BackendValue, index), indexType);
         }
+        
+        public CompilationValue InsertValue(CompilationValue dst, CompilationValue toStore, uint index)
+        {
+            return new CompilationValue(builderRef.BuildInsertValue(dst.BackendValue, toStore.BackendValue, index), toStore.Type);
+        }
+
 
         public CompilationValue InBoundsGEP(CompilationValue ptr, LLVMValueRef[] indices)
         {

@@ -1,3 +1,4 @@
+using Humphrey.FrontEnd;
 using LLVMSharp.Interop;
 
 namespace Humphrey.Backend
@@ -39,5 +40,23 @@ namespace Humphrey.Backend
             return builder.ExtractValue(src,elementTypes[idx], idx);
         }
 
+        public void StoreElement(CompilationUnit unit, CompilationBuilder builder, CompilationValue dst, IExpression src, string identifier)
+        {
+            // Find identifier in elements
+            uint idx=0;
+            foreach (var i in elementTypes)
+            {
+                if (i.Identifier==identifier)
+                    break;
+                idx++;
+            }
+                
+            CompilationType elementType = elementTypes[idx];
+            var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, src, elementType);
+
+            var newVal = builder.InsertValue(dst, storeValue, idx);
+
+            builder.Store(newVal, dst.Storage);
+        }
     }
 }

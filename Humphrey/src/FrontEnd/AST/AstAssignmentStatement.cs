@@ -13,23 +13,20 @@ namespace Humphrey.FrontEnd
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
-            throw new System.NotImplementedException($"Todo - assignment statement");
-            /*
-            uint outParamIdx = function.OutParamOffset;
-            foreach (var expr in exprList.Expressions)
+            // Resolve common things
+            var expr = assignable as IExpression;
+
+            if (expr == null)
+                throw new System.NotImplementedException($"CodeBlock assignment not supported");
+
+            foreach (var dest in exprList.Expressions)
             {
-                var paramType = function.FunctionType.Parameters[outParamIdx].Type;
-                var value = AstUnaryExpression.EnsureTypeOk(unit, builder, expr, paramType);
+                var store = dest as IStorable;
 
-                var parameter = function.BackendValue.GetParam(outParamIdx++);
-
-                builder.BackendValue.BuildStore(value.BackendValue, parameter);
+                store.ProcessExpressionForStore(unit, builder, expr);
             }
 
-            builder.BackendValue.BuildRetVoid();
-
             return true;
-            */
         }
 
         public string Dump()

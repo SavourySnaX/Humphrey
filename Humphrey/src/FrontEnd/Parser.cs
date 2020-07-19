@@ -213,6 +213,7 @@ namespace Humphrey.FrontEnd
         public IAst ArraySubscriptOperator() { return AstItem(Tokens.S_OpenSquareBracket, (e) => new AstOperator(e)); }
         // equals_operator : Equals
         public IAst EqualsOperator() { return AstItem(Tokens.O_Equals, (e) => new AstOperator(e)); }
+        public bool PeekEqualsOperator() { return Peek(Tokens.O_Equals).success; }
         public IAst ColonOperator() { return AstItem(Tokens.O_Colon, (e) => new AstOperator(e)); }
         public bool PeekColonOperator() { return Peek(Tokens.O_Colon).success; }
         public bool CommaSyntax() { return Item(Tokens.S_Comma).success; }
@@ -410,13 +411,26 @@ namespace Humphrey.FrontEnd
                 //Must be an assignment
                 return Assignment();
             }
-            SaveNextToken();
 
-            var isScopeDef = PeekColonOperator() || PeekCommaSyntax();
-                
+            var definition = false;
+            while (true)
+            {
+                SaveNextToken();
+
+                if (PeekColonOperator())
+                {
+                    definition = true;
+                    break;
+                }
+                if (PeekEqualsOperator())
+                {
+                    definition = false;
+                    break;
+                }
+            }
             RestoreTokens();
 
-            if (isScopeDef)
+            if (definition)
             {
                 return LocalScopeDefinition();
             }

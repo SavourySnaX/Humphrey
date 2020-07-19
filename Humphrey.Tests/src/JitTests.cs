@@ -76,6 +76,40 @@ namespace Humphrey.Backend.tests
             Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
         }
 
+
+        [Theory]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=0 return local } ", "Main", 0)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=1 return local } ", "Main", 1)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=+0 return local } ", "Main", 0)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=+1 return local } ", "Main", 1)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=0+1 return local } ", "Main", 1)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=0+0 return local } ", "Main", 0)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=1-0 return local } ", "Main", 1)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=1*1 return local } ", "Main", 1)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=1/1 return local } ", "Main", 1)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=1%1 return local } ", "Main", 0)]
+        [InlineData(@"Main : () (returnValue : bit) = { local1,local2:=0 return local1+local2 } ", "Main", 0)]
+        [InlineData(@"Main : () (returnValue : bit) = { local1,local2:=1 return local1+local2 } ", "Main", 0)]
+        [InlineData(@"Main : () (returnValue : bit) = { local1:=1 local2:=0 return local1+local2 } ", "Main", 1)]
+        [InlineData(@"Main : () (returnValue : bit) = { local1:=0 local2:=1 return local1+local2 } ", "Main", 1)]
+        public void CheckLocalAutoTypeVoidExpectsBit(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=0 local=1 return local } ", "Main", 1)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=1 local=0 return local } ", "Main", 0)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=0 local=1 return local-1 } ", "Main", 0)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:=0 local=1 return local-1 } ", "Main", 0)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:[2][1]bit=_ local[0]=1 local[1]=0 return local[1] } ", "Main", 0)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:[2][1]bit=_ local[0]=1 local[1]=0 return local[1]+local[0] } ", "Main", 1)]
+        [InlineData(@"Main : () (returnValue : bit) = { local:{a:[1]bit b:[1]bit}=_ local.a=1 return local.a } ", "Main", 1)]
+        public void CheckLocalReAssignAutoTypeVoidExpectsBit(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
+        }
+
         [Theory]
         [InlineData(@" MainType : () (returnValue:[8]bit) Main : MainType = { return 0 } ", "Main", 0)]
         [InlineData(@" Main : () (returnValue : [8]bit) = { return 0 } ", "Main", 0)]

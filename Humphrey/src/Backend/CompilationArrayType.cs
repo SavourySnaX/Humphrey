@@ -19,6 +19,8 @@ namespace Humphrey.Backend
                 return false;
             return elementCount == check.elementCount && Identifier == check.Identifier && element.Same(check.element);
         }
+
+        public CompilationType ElementType => element;
     }
 }
 

@@ -2,7 +2,7 @@ using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
-    public class AstLoadableIdentifier : IExpression,IType,ILoadValue
+    public class AstLoadableIdentifier : IExpression,IType,ILoadValue,IStorable
     {
         string temp;
         public AstLoadableIdentifier(string value)
@@ -29,6 +29,21 @@ namespace Humphrey.FrontEnd
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             return unit.FetchValue(temp, builder);
+        }
+
+        public void ProcessExpressionForStore(CompilationUnit unit, CompilationBuilder builder, IExpression value)
+        {
+            var storeTo = unit.FetchLocation(temp, builder);
+            if (storeTo.Type is CompilationPointerType ptrType)
+            {
+                CompilationType elementType = ptrType.ElementType;
+                var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, value, elementType);
+                builder.Store(storeValue, storeTo);
+            }
+            else
+            {
+                throw new System.NotImplementedException($"Cannot store value to type");
+            }
         }
     }
 }
