@@ -192,6 +192,7 @@ namespace Humphrey.FrontEnd
         // bit_keyword : bit
         public AstBitType BitKeyword() { return AstItem(Tokens.KW_Bit, (e) => new AstBitType()) as AstBitType; }
         public IAst ReturnKeyword() { return AstItem(Tokens.KW_Return, (e) => new AstKeyword(e)); }
+        public IAst ForKeyword() { return AstItem(Tokens.KW_For, (e) => new AstKeyword(e)); }
 
         // add_operator : +
         public IAst AddOperator() { return AstItem(Tokens.O_Plus, (e) => new AstOperator(e)); }
@@ -207,6 +208,8 @@ namespace Humphrey.FrontEnd
         public IAst AsOperator() { return AstItem(Tokens.O_As, (e) => new AstOperator(e)); }
         // reference_operator : .
         public IAst ReferenceOperator() { return AstItem(Tokens.O_Dot, (e) => new AstOperator(e)); }
+        // range_operator : .
+        public IAst DotDotOperator() { return AstItem(Tokens.O_DotDot, (e) => new AstOperator(e)); }
         // function_call_operator : (
         public IAst FunctionCallOperator() { return AstItem(Tokens.S_OpenParanthesis, (e) => new AstOperator(e)); }
         // function_call_operator : [
@@ -237,7 +240,7 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] Types => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
-        public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement, CouldBeLocalScopeDefinitionOrAssignment };
+        public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement, ForStatement, CouldBeLocalScopeDefinitionOrAssignment };
 
         public AstItemDelegate[] StructDefinitions => new AstItemDelegate[] { StructElementDefinition };
         public AstItemDelegate[] LocalDefinition => new AstItemDelegate[] { LocalScopeDefinition };
@@ -508,6 +511,45 @@ namespace Humphrey.FrontEnd
             return new AstAssignmentStatement(exprList, assignable);
         }
 
+        public AstRange Range()
+        {
+            var inclusiveBegin = ParseExpression();
+            if (inclusiveBegin == null)
+                return null;
+
+            if (DotDotOperator() == null)
+                return null;
+
+            var exclusiveEnd = ParseExpression();
+            if (exclusiveEnd == null)
+                return null;
+
+            return new AstRange(inclusiveBegin, exclusiveEnd);
+        }
+
+        public AstForStatement ForStatement()
+        {
+            if (ForKeyword() == null)
+                return null;
+
+            var identifierList = IdentifierList();
+            if (identifierList == null)
+                return null;
+
+            if (EqualsOperator()==null)
+                return null;
+
+            // Todo we should allow ranges or expressions (e.g. for x = mycollection )
+            var rangeList = CommaSeperatedItemList<AstRange>(Range);
+            if (rangeList == null)
+                return null;
+
+            var codeBlock = CodeBlock();
+            if (codeBlock == null)
+                return null;
+
+            return new AstForStatement(identifierList, rangeList, codeBlock);
+        }
         public IExpression BinaryOperatorProcess(IExpression terminal, IOperator op)
         {
             PushOperator((true, op));

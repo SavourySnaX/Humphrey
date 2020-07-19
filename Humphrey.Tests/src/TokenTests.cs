@@ -26,6 +26,7 @@ namespace Humphrey.Tests.src
         [InlineData("=", Tokens.O_Equals)]
         [InlineData(":", Tokens.O_Colon)]
         [InlineData(".", Tokens.O_Dot)]
+        [InlineData("..", Tokens.O_DotDot)]
         [InlineData("as", Tokens.O_As)]
         public void CheckOperatorTokens(string input, Tokens expected)
         {
@@ -50,6 +51,7 @@ namespace Humphrey.Tests.src
         [Theory]
         [InlineData("return", Tokens.KW_Return)]
         [InlineData("bit", Tokens.KW_Bit)]
+        [InlineData("for", Tokens.KW_For)]
         public void CheckKeywordTokens(string input, Tokens expected)
         {
             TokenTest(input, new[] { expected });

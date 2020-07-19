@@ -32,6 +32,9 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Keyword", Example = "bit")]
         KW_Bit,
 
+        [Token(Category = "Keyword", Example = "for")]
+        KW_For,
+
         [Token(Category = "Keyword", Example = "return")]
         KW_Return,
 
@@ -55,6 +58,8 @@ namespace Humphrey.FrontEnd
 
         [Token(Category = "Operator", Example = ".")]
         O_Dot,
+        [Token(Category = "Operator", Example = "..")]
+        O_DotDot,
 
         [Token(Category = "Operator", Example = ":")]
         O_Colon,
@@ -183,10 +188,16 @@ namespace Humphrey.FrontEnd
             [']'] = Tokens.S_CloseSquareBracket,
         };
 
+        readonly Dictionary<(char,char), Tokens> _dualOperators = new Dictionary<(char,char), Tokens>
+        {
+            [('.','.')] = Tokens.O_DotDot,
+        };
+
         readonly Dictionary<string, Tokens> _keywords = new Dictionary<string, Tokens>
         {
             ["as"] = Tokens.O_As,
             ["bit"] = Tokens.KW_Bit,
+            ["for"] = Tokens.KW_For,
             ["return"] = Tokens.KW_Return,
         };
 
@@ -424,8 +435,16 @@ namespace Humphrey.FrontEnd
                 var c = next.Value;
                 if (_operators.TryGetValue(c, out var token))
                 {
-                    yield return new Result<Tokens>(token, next.Location, next.Remainder);
+                    var location = next.Location;
+                    var remainder = next.Remainder;
                     next = next.Remainder.ConsumeChar();
+                    if (_dualOperators.TryGetValue((c,next.Value), out var dualToken))
+                    {
+                        remainder = next.Remainder;
+                        token = dualToken;
+                        next = next.Remainder.ConsumeChar();
+                    }
+                    yield return new Result<Tokens>(token, location, remainder);
                 }
                 else if (c == '#')
                 {

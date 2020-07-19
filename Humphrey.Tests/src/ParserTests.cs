@@ -329,6 +329,30 @@ namespace Humphrey.FrontEnd.tests
         }
 
         [Theory]
+        [InlineData("0..1", "0 .. 1")]
+        [InlineData("b..x", "b .. x")]
+        [InlineData("0+0..5*2", "+ 0 0 .. * 5 2")]
+        [InlineData("0+0..9*a", "+ 0 0 .. * 9 a")]
+        [InlineData("..", null)]
+        public void CheckRange(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.Range(), expected);
+        }
+
+        [Theory]
+        [InlineData("for x = 0..1 {}", "for x = 0 .. 1 { }")]
+        public void CheckForStatement(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.ForStatement(), expected);
+        }
+
+        [Theory]
         [InlineData("[]", null)]
         [InlineData("[5]", "5")]
         [InlineData("[5,2]", null)]

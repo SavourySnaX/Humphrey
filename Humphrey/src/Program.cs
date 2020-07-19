@@ -69,18 +69,16 @@ namespace Humphrey.Experiments
                 w := localBoot.fbWidth
                 h := localBoot.fbHeight
 
-                frameBuffer[s*y/2+w/2] = 0x00FFFFFF
-#!
-                for y in 0..h
+                for y = 0..h
                 {
                     frameBuffer[s*y+w/2] = 0x00FFFFFF
                 }
-                for x in 0..w
+                for x = 0..w
                 {
                     frameBuffer[s*(h/2)+x] = 0x00FFFFFF
                 }
-
-                for y*x in 20..40*20..40
+#!
+                for y*x = 20..40*20..40
                 {
                     frameBuffer[s*y+(x+ 0)] = 0x00FF0000
                     frameBuffer[s*y+(x+30)] = 0x0000FF00
