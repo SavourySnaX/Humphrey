@@ -77,14 +77,18 @@ namespace Humphrey.Experiments
                 {
                     frameBuffer[s*(h/2)+x] = 0x00FFFFFF
                 }
-#!
-                for y*x = 20..40*20..40
+
+#                for y*x = 20..40*20..40
+                for y = 20..40
                 {
-                    frameBuffer[s*y+(x+ 0)] = 0x00FF0000
-                    frameBuffer[s*y+(x+30)] = 0x0000FF00
-                    frameBuffer[s*y+(x+50)] = 0x000000FF
+                    for x=20..40
+                    {
+                        frameBuffer[s*y+(x+ 0)] = 0x00FF0000
+                        frameBuffer[s*y+(x+30)] = 0x0000FF00
+                        frameBuffer[s*y+(x+50)] = 0x000000FF
+                    }
                 }
-!#
+                return
             }
         
         ";

@@ -12,9 +12,9 @@ namespace Humphrey.FrontEnd
             statementList = statements;
         }
     
-        public CompilationBlock CreateCodeBlock(CompilationUnit unit, CompilationFunction function)
+        public CompilationBlock CreateCodeBlock(CompilationUnit unit, CompilationFunction function, string blockName)
         {
-            var newBB = new CompilationBlock(function.BackendValue.AppendBasicBlock("entry"));
+            var newBB = new CompilationBlock(function.BackendValue.AppendBasicBlock(blockName));
 
             var builder = unit.CreateBuilder(function, newBB);
 

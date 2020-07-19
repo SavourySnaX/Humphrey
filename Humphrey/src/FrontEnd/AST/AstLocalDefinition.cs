@@ -50,7 +50,7 @@ namespace Humphrey.FrontEnd
                 {
                     // should be scoped
                     var newFunction = unit.CreateFunction(ct as CompilationFunctionType, ident.Dump());
-                    codeBlock.CreateCodeBlock(unit, newFunction);
+                    codeBlock.CreateCodeBlock(unit, newFunction, $"entry_{ident.Dump()}");
                 }
                 else if (initialiser == null)
                 {

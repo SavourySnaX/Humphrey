@@ -532,7 +532,7 @@ namespace Humphrey.FrontEnd
             if (ForKeyword() == null)
                 return null;
 
-            var identifierList = IdentifierList();
+            var identifierList = CommaSeperatedItemList<AstLoadableIdentifier>(LoadableIdentifier);
             if (identifierList == null)
                 return null;
 

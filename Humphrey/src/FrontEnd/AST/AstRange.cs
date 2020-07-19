@@ -16,6 +16,9 @@ namespace Humphrey.FrontEnd
         {
             return $"{inclusiveStart.Dump()} .. {exclusiveStop.Dump()}";
         }
+
+        public IExpression InclusiveStart => inclusiveStart;
+        public IExpression ExclusiveEnd => exclusiveStop;
     }
 }
 
