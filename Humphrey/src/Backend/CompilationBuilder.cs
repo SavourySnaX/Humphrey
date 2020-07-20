@@ -7,11 +7,19 @@ namespace Humphrey.Backend
     {
         LLVMBuilderRef builderRef;
         CompilationFunction function;
+        CompilationBlock currentBlock;
 
-        public CompilationBuilder(LLVMBuilderRef builder, CompilationFunction func)
+        public CompilationBuilder(LLVMBuilderRef builder, CompilationFunction func, CompilationBlock block)
         {
             builderRef = builder;
             function = func;
+            currentBlock = block;
+        }
+
+        public void PositionAtEnd(CompilationBlock block)
+        {
+            currentBlock = block;
+            builderRef.PositionAtEnd(block.BackendValue);
         }
 
         public CompilationValue Load(CompilationValue loadFrom)
@@ -106,5 +114,6 @@ namespace Humphrey.Backend
 
         public LLVMBuilderRef BackendValue => builderRef;
         public CompilationFunction Function => function;
+        public CompilationBlock CurrentBlock => currentBlock;
     }
 }

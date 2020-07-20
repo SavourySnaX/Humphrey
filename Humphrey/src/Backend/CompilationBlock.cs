@@ -8,9 +8,13 @@ namespace Humphrey.Backend
 
         public CompilationBlock(LLVMBasicBlockRef bb)
         {
-            basicBlockRef = bb;
+            UpdateBlock(bb);
         }
 
+        public void UpdateBlock(LLVMBasicBlockRef bb)
+        {
+            basicBlockRef = bb;
+        }
         public LLVMBasicBlockRef BackendValue => basicBlockRef;
     }
 }

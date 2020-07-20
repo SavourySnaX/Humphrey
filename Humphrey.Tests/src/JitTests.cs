@@ -262,6 +262,19 @@ namespace Humphrey.Backend.tests
         {
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
+        
+        [Theory]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(returnValue:[8]bit)={ x,y,z:[8]bit=0 for x=a..b{for y=a..b{z=z+1}}return z}", "Main", 0, 0, 0)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(returnValue:[8]bit)={ x,y,z:[8]bit=0 for x=a..b{for y=a..b{z=z+1}}return z}", "Main", 0, 1, 1)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(returnValue:[8]bit)={ x,y,z:[8]bit=0 for x=a..b{for y=a..b{z=z+1}}return z}", "Main", 0, 2, 4)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(returnValue:[8]bit)={ x,y,z:[8]bit=0 for x=a..b{for y=a..b{z=z+1}}return z}", "Main", 10, 11, 1)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(returnValue:[8]bit)={ x,y,z:[8]bit=0 for x=a..b{for y=a..b{z=z+1}}return z}", "Main", 10, 12, 4)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(returnValue:[8]bit)={ x,y,z,w:[8]bit=0 for x=a..b{for y=a..b{for z=a..b{w=w+1}}}return w}", "Main", 0, 2, 8)]
+        public void CheckNestedForIntRangeLoop(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+
 
         public IntPtr CompileForTest(string input, string entryPointName)
         {

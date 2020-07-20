@@ -12,7 +12,7 @@ namespace Humphrey.FrontEnd
             statementList = statements;
         }
     
-        public CompilationBlock CreateCodeBlock(CompilationUnit unit, CompilationFunction function, string blockName)
+        public (CompilationBlock entry, CompilationBlock exit) CreateCodeBlock(CompilationUnit unit, CompilationFunction function, string blockName)
         {
             var newBB = new CompilationBlock(function.BackendValue.AppendBasicBlock(blockName));
 
@@ -23,7 +23,7 @@ namespace Humphrey.FrontEnd
                 s.BuildStatement(unit, function, builder);
             }
 
-            return newBB;
+            return (newBB, builder.CurrentBlock);
         }
     
         public string Dump()

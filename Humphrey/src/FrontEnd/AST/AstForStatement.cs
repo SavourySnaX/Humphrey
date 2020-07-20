@@ -44,12 +44,12 @@ namespace Humphrey.FrontEnd
                 var loadVal = identifiers[0].ProcessExpression(unit, checkBuilder);
                 var end = rangeList[0].ExclusiveEnd.ProcessExpression(unit, checkBuilder);
                 var cond = checkBuilder.BackendValue.BuildICmp(LLVMIntPredicate.LLVMIntULT, Expression.ResolveExpressionToValue(unit, loadVal, null).BackendValue, Expression.ResolveExpressionToValue(unit, end, null).BackendValue);
-                checkBuilder.BackendValue.BuildCondBr(cond, compilationBlock.BackendValue, endBlock.BackendValue);
+                checkBuilder.BackendValue.BuildCondBr(cond, compilationBlock.entry.BackendValue, endBlock.BackendValue);
             }
 
             // insert branch at end of for_block
             {
-                var loopBlockBuilder = unit.CreateBuilder(function, compilationBlock);
+                var loopBlockBuilder = unit.CreateBuilder(function, compilationBlock.exit);
                 loopBlockBuilder.BackendValue.BuildBr(iterBlock.BackendValue);
             }
 
@@ -62,7 +62,7 @@ namespace Humphrey.FrontEnd
             }
 
             // ensure our builder correctly points at end block now
-            builder.BackendValue.PositionAtEnd(endBlock.BackendValue);
+            builder.PositionAtEnd(endBlock);
 
 
             //throw new System.NotImplementedException($"Todo for statement");

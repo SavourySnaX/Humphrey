@@ -134,7 +134,7 @@ namespace Humphrey.Backend
         {
             var builder = contextRef.CreateBuilder();
             builder.PositionAtEnd(bb.BackendValue);
-            return new CompilationBuilder(builder, function);
+            return new CompilationBuilder(builder, function, bb);
         }
 
         public LLVMValueRef CreateI64Constant(UInt64 value)
@@ -241,12 +241,14 @@ namespace Humphrey.Backend
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
             {
                 Console.WriteLine($"Module Verification Failed : {message} {moduleRef.PrintToString()}");
+                throw new System.Exception($"Failed to compile module");
             }
 
             var options = LLVMMCJITCompilerOptions.Create();
             if (!moduleRef.TryCreateMCJITCompiler(out var ee,ref options, out message))
             {
                 Console.WriteLine($"Failed to create MCJit : {message}");
+                throw new System.Exception($"Failed to create jit");
             }
 
             return ee.GetPointerToGlobal(symbolTable.FetchFunction(identifier).BackendValue);
