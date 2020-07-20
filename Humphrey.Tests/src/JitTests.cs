@@ -252,6 +252,17 @@ namespace Humphrey.Backend.tests
             Assert.True(InputBytePointerToArrayByteExpectsByteValue(CompileForTest(input, entryPointName), inputArray, index, expected), $"Test {entryPointName},{input},{inputArray},{index},{expected}");
         }
 
+        [Theory]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { x,y:[8]bit=0 for x=a..b { y=y+1 } return y}", "Main", 0, 0, 0)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { x,y:[8]bit=0 for x=a..b { y=y+1 } return y}", "Main", 0, 1, 1)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { x,y:[8]bit=0 for x=a..b { y=y+1 } return y}", "Main", 0, 99, 99)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { x,y:[8]bit=0 for x=a..b { y=y+1 } return y}", "Main", 10, 11, 1)]
+        [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { x,y:[8]bit=0 for x=a..b { y=y+2 } return y}", "Main", 10, 11, 2)]
+        public void CheckForIntRangeLoop(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+
         public IntPtr CompileForTest(string input, string entryPointName)
         {
             var tokenise = new HumphreyTokeniser();

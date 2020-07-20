@@ -18,31 +18,10 @@ namespace Humphrey.FrontEnd
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
-            //for loop
-            //
-            //
-            // initialise vars (can be done on current location)
-            // br check_end
-            //
-            // check_end
-            //  load initial var
-            //  cmp range
-            //  if < jmp for_block
-            //  else jmp_end
-            //
-            // jmp_end:
-            //  (update current builder bb to point here)
-            //
-            // for_block:
-            //  ...
-            //  next_iter  (for now just ++ var)
-            //  br check_end
-
-
             if (rangeList.Length != identifiers.Length)
                 throw new System.NotImplementedException($"identifiers.length != rangeList.Length");
-    
-            if (identifiers.Length!=1)
+
+            if (identifiers.Length != 1)
                 throw new System.NotImplementedException($"Todo nultiple block assignments..etc");
 
             for (int idx = 0; idx < identifiers.Length; idx++)
@@ -52,23 +31,37 @@ namespace Humphrey.FrontEnd
             }
 
             //Create check_end
-            var checkEndBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"for_check_end_{identifiers[0].Dump()}"));
+            var checkBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"for_check_{identifiers[0].Dump()}"));
+            var compilationBlock = loopBlock.CreateCodeBlock(unit, function, $"for_block_{identifiers[0].Dump()}");
+            var iterBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"for_iter_{identifiers[0].Dump()}"));
             var endBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"for_end_{identifiers[0].Dump()}"));
 
-            var compilationBlock = loopBlock.CreateCodeBlock(unit, function, $"for_block_{identifiers[0].Dump()}");
+            builder.BackendValue.BuildBr(checkBlock.BackendValue);
 
-            builder.BackendValue.BuildBr(checkEndBlock.BackendValue);
+            // CheckBlock performs iter end check basically
+            {
+                var checkBuilder = unit.CreateBuilder(function, checkBlock);
+                var loadVal = identifiers[0].ProcessExpression(unit, checkBuilder);
+                var end = rangeList[0].ExclusiveEnd.ProcessExpression(unit, checkBuilder);
+                var cond = checkBuilder.BackendValue.BuildICmp(LLVMIntPredicate.LLVMIntULT, Expression.ResolveExpressionToValue(unit, loadVal, null).BackendValue, Expression.ResolveExpressionToValue(unit, end, null).BackendValue);
+                checkBuilder.BackendValue.BuildCondBr(cond, compilationBlock.BackendValue, endBlock.BackendValue);
+            }
 
-            var checkEndBuilder= unit.CreateBuilder(function, checkEndBlock);
+            // insert branch at end of for_block
+            {
+                var loopBlockBuilder = unit.CreateBuilder(function, compilationBlock);
+                loopBlockBuilder.BackendValue.BuildBr(iterBlock.BackendValue);
+            }
 
-            var loadVal = identifiers[0].ProcessExpression(unit, checkEndBuilder);
-            var end = rangeList[0].ExclusiveEnd.ProcessExpression(unit, checkEndBuilder);
-            var cond= checkEndBuilder.BackendValue.BuildICmp(LLVMIntPredicate.LLVMIntULT, Expression.ResolveExpressionToValue(unit, loadVal, null).BackendValue, Expression.ResolveExpressionToValue(unit, end, null).BackendValue);
-            checkEndBuilder.BackendValue.BuildCondBr(cond, compilationBlock.BackendValue, endBlock.BackendValue);
+            // IterBlock performs iter next
+            {
+                var iterBuilder = unit.CreateBuilder(function, iterBlock);
+                var binaryAdd = new AstBinaryPlus(identifiers[0], new AstNumber("1"));
+                identifiers[0].ProcessExpressionForStore(unit, iterBuilder, binaryAdd);
+                iterBuilder.BackendValue.BuildBr(checkBlock.BackendValue);
+            }
 
-            var loopBlockBuilder = unit.CreateBuilder(function, compilationBlock);
-            loopBlockBuilder.BackendValue.BuildBr(checkEndBlock.BackendValue);
-
+            // ensure our builder correctly points at end block now
             builder.BackendValue.PositionAtEnd(endBlock.BackendValue);
 
 
