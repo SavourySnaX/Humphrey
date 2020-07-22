@@ -103,21 +103,48 @@ namespace Humphrey.FrontEnd
 
     public struct TokenSpan
     {
-        public TokenSpan(string e, int p)
+        public TokenSpan(string f,string e, int p, uint l, uint c)
         {
             encompass = e;
             position = p;
+            line = l;
+            column = c;
+            filename = f;
         }
 
+        string filename;
         string encompass;
         int position;
+        uint column, line;
 
         public Result<char> ConsumeChar()
         {
             if (AtEnd)
                 return new Result<char>(this);
 
-            return new Result<char>(encompass[position], this, new TokenSpan(encompass, ++position));
+            var newLine = false;
+            var consumed = encompass[position];
+            if (Char.GetUnicodeCategory(consumed) == System.Globalization.UnicodeCategory.LineSeparator)
+                newLine = true;
+            else if (consumed=='\r')
+                newLine = true;
+            else if (consumed=='\n')
+            {
+                if (position==0 || encompass[position-1]!='\r')
+                    newLine = true;
+                else
+                    column--;
+            }
+
+            if (newLine)
+            {
+                column = 1;
+                line++;
+            }
+            else
+                column++;
+
+            return new Result<char>(encompass[position], this, new TokenSpan(filename, encompass, ++position, line, column));
         }
 
         public string ToStringValue(TokenSpan remain)
@@ -130,6 +157,9 @@ namespace Humphrey.FrontEnd
         {
             return new Result<char>(encompass[position], this, location);
         }
+
+        public uint Line => line;
+        public uint Column => column;
     }
 
     public struct Result<T>
@@ -214,7 +244,7 @@ namespace Humphrey.FrontEnd
         protected static Result<char> SkipToNewLine(TokenSpan span)
         {
             var next = span.ConsumeChar();
-            while (next.HasValue && next.Value != '\n' && next.Value != '\r') 
+            while (next.HasValue && next.Value != '\n' && next.Value != '\r' && Char.GetUnicodeCategory(next.Value) != System.Globalization.UnicodeCategory.LineSeparator)
             {
                 next = next.Remainder.ConsumeChar();
             }
@@ -421,7 +451,7 @@ namespace Humphrey.FrontEnd
 
         public IEnumerable<Result<Tokens>> Tokenize(string input)
         {
-            return Tokenize(new TokenSpan(input, 0));
+            return Tokenize(new TokenSpan("", input, 0, 1, 1));
         }
 
         protected IEnumerable<Result<Tokens>> Tokenize(TokenSpan span)
