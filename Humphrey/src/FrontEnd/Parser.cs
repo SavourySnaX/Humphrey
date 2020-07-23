@@ -21,8 +21,13 @@ namespace Humphrey.FrontEnd
         Queue<Result<Tokens>> searchResetQueue;
         Queue<Result<Tokens>> searchResetBuffer;
 
-        public HumphreyParser(IEnumerable<Result<Tokens>> toParse)
+        CompilerMessages messages;
+
+        public HumphreyParser(IEnumerable<Result<Tokens>> toParse, CompilerMessages overrideDefaultMessages = null)
         {
+            messages = overrideDefaultMessages;
+            if (messages==null)
+                messages = new CompilerMessages(true, true, false);
             operators = new Stack<(bool binary, IOperator item)>(32);
             searchResetQueue = new Queue<Result<Tokens>>(32);
             searchResetBuffer = new Queue<Result<Tokens>>(32);

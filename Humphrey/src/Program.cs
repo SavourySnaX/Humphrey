@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using LLVMSharp.Interop;
-using System.Linq;
-using static Extensions.Helpers;
 
 using Humphrey.FrontEnd;
 using Humphrey.Backend;
@@ -95,22 +92,32 @@ namespace Humphrey.Experiments
 
         static void LangTest()
         {
-            var tokeniser = new HumphreyTokeniser();
+            var messages = new CompilerMessages(true, true, false);
+
+            var tokeniser = new HumphreyTokeniser(messages);
 
             var tokens = tokeniser.Tokenize(test);
 
-            var parse = new HumphreyParser(tokens).File();
-
-            var cu = new CompilationUnit("testing");
-
-            foreach (var def in parse)
+            if (!messages.HasErrors)
             {
-                def.Compile(cu);
+                var parse = new HumphreyParser(tokens, messages).File();
+
+                if (!messages.HasErrors)
+                {
+                    var cu = new CompilationUnit("testing");
+
+                    foreach (var def in parse)
+                    {
+                        def.Compile(cu);
+                    }
+
+                    Console.WriteLine(cu.Dump());
+
+                    cu.EmitToFile("compiled.o");
+                }
             }
 
-            Console.WriteLine(cu.Dump());
-            
-            cu.EmitToFile("compiled.o");
+            Console.WriteLine(messages.Dump());
         }
 
         static void Main(string[] args)

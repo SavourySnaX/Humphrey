@@ -18,16 +18,15 @@ namespace Humphrey.FrontEnd
         public string Example { get; set; }
     }
 
-
     public enum Tokens
     {
         None,
 
-        [Token(Category ="Identifier", Example = "variable_name")]
+        [Token(Category = "Identifier", Example = "variable_name")]
         Identifier,
 
         [Token(Category = "Number", Example = "1234")]
-        Number, 
+        Number,
 
         [Token(Category = "Keyword", Example = "bit")]
         KW_Bit,
@@ -43,13 +42,13 @@ namespace Humphrey.FrontEnd
 
         [Token(Category = "Operator", Example = "-")]
         O_Subtract,
-        
+
         [Token(Category = "Operator", Example = "*")]
         O_Multiply,
 
         [Token(Category = "Operator", Example = "/")]
         O_Divide,
-        
+
         [Token(Category = "Operator", Example = "%")]
         O_Modulus,
 
@@ -67,31 +66,31 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Operator", Example = "as")]
         O_As,
 
-        [Token(Category = "Syntax", Example =";")]
+        [Token(Category = "Syntax", Example = ";")]
         S_SemiColon,
 
-        [Token(Category = "Syntax", Example ="{")]
+        [Token(Category = "Syntax", Example = "{")]
         S_OpenCurlyBrace,
 
-        [Token(Category = "Syntax", Example ="}")]
+        [Token(Category = "Syntax", Example = "}")]
         S_CloseCurlyBrace,
 
-        [Token(Category = "Syntax", Example ="(")]
+        [Token(Category = "Syntax", Example = "(")]
         S_OpenParanthesis,
 
-        [Token(Category = "Syntax", Example =")")]
+        [Token(Category = "Syntax", Example = ")")]
         S_CloseParanthesis,
 
-        [Token(Category = "Syntax", Example ="[")]
+        [Token(Category = "Syntax", Example = "[")]
         S_OpenSquareBracket,
 
-        [Token(Category = "Syntax", Example ="]")]
+        [Token(Category = "Syntax", Example = "]")]
         S_CloseSquareBracket,
 
-        [Token(Category = "Syntax", Example =",")]
+        [Token(Category = "Syntax", Example = ",")]
         S_Comma,
 
-        [Token(Category = "Syntax", Example ="_")]
+        [Token(Category = "Syntax", Example = "_")]
         S_Underscore,
 
         [Token(Category = "Comment")]
@@ -103,7 +102,7 @@ namespace Humphrey.FrontEnd
 
     public struct TokenSpan
     {
-        public TokenSpan(string f,string e, int p, uint l, uint c)
+        public TokenSpan(string f, string e, int p, uint l, uint c)
         {
             encompass = e;
             position = p;
@@ -126,11 +125,11 @@ namespace Humphrey.FrontEnd
             var consumed = encompass[position];
             if (Char.GetUnicodeCategory(consumed) == System.Globalization.UnicodeCategory.LineSeparator)
                 newLine = true;
-            else if (consumed=='\r')
+            else if (consumed == '\r')
                 newLine = true;
-            else if (consumed=='\n')
+            else if (consumed == '\n')
             {
-                if (position==0 || encompass[position-1]!='\r')
+                if (position == 0 || encompass[position - 1] != '\r')
                     newLine = true;
                 else
                     column--;
@@ -158,8 +157,55 @@ namespace Humphrey.FrontEnd
             return new Result<char>(encompass[position], this, location);
         }
 
+        public override string ToString()
+        {
+            return $"\"{filename}\"@{line}:{column}";
+        }
+
+        public string DumpContext(int length = 1)
+        {
+            var s = new StringBuilder();
+
+            // scan backwards to beginning of line from current location
+            int scan=position;
+            while (scan > 0)
+            {
+                var c = encompass[scan];
+                if (c == '\r' || c == '\n' || Char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.LineSeparator)
+                {
+                    scan++;
+                    break;
+                }
+                scan--;
+            }
+            int end=position;
+            while (end < encompass.Length)
+            {
+                var c = encompass[end];
+                if (c == '\r' || c == '\n' || Char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.LineSeparator)
+                {
+                    end--;
+                    break;
+                }
+                end++;
+            }
+
+            for (int a = scan; a <= end; a++)
+                s.Append(encompass[a]);
+            s.AppendLine();
+            for (int a = scan; a < position; a++)
+            {
+                s.Append(" ");
+            }
+            for (int a = 0; a < length; a++)
+                s.AppendLine("^");
+
+            return s.ToString();
+        }
+
         public uint Line => line;
         public uint Column => column;
+        public string Filename => filename;
     }
 
     public struct Result<T>
@@ -196,8 +242,17 @@ namespace Humphrey.FrontEnd
         public TokenSpan Remainder => remaining;
     }
 
-    public class HumphreyTokeniser 
+    public class HumphreyTokeniser
     {
+        CompilerMessages messages;
+
+        public HumphreyTokeniser(CompilerMessages overrideDefaultMessages = null)
+        {
+            messages = overrideDefaultMessages;
+            if (messages==null)
+                messages = new CompilerMessages(true, true, false);
+        }
+
         readonly Dictionary<char, Tokens> _operators = new Dictionary<char, Tokens>
         {
             ['+'] = Tokens.O_Plus,
@@ -218,9 +273,9 @@ namespace Humphrey.FrontEnd
             [']'] = Tokens.S_CloseSquareBracket,
         };
 
-        readonly Dictionary<(char,char), Tokens> _dualOperators = new Dictionary<(char,char), Tokens>
+        readonly Dictionary<(char, char), Tokens> _dualOperators = new Dictionary<(char, char), Tokens>
         {
-            [('.','.')] = Tokens.O_DotDot,
+            [('.', '.')] = Tokens.O_DotDot,
         };
 
         readonly Dictionary<string, Tokens> _keywords = new Dictionary<string, Tokens>
@@ -267,21 +322,21 @@ namespace Humphrey.FrontEnd
             while (next.HasValue)
             {
                 var c = next.Value;
-                if (endNumber>0)
+                if (endNumber > 0)
                 {
                     operatorOnly = false;
-                    if (endNumber==1)
+                    if (endNumber == 1)
                     {
                         if (!(c >= '₀' && c <= '₉'))
                             break;
                     }
-                    else if (endNumber==2)
+                    else if (endNumber == 2)
                     {
                         if (c != '_')
                             break;
                         endNumber = 3;
                     }
-                    else if (endNumber==3)
+                    else if (endNumber == 3)
                     {
                         if (!char.IsDigit(c))
                             break;
@@ -289,17 +344,17 @@ namespace Humphrey.FrontEnd
                 }
                 else
                 {
-                    if (firstChar == '0' && secondChar=='\0' && (c=='x' || c=='b'))
+                    if (firstChar == '0' && secondChar == '\0' && (c == 'x' || c == 'b'))
                     {
                         // Handle x/b
                         if (c == 'x')
                             secondChar = 'x';
-                        else if (c=='b')
+                        else if (c == 'b')
                             secondChar = 'b';
                     }
-                    else if (secondChar=='x')
+                    else if (secondChar == 'x')
                     {
-                        if (!(char.IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || c=='_'))
+                        if (!(char.IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || c == '_'))
                             break;
                     }
                     else if (secondChar == 'b')
@@ -332,7 +387,7 @@ namespace Humphrey.FrontEnd
             {
                 kind = Tokens.S_Underscore;
             }
-            else if (endNumber>0 || secondChar == 'x' || secondChar == 'b' || digitOnly)
+            else if (endNumber > 0 || secondChar == 'x' || secondChar == 'b' || digitOnly)
             {
                 kind = Tokens.Number;
             }
@@ -403,7 +458,7 @@ namespace Humphrey.FrontEnd
                 offset = 2;
 
             int radix = 0;
-            for (int c=offset;c<number.Length;c++)
+            for (int c = offset; c < number.Length; c++)
             {
                 if (number[c] == '_')
                     continue;
@@ -422,13 +477,13 @@ namespace Humphrey.FrontEnd
                     }
                     else if (number[c] == '\\')
                         radix = 2;
-                    else 
+                    else
                         builderN.Append(number[c]);
                 }
             }
 
             int radii = 10;
-            if (offset==2 || radix>0)
+            if (offset == 2 || radix > 0)
             {
                 if (offset == 2)
                 {
@@ -468,7 +523,7 @@ namespace Humphrey.FrontEnd
                     var location = next.Location;
                     var remainder = next.Remainder;
                     next = next.Remainder.ConsumeChar();
-                    if (_dualOperators.TryGetValue((c,next.Value), out var dualToken))
+                    if (_dualOperators.TryGetValue((c, next.Value), out var dualToken))
                     {
                         remainder = next.Remainder;
                         token = dualToken;
@@ -530,7 +585,7 @@ namespace Humphrey.FrontEnd
                 }
                 else
                 {
-                    yield return new Result<Tokens>();
+                    messages.Log(CompilerErrorKind.Warning_InvalidToken, $"Unexpected character ('{c}' U+{(ushort)c:X4} {Char.GetUnicodeCategory(c).ToString()})", next.Location);
                     next = next.Remainder.ConsumeChar();
                 }
 
@@ -538,5 +593,4 @@ namespace Humphrey.FrontEnd
             } while (next.HasValue);
         }
     }
-
 }
