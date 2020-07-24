@@ -102,7 +102,7 @@ namespace Humphrey.FrontEnd
 
     public struct TokenSpan
     {
-        public TokenSpan(string f, string e, int p, uint l, uint c)
+        public TokenSpan(string f, string e, int p = 0, uint l = 1, uint c = 1)
         {
             encompass = e;
             position = p;
@@ -122,6 +122,8 @@ namespace Humphrey.FrontEnd
                 return new Result<char>(this);
 
             var newLine = false;
+            uint nxtCol = column;
+            uint nxtLin = line;
             var consumed = encompass[position];
             if (Char.GetUnicodeCategory(consumed) == System.Globalization.UnicodeCategory.LineSeparator)
                 newLine = true;
@@ -132,18 +134,18 @@ namespace Humphrey.FrontEnd
                 if (position == 0 || encompass[position - 1] != '\r')
                     newLine = true;
                 else
-                    column--;
+                    nxtCol--;
             }
 
             if (newLine)
             {
-                column = 1;
-                line++;
+                nxtCol = 1;
+                nxtLin++;
             }
             else
-                column++;
+                nxtCol++;
 
-            return new Result<char>(encompass[position], this, new TokenSpan(filename, encompass, ++position, line, column));
+            return new Result<char>(encompass[position], this, new TokenSpan(filename, encompass, ++position, nxtLin, nxtCol));
         }
 
         public string ToStringValue(TokenSpan remain)
@@ -506,8 +508,14 @@ namespace Humphrey.FrontEnd
 
         public IEnumerable<Result<Tokens>> Tokenize(string input)
         {
-            return Tokenize(new TokenSpan("", input, 0, 1, 1));
+            return Tokenize(new TokenSpan("", input));
         }
+
+        public IEnumerable<Result<Tokens>> TokenizeFromFile(string filename)
+        {
+            return Tokenize(new TokenSpan(filename, System.IO.File.ReadAllText(filename)));
+        }
+
 
         protected IEnumerable<Result<Tokens>> Tokenize(TokenSpan span)
         {
