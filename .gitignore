@@ -1,3 +1,5 @@
+.vscode/
+_site/
 bin/
 obj/
 .vs/
