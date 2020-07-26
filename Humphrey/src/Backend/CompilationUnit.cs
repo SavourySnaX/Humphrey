@@ -4,6 +4,7 @@ using static Extensions.Helpers;
 using Humphrey.FrontEnd;
 using System.Numerics;
 using System;
+using System.IO;
 
 namespace Humphrey.Backend
 {
@@ -254,9 +255,9 @@ namespace Humphrey.Backend
             return ee.GetPointerToGlobal(symbolTable.FetchFunction(identifier).BackendValue);
         }
 
-        public void EmitToFile(string filename)
+        public void EmitToFile(string filename, string targetTriple)
         {
-            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(LLVMTargetRef.DefaultTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
 
             moduleRef.DataLayout = targetMachine.CreateTargetDataLayout();
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
@@ -266,7 +267,28 @@ namespace Humphrey.Backend
             passes.PopulateModulePassManager(pm);
             passes.PopulateFunctionPassManager(pm);
 
-            moduleRef.Dump();
+            if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
+            {
+                Console.WriteLine($"Module Verification Failed : {message} {moduleRef.PrintToString()}");
+                return;
+            }
+
+            pm.Run(moduleRef);
+
+            targetMachine.EmitToFile(moduleRef, filename, LLVMCodeGenFileType.LLVMObjectFile);
+        }
+
+        public void DumpDisassembly(string targetTriple)
+        {
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
+
+            moduleRef.DataLayout = targetMachine.CreateTargetDataLayout();
+            moduleRef.Target = LLVMTargetRef.DefaultTriple;
+
+            var pm = LLVMPassManagerRef.Create();
+            var passes = PassManagerBuilderCreate();
+            passes.PopulateModulePassManager(pm);
+            passes.PopulateFunctionPassManager(pm);
 
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
             {
@@ -275,9 +297,14 @@ namespace Humphrey.Backend
             }
 
             pm.Run(moduleRef);
-            moduleRef.Dump();
 
-            targetMachine.EmitToFile(moduleRef,filename, LLVMCodeGenFileType.LLVMObjectFile);
+            string tmp = Path.GetTempFileName();
+
+            targetMachine.EmitToFile(moduleRef, tmp, LLVMCodeGenFileType.LLVMAssemblyFile);
+
+            Console.WriteLine(File.ReadAllText(tmp));
+
+            File.Delete(tmp);
         }
     }
 }
