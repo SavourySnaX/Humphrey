@@ -157,7 +157,7 @@ namespace Humphrey.Experiments
 
             if (!messages.HasErrors)
             {
-                var cu = new CompilationUnit("testing");
+                var cu = new CompilationUnit("testing", messages);
 
                 foreach (var def in parse)
                 {

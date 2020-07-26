@@ -5,7 +5,8 @@ namespace Humphrey.FrontEnd
 {
     public enum CompilerErrorKind : ushort
     {
-        Warning_InvalidToken    =   Warning|0x001,
+        Error_InvalidToken          =   Error|0x001,
+        Error_FailedVerification    =   Error|0xC01,
 
         Debug=0x0000,
         Info = 0x4000,
@@ -18,7 +19,7 @@ namespace Humphrey.FrontEnd
 
     public class CompilerMessages
     {
-        private List<(CompilerErrorKind errorKind, string message, TokenSpan location)> messages;
+        private List<(CompilerErrorKind errorKind, string message, TokenSpan? location)> messages;
         private HashSet<CompilerErrorKind> logged;
         bool anyErrorsLogged;
         bool logDebug;
@@ -27,7 +28,7 @@ namespace Humphrey.FrontEnd
 
         public CompilerMessages(bool debugEnable, bool infoEnable, bool warningsAsErrors)
         {
-            messages = new List<(CompilerErrorKind errorKind, string message, TokenSpan location)>();
+            messages = new List<(CompilerErrorKind errorKind, string message, TokenSpan? location)>();
             logged = new HashSet<CompilerErrorKind>();
             anyErrorsLogged = false;
             logDebug = debugEnable;
@@ -40,7 +41,11 @@ namespace Humphrey.FrontEnd
             return logged.Contains(kind&~CompilerErrorKind.KindMask);
         }
 
-        public void Log(CompilerErrorKind kind, string message, TokenSpan location)
+        public void Log(CompilerErrorKind kind, string message)
+        {
+            Log(kind, message, null);
+        }
+        public void Log(CompilerErrorKind kind, string message, TokenSpan? location)
         {
             var type = kind & CompilerErrorKind.KindMask;
             var code = kind & ~CompilerErrorKind.KindMask;
@@ -81,9 +86,18 @@ namespace Humphrey.FrontEnd
                         break;
                 }
                 s.Append($"{(uint)code:D4}]: ");
-                s.AppendLine($"{m.message}{System.Environment.NewLine}\t--> {m.location}");
-                s.AppendLine();
-                s.AppendLine(m.location.DumpContext());
+                if (m.location.HasValue)
+                {
+                    s.AppendLine($"{m.message}{System.Environment.NewLine}\t--> {m.location.Value}");
+                    s.AppendLine();
+                    s.AppendLine(m.location.Value.DumpContext());
+                    s.AppendLine();
+                }
+                else
+                {
+                    s.AppendLine($"{m.message}");
+                    s.AppendLine();
+                }
             }
             return s.ToString();
         }

@@ -13,8 +13,15 @@ namespace Humphrey.Backend
         SymbolTable symbolTable;
         LLVMContextRef contextRef;
         LLVMModuleRef moduleRef;
-        public CompilationUnit(string name)
+
+        CompilerMessages messages;
+
+        public CompilationUnit(string name, CompilerMessages overrideDefaultMessages = null)
         {
+            messages = overrideDefaultMessages;
+            if (messages==null)
+                messages = new CompilerMessages(true, true, false);
+
             LLVM.LinkInMCJIT();
 
             LLVM.InitializeX86TargetMC();
@@ -255,7 +262,7 @@ namespace Humphrey.Backend
             return ee.GetPointerToGlobal(symbolTable.FetchFunction(identifier).BackendValue);
         }
 
-        public void EmitToFile(string filename, string targetTriple)
+        public bool EmitToFile(string filename, string targetTriple)
         {
             var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
 
@@ -269,16 +276,18 @@ namespace Humphrey.Backend
 
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
             {
-                Console.WriteLine($"Module Verification Failed : {message} {moduleRef.PrintToString()}");
-                return;
+                messages.Log(CompilerErrorKind.Error_FailedVerification, $"Module Verification Failed : {moduleRef.PrintToString()}{Environment.NewLine}{message}");
+                return false;
             }
 
             pm.Run(moduleRef);
 
             targetMachine.EmitToFile(moduleRef, filename, LLVMCodeGenFileType.LLVMObjectFile);
+
+            return true;
         }
 
-        public void DumpDisassembly(string targetTriple)
+        public bool DumpDisassembly(string targetTriple)
         {
             var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
 
@@ -292,8 +301,8 @@ namespace Humphrey.Backend
 
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
             {
-                Console.WriteLine($"Module Verification Failed : {message} {moduleRef.PrintToString()}");
-                return;
+                messages.Log(CompilerErrorKind.Error_FailedVerification, $"Module Verification Failed : {moduleRef.PrintToString()}{Environment.NewLine}{message}");
+                return false;
             }
 
             pm.Run(moduleRef);
@@ -305,6 +314,8 @@ namespace Humphrey.Backend
             Console.WriteLine(File.ReadAllText(tmp));
 
             File.Delete(tmp);
+
+            return true;
         }
     }
 }

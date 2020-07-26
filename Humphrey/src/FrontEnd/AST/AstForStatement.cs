@@ -41,10 +41,8 @@ namespace Humphrey.FrontEnd
             // CheckBlock performs iter end check basically
             {
                 var checkBuilder = unit.CreateBuilder(function, checkBlock);
-                var loadVal = identifiers[0].ProcessExpression(unit, checkBuilder);
-                var end = rangeList[0].ExclusiveEnd.ProcessExpression(unit, checkBuilder);
-                var cond = checkBuilder.BackendValue.BuildICmp(LLVMIntPredicate.LLVMIntULT, Expression.ResolveExpressionToValue(unit, loadVal, null).BackendValue, Expression.ResolveExpressionToValue(unit, end, null).BackendValue);
-                checkBuilder.BackendValue.BuildCondBr(cond, compilationBlock.entry.BackendValue, endBlock.BackendValue);
+                var cond = new AstBinaryLessThan(identifiers[0], rangeList[0].ExclusiveEnd).ProcessExpression(unit, checkBuilder);
+                checkBuilder.BackendValue.BuildCondBr(Expression.ResolveExpressionToValue(unit, cond, null).BackendValue, compilationBlock.entry.BackendValue, endBlock.BackendValue);
             }
 
             // insert branch at end of for_block

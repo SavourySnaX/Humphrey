@@ -18,7 +18,7 @@ namespace Humphrey.Backend
             constant = BigInteger.Zero;
             resultType = null;
         }
-        
+
         public CompilationConstantValue(AstNumber val)
         {
             constant = BigInteger.Parse(val.Dump());
@@ -38,7 +38,7 @@ namespace Humphrey.Backend
                     goto case 1;
                 case 1:
                     var tVal = ival;
-                    if (sign==-1)
+                    if (sign == -1)
                         tVal *= -1;
 
                     while (tVal != BigInteger.Zero)
@@ -54,7 +54,7 @@ namespace Humphrey.Backend
 
             }
 
-            return (numBits, sign==-1);
+            return (numBits, sign == -1);
         }
 
         public CompilationValue GetCompilationValue(CompilationUnit unit, CompilationType destType)
@@ -67,7 +67,7 @@ namespace Humphrey.Backend
             if (destType == null && resultType != null)
                 destType = resultType.CreateOrFetchType(unit);
 
-            if (destType==null)
+            if (destType == null)
                 return unit.CreateConstant(this, numBits, isSigned);
 
             if (destType is CompilationIntegerType destIntType)
@@ -124,10 +124,15 @@ namespace Humphrey.Backend
         {
             constant = constant % rhs.Constant;
         }
+        public void LessThan(CompilationConstantValue rhs)
+        {
+            constant = (constant < rhs.Constant) ? BigInteger.One : BigInteger.Zero;
+        }
         public void Cast(IType type)
         {
             resultType = type;
         }
+
         public BigInteger Constant => constant;
     }
 }

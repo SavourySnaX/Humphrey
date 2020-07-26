@@ -40,16 +40,23 @@ namespace Humphrey.FrontEnd
 
             foreach (var ident in identifiers)
             {
-                var functionType = ct is CompilationFunctionType;
-                if (functionType && initialiser==null)
+                var functionType = ct as CompilationFunctionType;
+                if (functionType != null && initialiser == null)
                 {
                     unit.CreateNamedType(ident.Dump(), ct);
                 }
-                else if (functionType && initialiser != null)
+                else if (functionType != null && initialiser != null)
                 {
                     var newFunction = unit.CreateFunction(ct as CompilationFunctionType, ident.Dump());
 
-                    codeBlock.CreateCodeBlock(unit, newFunction, $"entry_{ident.Dump()}");
+                    var compiledBlock = codeBlock.CreateCodeBlock(unit, newFunction, $"entry_{ident.Dump()}");
+
+                    if (compiledBlock.exit.BackendValue.Terminator==null && !functionType.HasOutputs)
+                    {
+                        var builder = unit.CreateBuilder(newFunction, compiledBlock.exit);
+                        builder.BackendValue.BuildRetVoid();
+                    }
+
                 }
                 else if (initialiser == null)
                 {

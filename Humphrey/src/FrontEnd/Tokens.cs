@@ -593,7 +593,7 @@ namespace Humphrey.FrontEnd
                 }
                 else
                 {
-                    messages.Log(CompilerErrorKind.Warning_InvalidToken, $"Unexpected character ('{c}' U+{(ushort)c:X4} {Char.GetUnicodeCategory(c).ToString()})", next.Location);
+                    messages.Log(CompilerErrorKind.Error_InvalidToken, $"Unexpected character ('{c}' U+{(ushort)c:X4} {Char.GetUnicodeCategory(c).ToString()})", next.Location);
                     next = next.Remainder.ConsumeChar();
                 }
 

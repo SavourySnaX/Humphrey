@@ -59,5 +59,9 @@ namespace Extensions
         {
             return LLVM.ArrayType(elementType, numElements);
         }
+        public static LLVMTypeRef CreateIntType(uint numBits)
+        {
+            return LLVM.IntType(numBits);
+        }
     }
 }

@@ -8,7 +8,7 @@ namespace Humphrey.Tests.src
     {
         [Theory]
         [InlineData("#", CompilerErrorKind.Debug)]
-        [InlineData("\b", CompilerErrorKind.Warning_InvalidToken)]
+        [InlineData("\b", CompilerErrorKind.Error_InvalidToken)]
         public void CheckComments(string input, CompilerErrorKind kind)
         {
             TokenTest(input, kind);

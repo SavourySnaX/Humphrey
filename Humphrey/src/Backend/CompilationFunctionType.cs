@@ -15,6 +15,8 @@ namespace Humphrey.Backend
         public uint OutParamOffset => outParameterOffset;
         public CompilationParam[] Parameters => parameters;
 
+        public bool HasOutputs => outParameterOffset < Parameters.Length;
+
         public override bool Same(CompilationType obj)
         {
             var check = obj as CompilationFunctionType;

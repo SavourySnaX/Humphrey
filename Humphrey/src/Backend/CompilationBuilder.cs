@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using LLVMSharp.Interop;
 
 namespace Humphrey.Backend
@@ -8,6 +9,18 @@ namespace Humphrey.Backend
         LLVMBuilderRef builderRef;
         CompilationFunction function;
         CompilationBlock currentBlock;
+
+        public enum CompareKind
+        {
+            ULT,
+            SLT,
+        };
+
+        readonly Dictionary<CompareKind, LLVMIntPredicate> _intPredicates = new Dictionary<CompareKind, LLVMIntPredicate>
+        {
+            [CompareKind.ULT] = LLVMIntPredicate.LLVMIntULT,
+            [CompareKind.SLT] = LLVMIntPredicate.LLVMIntSLT,
+        };
 
         public CompilationBuilder(LLVMBuilderRef builder, CompilationFunction func, CompilationBlock block)
         {
@@ -110,6 +123,14 @@ namespace Humphrey.Backend
                     return new CompilationValue(builderRef.BuildZExt(src.BackendValue,toType.BackendType), toType);
             }
             throw new NotImplementedException($"Unhandled type in extension");
+        }
+
+        public CompilationValue Compare(CompareKind compareKind, CompilationValue left, CompilationValue right)
+        {
+            if (_intPredicates.TryGetValue(compareKind, out var intPredicate))
+                return new CompilationValue(builderRef.BuildICmp(intPredicate, left.BackendValue, right.BackendValue), new CompilationIntegerType(Extensions.Helpers.CreateIntType(1), false));
+
+            throw new NotImplementedException($"Unahandled compare kind {compareKind}");
         }
 
         public LLVMBuilderRef BackendValue => builderRef;
