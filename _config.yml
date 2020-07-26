@@ -17,8 +17,8 @@ title: Humphrey
 email: savoury.snax@googlemail.com
 description: >- # this means to ignore newlines until "baseurl:"
   Humphrey is a low level experimental language.
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
+baseurl: "/Humphrey" # the subpath of your site, e.g. /blog
+url: "https://savourysnax.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: SavourySnaX
 github_username:  SavourySnaX
 
