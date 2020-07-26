@@ -64,6 +64,9 @@ namespace Humphrey.Backend
 
             var (numBits, isSigned) = ComputeKind();
 
+            if (destType == null && resultType != null)
+                destType = resultType.CreateOrFetchType(unit);
+
             if (destType==null)
                 return unit.CreateConstant(this, numBits, isSigned);
 

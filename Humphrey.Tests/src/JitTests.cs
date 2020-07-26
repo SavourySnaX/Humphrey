@@ -275,7 +275,6 @@ namespace Humphrey.Backend.tests
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
 
-
         public IntPtr CompileForTest(string input, string entryPointName)
         {
             var tokenise = new HumphreyTokeniser();

@@ -26,6 +26,10 @@ namespace Humphrey.FrontEnd
 
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
+            var vlhs = lhs.ProcessExpression(unit, builder);
+            if (vlhs is CompilationConstantValue)
+                return ProcessConstantExpression(unit);
+
             throw new System.NotImplementedException($"Todo ProcessExpression as");
             /*
             var rlhs = lhs.ProcessExpression(unit, builder);
