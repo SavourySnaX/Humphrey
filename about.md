@@ -14,4 +14,4 @@ Humphrey borrows some ideas from the [Emulation Description Language](http://sav
 
 # Humphrey the bear (the languages namesake)
 
-Late 2017, christmas day to be precise, I suffered a haemorrhagic stroke. This resulted in me spending christmas through new years in hospital. I had an operation to block up the aneurysm, and shortly after the operation I was greeted by the bear pictured above. Humphrey was bought for me by my distraught partner, who had a significantly worse christmas/new years than myself, and who is directly responsible for me still being alive today. 
+Late 2017, christmas day to be precise, I suffered a haemorrhagic stroke. This resulted in me spending christmas through new year in hospital. I had an operation to block up the aneurysm, and shortly after the operation I was greeted by the bear pictured above. Humphrey was bought for me by my distraught partner, who had a significantly worse christmas/new year than myself, and who is directly responsible for me still being alive today. 
