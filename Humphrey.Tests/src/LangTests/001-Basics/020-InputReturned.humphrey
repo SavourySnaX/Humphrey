@@ -2,7 +2,7 @@
 
 Main : (inputValue : bit) (returnValue : bit) =
 {
-    return inputValue;
+    returnValue = inputValue
 } 
 
 

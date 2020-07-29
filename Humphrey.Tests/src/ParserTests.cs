@@ -287,9 +287,11 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("{}","{ }")]
         [InlineData("{return}","{ return}")]
         [InlineData("{{{}}",null)]
-        [InlineData("return", null)]
-        [InlineData("{return 5+2}", "{ return + 5 2}")]
-        [InlineData("{return 5+2,6-3}", "{ return + 5 2 , - 6 3}")]
+        [InlineData("return", "return")]
+        [InlineData("a:bit=1", "a : bit = 1")]
+        [InlineData("a=1", "a = 1")]
+        [InlineData("for x = 0..1 {}", "for x = 0 .. 1 { }")]
+        [InlineData("for x = 0..1", null)]
         public void CheckStatement(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();

@@ -829,23 +829,13 @@ namespace Humphrey.FrontEnd
             return (true, identifier, typeSpecifier, assignable);
         }
 
-        // return_statement : return [expression_list] ;
+        // return_statement : return 
         public AstReturnStatement ReturnStatement()
         {
             if (ReturnKeyword() == null)
                 return null;
 
-            if (PeekCloseCurlyBrace())      // Must be last statement in a code block
-                return new AstReturnStatement(new AstExpressionList());
-
-            var expressionList = ExpressionList();
-            if (expressionList==null)
-                return null;
-
-            if (!PeekCloseCurlyBrace())     // Must be last statement in a code block
-                return null;
-
-            return new AstReturnStatement(expressionList);
+            return new AstReturnStatement();
         }
 
         // statement : block

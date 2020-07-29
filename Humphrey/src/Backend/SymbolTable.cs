@@ -9,6 +9,7 @@ namespace Humphrey.Backend
         private readonly Dictionary<string, CompilationValue> globalValueTable;
         private readonly Dictionary<string, CompilationValue> localValueTable;      // Temporary, will become scoped type
         private readonly Dictionary<(string, CompilationFunction), CompilationValue> inputParamsTable;
+        private readonly Dictionary<(string, CompilationFunction), CompilationValue> outputParamsTable;
 
         public SymbolTable()
         {
@@ -17,6 +18,7 @@ namespace Humphrey.Backend
             globalValueTable = new Dictionary<string, CompilationValue>();
             localValueTable = new Dictionary<string, CompilationValue>();
             inputParamsTable = new Dictionary<(string, CompilationFunction), CompilationValue>();
+            outputParamsTable = new Dictionary<(string, CompilationFunction), CompilationValue>();
         }
 
         public CompilationType FetchType(string identifier)
@@ -49,18 +51,33 @@ namespace Humphrey.Backend
             return true;
         }
 
-        public CompilationValue FetchFunctionParam(string identifier, CompilationFunction function)
+        public CompilationValue FetchFunctionInputParam(string identifier, CompilationFunction function)
         {
             if (inputParamsTable.TryGetValue((identifier,function),out var result))
                 return result;
             return null;
         }
 
-        public bool AddFunctionParam(string identifier, CompilationFunction function, CompilationValue value)
+        public bool AddFunctionInputParam(string identifier, CompilationFunction function, CompilationValue value)
         {
             if (inputParamsTable.ContainsKey((identifier,function)))
                 return false;
             inputParamsTable.Add((identifier, function), value);
+            return true;
+        }
+
+        public CompilationValue FetchFunctionOutputParam(string identifier, CompilationFunction function)
+        {
+            if (outputParamsTable.TryGetValue((identifier,function),out var result))
+                return result;
+            return null;
+        }
+
+        public bool AddFunctionOutputParam(string identifier, CompilationFunction function, CompilationValue value)
+        {
+            if (outputParamsTable.ContainsKey((identifier,function)))
+                return false;
+            outputParamsTable.Add((identifier, function), value);
             return true;
         }
 

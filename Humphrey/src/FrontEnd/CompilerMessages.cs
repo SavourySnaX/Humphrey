@@ -5,8 +5,13 @@ namespace Humphrey.FrontEnd
 {
     public enum CompilerErrorKind : ushort
     {
-        Error_InvalidToken          =   Error|0x001,
-        Error_FailedVerification    =   Error|0xC01,
+        // Tokeniser block
+        Error_InvalidToken              =   Error|0x001,
+        // Parser block
+        // Compilation block
+        Error_MissingOutputAssignment   =   Error|0x801,
+        // LLVM block
+        Error_FailedVerification        =   Error|0xC01,
 
         Debug=0x0000,
         Info = 0x4000,

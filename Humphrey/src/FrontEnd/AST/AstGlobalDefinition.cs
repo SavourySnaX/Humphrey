@@ -47,16 +47,7 @@ namespace Humphrey.FrontEnd
                 }
                 else if (functionType != null && initialiser != null)
                 {
-                    var newFunction = unit.CreateFunction(ct as CompilationFunctionType, ident.Dump());
-
-                    var compiledBlock = codeBlock.CreateCodeBlock(unit, newFunction, $"entry_{ident.Dump()}");
-
-                    if (compiledBlock.exit.BackendValue.Terminator==null && !functionType.HasOutputs)
-                    {
-                        var builder = unit.CreateBuilder(newFunction, compiledBlock.exit);
-                        builder.BackendValue.BuildRetVoid();
-                    }
-
+                    AstFunctionType.BuildFunction(unit, functionType, ident, codeBlock);
                 }
                 else if (initialiser == null)
                 {

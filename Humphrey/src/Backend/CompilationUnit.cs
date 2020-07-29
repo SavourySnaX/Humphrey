@@ -106,9 +106,14 @@ namespace Humphrey.Backend
         public CompilationValue FetchValue(string identifier, CompilationBuilder builder)
         {
             // Check for function paramter
-            var value = symbolTable.FetchFunctionParam(identifier, builder.Function);
+            var value = symbolTable.FetchFunctionInputParam(identifier, builder.Function);
             if (value != null)
                 return value;
+
+            // Check for function paramter
+            value = symbolTable.FetchFunctionOutputParam(identifier, builder.Function);
+            if (value != null)
+                return builder.Load(value);
 
             // Check for global value
             value = symbolTable.FetchGlobalValue(identifier);
@@ -134,6 +139,14 @@ namespace Humphrey.Backend
             value = symbolTable.FetchLocalValue(identifier);
             if (value != null)
                 return value.Storage;
+
+            // Check for function output param
+            value = symbolTable.FetchFunctionOutputParam(identifier, builder.Function);
+            if (value != null)
+            {
+                builder.Function.MarkUsed(identifier);
+                return value;
+            }
 
             throw new Exception($"Failed to find identifier {identifier}");
         }
@@ -188,9 +201,14 @@ namespace Humphrey.Backend
             if (!symbolTable.AddFunction(identifier, cfunc))
                 throw new Exception($"function {identifier} failed to add symbol!");
 
-            for (int p = 0; p < type.Parameters.Length; p++)
+            for (uint p = 0; p < type.OutParamOffset && p < type.Parameters.Length; p++)
             {
-                symbolTable.AddFunctionParam(type.Parameters[p].Identifier, cfunc, new CompilationValue(cfunc.BackendValue.Params[p], type.Parameters[p].Type));
+                symbolTable.AddFunctionInputParam(type.Parameters[p].Identifier, cfunc, new CompilationValue(cfunc.BackendValue.Params[p], type.Parameters[p].Type));
+            }
+
+            for (uint p = type.OutParamOffset; p < type.Parameters.Length; p++)
+            {
+                symbolTable.AddFunctionOutputParam(type.Parameters[p].Identifier, cfunc, new CompilationValue(cfunc.BackendValue.Params[p], new CompilationPointerType(Extensions.Helpers.CreatePointerType(type.Parameters[p].Type.BackendType), type.Parameters[p].Type)));
             }
 
             return cfunc;
@@ -317,5 +335,7 @@ namespace Humphrey.Backend
 
             return true;
         }
+
+        public CompilerMessages Messages => messages;
     }
 }

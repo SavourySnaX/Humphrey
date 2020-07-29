@@ -23,7 +23,7 @@ namespace Humphrey.Tests.src
 
 Main : (inputValue : bit) (returnValue : bit) =
 {
-    return inputValue;
+    returnValue = inputValue
 }", 6, 2)]
         [InlineData(@"#!
 public enum FrameBufferType : byte

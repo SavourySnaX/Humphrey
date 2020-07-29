@@ -4,6 +4,6 @@
 
 Main : () (returnValue : bit) =
 {
-    return 0;
+    returnValue = 0
 } 
 
