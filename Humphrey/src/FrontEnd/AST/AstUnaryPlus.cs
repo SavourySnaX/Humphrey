@@ -24,6 +24,9 @@ namespace Humphrey.FrontEnd
         {
             return expr.ProcessExpression(unit, builder);
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

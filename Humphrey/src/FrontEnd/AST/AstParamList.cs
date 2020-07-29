@@ -36,6 +36,9 @@ namespace Humphrey.FrontEnd
             }
             return s.ToString();
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

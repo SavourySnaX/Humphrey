@@ -103,6 +103,9 @@ namespace Humphrey.FrontEnd
 
             throw new System.NotImplementedException($"Todo implement expression for store for subscript of array type...");
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

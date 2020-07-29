@@ -18,5 +18,8 @@ namespace Humphrey.FrontEnd
         {
             return "bit";
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }

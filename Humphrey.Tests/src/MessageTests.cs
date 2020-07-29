@@ -29,11 +29,11 @@ namespace Humphrey.Tests.src
         
         [Theory]
         [InlineData("WorkingFunction:()(out:bit)={out=0}", CompilerErrorKind.Debug)]
+        [InlineData("WorkingFunction:()(out1:bit,out2:bit)={out1,out2=0}", CompilerErrorKind.Debug)]
         [InlineData("BrokenFunction:()(out:bit)={}", CompilerErrorKind.Error_MissingOutputAssignment)]
         [InlineData("BrokenFunction:()(out1:bit,out2:bit)={out1=0}", CompilerErrorKind.Error_MissingOutputAssignment)]
         [InlineData("BrokenFunction:()(out1:bit,out2:bit)={out2=0}", CompilerErrorKind.Error_MissingOutputAssignment)]
         [InlineData("BrokenFunction:()(out1:bit,out2:bit)={}", CompilerErrorKind.Error_MissingOutputAssignment)]
-        [InlineData("BrokenFunction:()(out1:bit,out2:bit)={out1,out2=0}", CompilerErrorKind.Debug)]
         public void CheckCompilationMessages(string input, CompilerErrorKind kind)
         {
             CompilationTest(input, kind);
@@ -55,8 +55,6 @@ namespace Humphrey.Tests.src
                 Assert.True(messages.Dump().Length == 0, $"No compiler messages should have been generated but got {messages.Dump()}");
             else
                 Assert.True(messages.HasMessageKindBeenLogged(expected), $"Expected message code {(uint)expected:D4} ({expected}) but was not found");
-
-            var s = messages.Dump();
         }
     }
 }

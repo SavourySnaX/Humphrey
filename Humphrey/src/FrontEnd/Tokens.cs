@@ -164,9 +164,14 @@ namespace Humphrey.FrontEnd
             return $"\"{filename}\"@{line}:{column}";
         }
 
-        public string DumpContext(int length = 1)
+        public string DumpContext(TokenSpan? remain)
         {
             var s = new StringBuilder();
+            int length = 1;
+            if (remain.HasValue)
+            {
+                length = remain.Value.position - position;
+            }
 
             // scan backwards to beginning of line from current location
             int scan=position;
@@ -192,7 +197,7 @@ namespace Humphrey.FrontEnd
                 end++;
             }
 
-            for (int a = scan; a <= end; a++)
+            for (int a = scan; a < end; a++)
                 s.Append(encompass[a]);
             s.AppendLine();
             for (int a = scan; a < position; a++)
@@ -200,7 +205,8 @@ namespace Humphrey.FrontEnd
                 s.Append(" ");
             }
             for (int a = 0; a < length; a++)
-                s.AppendLine("^");
+                s.Append("^");
+            s.AppendLine();
 
             return s.ToString();
         }

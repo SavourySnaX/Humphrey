@@ -32,5 +32,8 @@ namespace Humphrey.FrontEnd
             else
                 return builder.Negate(value as CompilationValue);
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }

@@ -53,6 +53,9 @@ namespace Humphrey.FrontEnd
             return builder.UDiv(valueLeft, valueRight);
             */
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

@@ -255,7 +255,7 @@ namespace Humphrey.Backend
 
             return local;
         }
-        public CompilationParam CreateFunctionParameter(CompilationType type, string identifier)
+        public CompilationParam CreateFunctionParameter(CompilationType type, AstIdentifier identifier)
         {
             return new CompilationParam(type, identifier);
         }

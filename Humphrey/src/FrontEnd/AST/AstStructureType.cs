@@ -48,6 +48,9 @@ namespace Humphrey.FrontEnd
         }
 
         public AstStructElement[] Elements => definitions;
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

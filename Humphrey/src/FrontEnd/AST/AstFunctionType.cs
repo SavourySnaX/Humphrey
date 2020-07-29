@@ -38,7 +38,7 @@ namespace Humphrey.FrontEnd
             {
                 foreach (var o in newFunction.FetchMissingOutputs())
                 {
-                    unit.Messages.Log(CompilerErrorKind.Error_MissingOutputAssignment, $"The function '{ident.Dump()}' does not assign a result to the output '{o.Identifier}'.");
+                    unit.Messages.Log(CompilerErrorKind.Error_MissingOutputAssignment, $"The function '{ident.Dump()}' does not assign a result to the output '{o.Identifier}'.", o.Token.Location, o.Token.Remainder);
                 }
             }
         }
@@ -48,6 +48,9 @@ namespace Humphrey.FrontEnd
         {
             return $"({inputList.Dump()}) ({outputList.Dump()})";
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

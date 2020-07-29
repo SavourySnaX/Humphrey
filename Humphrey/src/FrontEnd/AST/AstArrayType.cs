@@ -30,5 +30,8 @@ namespace Humphrey.FrontEnd
         {
             return $"[{constantExpression.Dump()}] {elementType.Dump()}";
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }

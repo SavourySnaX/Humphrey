@@ -18,6 +18,9 @@ namespace Humphrey.FrontEnd
         {
             return "return";
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

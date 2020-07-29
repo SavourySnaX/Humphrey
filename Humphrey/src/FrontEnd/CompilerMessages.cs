@@ -24,7 +24,7 @@ namespace Humphrey.FrontEnd
 
     public class CompilerMessages
     {
-        private List<(CompilerErrorKind errorKind, string message, TokenSpan? location)> messages;
+        private List<(CompilerErrorKind errorKind, string message, TokenSpan? location, TokenSpan? remain)> messages;
         private HashSet<CompilerErrorKind> logged;
         bool anyErrorsLogged;
         bool logDebug;
@@ -33,7 +33,7 @@ namespace Humphrey.FrontEnd
 
         public CompilerMessages(bool debugEnable, bool infoEnable, bool warningsAsErrors)
         {
-            messages = new List<(CompilerErrorKind errorKind, string message, TokenSpan? location)>();
+            messages = new List<(CompilerErrorKind errorKind, string message, TokenSpan? location, TokenSpan? remain)>();
             logged = new HashSet<CompilerErrorKind>();
             anyErrorsLogged = false;
             logDebug = debugEnable;
@@ -48,9 +48,13 @@ namespace Humphrey.FrontEnd
 
         public void Log(CompilerErrorKind kind, string message)
         {
-            Log(kind, message, null);
+            Log(kind, message, null, null);
         }
         public void Log(CompilerErrorKind kind, string message, TokenSpan? location)
+        {
+            Log(kind, message, location, null);
+        }
+        public void Log(CompilerErrorKind kind, string message, TokenSpan? location, TokenSpan? remain)
         {
             var type = kind & CompilerErrorKind.KindMask;
             var code = kind & ~CompilerErrorKind.KindMask;
@@ -63,7 +67,7 @@ namespace Humphrey.FrontEnd
                 type = CompilerErrorKind.Error;
                 kind = code | CompilerErrorKind.Error;
             }
-            messages.Add((kind, message, location));
+            messages.Add((kind, message, location, remain));
             anyErrorsLogged |= type == CompilerErrorKind.Error;
             logged.Add(code);
         }
@@ -95,7 +99,7 @@ namespace Humphrey.FrontEnd
                 {
                     s.AppendLine($"{m.message}{System.Environment.NewLine}\t--> {m.location.Value}");
                     s.AppendLine();
-                    s.AppendLine(m.location.Value.DumpContext());
+                    s.AppendLine(m.location.Value.DumpContext(m.remain));
                     s.AppendLine();
                 }
                 else

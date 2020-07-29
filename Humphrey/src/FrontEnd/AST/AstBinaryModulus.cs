@@ -52,6 +52,9 @@ namespace Humphrey.FrontEnd
 
             return builder.URem(valueLeft, valueRight);
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

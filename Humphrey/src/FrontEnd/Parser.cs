@@ -73,30 +73,38 @@ namespace Humphrey.FrontEnd
             NextToken();
         }
 
-        (bool success, string item) Item(Tokens kind)
+        (bool success, string item, Result<Tokens> token) Item(Tokens kind)
         {
             if (lookahead.HasValue && lookahead.Value == kind)
             {
+                var retToken = lookahead;
                 var v = lookahead.ToStringValue();
                 if (kind == Tokens.Number)
                     v = HumphreyTokeniser.ConvertNumber(v);
                 NextToken();
-                return (true, v);
+                return (true, v, retToken);
             }
-            return (false, "");
+            return (false, "", lookahead);
         }
 
-        (bool success, string item) Peek(Tokens kind)
+        bool Peek(Tokens kind)
         {
             if (lookahead.HasValue && lookahead.Value == kind)
             {
-                var v = lookahead.ToStringValue();
-                if (kind == Tokens.Number)
-                    v = HumphreyTokeniser.ConvertNumber(v);
-                return (true, v);
+                return true;
             }
-            return (false, "");
+            return false;
         }
+        bool Take(Tokens kind)
+        {
+            if (lookahead.HasValue && lookahead.Value == kind)
+            {
+                NextToken();
+                return true;
+            }
+            return false;
+        }
+
 
         // * (0 or more)
         protected IAst[] ItemList(AstItemDelegate kind)
@@ -173,7 +181,11 @@ namespace Humphrey.FrontEnd
         {
             var item = Item(kind);
             if (item.success)
-                return init(item.item);
+            {
+                var ast = init(item.item);
+                ast.Token = item.token;
+                return ast;
+            }
 
             return null;
         }
@@ -184,7 +196,7 @@ namespace Humphrey.FrontEnd
         // identifier : Identifier
         public AstIdentifier Identifier() { return AstItem(Tokens.Identifier, (e) => new AstIdentifier(e)) as AstIdentifier; }
         // identifier : Identifier
-        public bool PeekIdentifier() { return Peek(Tokens.Identifier).success; }
+        public bool PeekIdentifier() { return Peek(Tokens.Identifier); }
         // loadable_identifier : Identifier
         public AstLoadableIdentifier LoadableIdentifier() { return AstItem(Tokens.Identifier, (e) => new AstLoadableIdentifier(e)) as AstLoadableIdentifier; }
 
@@ -221,23 +233,23 @@ namespace Humphrey.FrontEnd
         public IAst ArraySubscriptOperator() { return AstItem(Tokens.S_OpenSquareBracket, (e) => new AstOperator(e)); }
         // equals_operator : Equals
         public IAst EqualsOperator() { return AstItem(Tokens.O_Equals, (e) => new AstOperator(e)); }
-        public bool PeekEqualsOperator() { return Peek(Tokens.O_Equals).success; }
+        public bool PeekEqualsOperator() { return Peek(Tokens.O_Equals); }
         public IAst ColonOperator() { return AstItem(Tokens.O_Colon, (e) => new AstOperator(e)); }
-        public bool PeekColonOperator() { return Peek(Tokens.O_Colon).success; }
-        public bool CommaSyntax() { return Item(Tokens.S_Comma).success; }
-        public bool PeekCommaSyntax() { return Peek(Tokens.S_Comma).success; }
-        public bool SemiColonSyntax() { return Item(Tokens.S_SemiColon).success; }
-        public bool OpenParanthesis() { return Item(Tokens.S_OpenParanthesis).success; }
-        public bool PeekOpenParanthesis() { return Peek(Tokens.S_OpenParanthesis).success; }
-        public bool CloseParenthesis() { return Item(Tokens.S_CloseParanthesis).success; }
-        public bool OpenCurlyBrace() { return Item(Tokens.S_OpenCurlyBrace).success; }
-        public bool CloseCurlyBrace() { return Item(Tokens.S_CloseCurlyBrace).success; }
-        public bool PeekCloseCurlyBrace() { return Peek(Tokens.S_CloseCurlyBrace).success; }
-        public bool OpenSquareBracket() { return Item(Tokens.S_OpenSquareBracket).success; }
-        public bool PeekOpenSquareBracket() { return Peek(Tokens.S_OpenSquareBracket).success; }
-        public bool CloseSquareBracket() { return Item(Tokens.S_CloseSquareBracket).success; }
-        public bool UnderscoreOperator() { return Item(Tokens.S_Underscore).success; }
-        public bool PointerOperator() { return Item(Tokens.O_Multiply).success; }
+        public bool PeekColonOperator() { return Peek(Tokens.O_Colon); }
+        public bool CommaSyntax() { return Take(Tokens.S_Comma); }
+        public bool PeekCommaSyntax() { return Peek(Tokens.S_Comma); }
+        public bool SemiColonSyntax() { return Take(Tokens.S_SemiColon); }
+        public bool OpenParanthesis() { return Take(Tokens.S_OpenParanthesis); }
+        public bool PeekOpenParanthesis() { return Peek(Tokens.S_OpenParanthesis); }
+        public bool CloseParenthesis() { return Take(Tokens.S_CloseParanthesis); }
+        public bool OpenCurlyBrace() { return Take(Tokens.S_OpenCurlyBrace); }
+        public bool CloseCurlyBrace() { return Take(Tokens.S_CloseCurlyBrace); }
+        public bool PeekCloseCurlyBrace() { return Peek(Tokens.S_CloseCurlyBrace); }
+        public bool OpenSquareBracket() { return Take(Tokens.S_OpenSquareBracket); }
+        public bool PeekOpenSquareBracket() { return Peek(Tokens.S_OpenSquareBracket); }
+        public bool CloseSquareBracket() { return Take(Tokens.S_CloseSquareBracket); }
+        public bool UnderscoreOperator() { return Take(Tokens.S_Underscore); }
+        public bool PointerOperator() { return Take(Tokens.O_Multiply); }
 
         public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator };
         public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator, AsOperator, ReferenceOperator, FunctionCallOperator, ArraySubscriptOperator };

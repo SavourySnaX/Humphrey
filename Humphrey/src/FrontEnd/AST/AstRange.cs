@@ -19,6 +19,9 @@ namespace Humphrey.FrontEnd
 
         public IExpression InclusiveStart => inclusiveStart;
         public IExpression ExclusiveEnd => exclusiveStop;
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

@@ -33,6 +33,9 @@ namespace Humphrey.FrontEnd
         {
             return $"{exprList.Dump()} = {assignable.Dump()}";
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

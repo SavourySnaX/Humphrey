@@ -1,11 +1,13 @@
+using Humphrey.FrontEnd;
+
 namespace Humphrey.Backend
 {
     public class CompilationParam
     {
         private CompilationType type;
-        private string identifier;
+        private AstIdentifier identifier;
 
-        public CompilationParam(CompilationType itype, string iidentifier)
+        public CompilationParam(CompilationType itype, AstIdentifier iidentifier)
         {
             type = itype;
             identifier = iidentifier;
@@ -13,6 +15,8 @@ namespace Humphrey.Backend
 
         public CompilationType Type => type;
 
-        public string Identifier => identifier;
+        public string Identifier => identifier.Dump();
+
+        public Result<Tokens> Token => identifier.Token;
     }
 }

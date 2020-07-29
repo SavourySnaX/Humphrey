@@ -47,6 +47,9 @@ namespace Humphrey.FrontEnd
         {
             throw new System.NotImplementedException($"Todo implement expression for call...");
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

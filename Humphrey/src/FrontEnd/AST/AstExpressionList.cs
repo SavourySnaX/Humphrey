@@ -30,6 +30,9 @@ namespace Humphrey.FrontEnd
         }
 
         public IExpression[] Expressions => expressions;
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

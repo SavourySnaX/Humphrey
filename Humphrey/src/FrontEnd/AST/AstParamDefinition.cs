@@ -13,13 +13,16 @@ namespace Humphrey.FrontEnd
     
         public CompilationParam FetchParam(CompilationUnit unit)
         {
-            return unit.CreateFunctionParameter(type.CreateOrFetchType(unit), ident.Dump());
+            return unit.CreateFunctionParameter(type.CreateOrFetchType(unit), ident);
         }
 
         public string Dump()
         {
             return $"{ident.Dump()} : {type.Dump()}";
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

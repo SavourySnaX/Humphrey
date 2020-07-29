@@ -91,6 +91,9 @@ namespace Humphrey.FrontEnd
         {
             throw new System.NotImplementedException();
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 

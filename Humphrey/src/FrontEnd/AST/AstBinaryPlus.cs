@@ -46,6 +46,9 @@ namespace Humphrey.FrontEnd
 
             return builder.Add(valueLeft, valueRight);
         }
+        private Result<Tokens> _token;
+        public Result<Tokens> Token { get => _token; set => _token = value; }
+
     }
 }
 
