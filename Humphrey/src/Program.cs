@@ -26,6 +26,7 @@ namespace Humphrey.Experiments
             public bool debugLog;
             public bool infoLog;
             public bool warningsAsErrors;
+            public bool emitLLVM;
         }
 
         static Options options;
@@ -38,6 +39,7 @@ namespace Humphrey.Experiments
             options.infoLog = true;
             options.warningsAsErrors = false;
             options.target = LLVMTargetRef.DefaultTriple;
+            options.emitLLVM = false;
         }
 
         static void ShowOptions()
@@ -46,14 +48,16 @@ namespace Humphrey.Experiments
             Console.WriteLine();
             Console.WriteLine($"Options are case sensistive!");
             Console.WriteLine();
-            Console.WriteLine($"-o=<filename>              Output filename and path (Default: compile and dump disassembly)");
+            Console.WriteLine($"-o=<filename>                Output filename and path (Default: compile and dump disassembly)");
             Console.WriteLine($"--output=<filename>");
             Console.WriteLine();
-            Console.WriteLine($"--debugLog=<bool>          Enable/Disable logging of debug messages (Default: {options.debugLog})");
-            Console.WriteLine($"--infoLog=<bool>           Enable/Disable logging of information messages (Default: {options.infoLog})");
-            Console.WriteLine($"--warningsAsErrors=<bool>  Enable/Disable treating warnings as errors (Default: {options.warningsAsErrors})");
+            Console.WriteLine($"--debugLog[=<bool>]          Enable/Disable logging of debug messages (Default: {options.debugLog})");
+            Console.WriteLine($"--infoLog[=<bool>]           Enable/Disable logging of information messages (Default: {options.infoLog})");
+            Console.WriteLine($"--warningsAsErrors[=<bool>]  Enable/Disable treating warnings as errors (Default: {options.warningsAsErrors})");
             Console.WriteLine();
-            Console.WriteLine($"--target=<string>          Set the compilation target triple (Default: \"{options.target}\")");
+            Console.WriteLine($"--target=<string>            Set the compilation target triple (Default: \"{options.target}\")");
+            Console.WriteLine();
+            Console.WriteLine($"--emitLLVM[=<bool>]          Enable/Disable emitting llvm object/asm (Default: {options.emitLLVM})");
             Console.WriteLine();
         }
 
@@ -81,13 +85,9 @@ namespace Humphrey.Experiments
         {
             result = false;
             if (split.Length > 1 && bool.TryParse(s, out var p))
-            {
                 result = p;
-            }
             else
-            {
-                return ShowOptionError(ExitCodes.InvalidArguments, $"Expected filename ${s}");
-            }
+                result = true;
             return true;
         }
 
@@ -101,6 +101,7 @@ namespace Humphrey.Experiments
             ["--infoLog"] = (s, split) => ParseBoolOption(s, split, out options.infoLog),
             ["--warningsAsErrors"] = (s, split) => ParseBoolOption(s, split, out options.warningsAsErrors),
             ["--target"] = (s, split) => ParseStringOption(s, split, out options.target),
+            ["--emitLLVM"] = (s, split) => ParseBoolOption(s, split, out options.emitLLVM),
         };
 
         static bool ParseOptions(string[] args)
@@ -168,11 +169,17 @@ namespace Humphrey.Experiments
                 {
                     if (options.outputFileName != null)
                     {
-                        cu.EmitToFile(options.outputFileName,options.target);
+                        if (options.emitLLVM)
+                            cu.EmitToBitCodeFile(options.outputFileName);
+                        else
+                            cu.EmitToFile(options.outputFileName,options.target);
                     }
                     else
                     {
-                        cu.DumpDisassembly(options.target);
+                        if (options.emitLLVM)
+                            Console.WriteLine(cu.Dump());
+                        else
+                            cu.DumpDisassembly(options.target);
                     }
                 }
             }

@@ -280,6 +280,12 @@ namespace Humphrey.Backend
             return ee.GetPointerToGlobal(symbolTable.FetchFunction(identifier).BackendValue);
         }
 
+        public bool EmitToBitCodeFile(string filename)
+        {
+            moduleRef.WriteBitcodeToFile(filename);
+            return true;
+        }
+
         public bool EmitToFile(string filename, string targetTriple)
         {
             var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);

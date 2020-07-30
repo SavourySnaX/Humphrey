@@ -38,6 +38,29 @@ namespace Extensions
             }
         }
 
+        public static void ParseCommandLineOptions(string[] options, string overview)
+        {
+            int argc = options.Length;
+            byte[][] toManaged = new byte[argc][];
+            int a = 0;
+            var onstackArray = stackalloc sbyte*[argc];
+            foreach (var opt in options)
+            {
+                var bArray = Encoding.ASCII.GetBytes(options[a]);
+                var bAlloc = stackalloc sbyte[bArray.Length + 1];
+                for (int b = 0; b < bArray.Length;b++)
+                {
+                    bAlloc[b] = (sbyte)bArray[b];
+                }
+                onstackArray[a++] = bAlloc;
+            }
+
+            fixed (byte* pOverview = Encoding.ASCII.GetBytes(overview))
+            {
+                LLVM.ParseCommandLineOptions(argc, onstackArray, (sbyte*)pOverview);
+            }
+        }
+
         public static LLVMTypeRef CreateFunctionType(LLVMTypeRef returnType, LLVMTypeRef[] paramTypes, bool isVarArg)
         {
             uint numParams = (uint)paramTypes.Length;
