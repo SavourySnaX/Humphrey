@@ -31,7 +31,7 @@ If you tend to write code in 'C' using the more specific fixed size types :
 ```c
 uint32_t    myUnsignedInteger = 0;
 uint8_t     myUnsignedByte    = 0;
-int_16_t    mySignedShort     = 0;
+int16_t     mySignedShort     = 0;
 ```
 
 Then you are free to define them in Humphrey as follows :
