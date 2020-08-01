@@ -33,5 +33,22 @@ namespace Humphrey.Backend
             return outParameterOffset == check.outParameterOffset && Identifier == check.Identifier;
         }
 
+        public CompilationStructureType CreateOutputParameterStruct(CompilationUnit unit)
+        {
+            if (HasOutputs)
+            {
+                var types = new CompilationType[Parameters.Length - outParameterOffset];
+                for (uint a = outParameterOffset; a < Parameters.Length; a++)
+                {
+                    types[a-outParameterOffset] = Parameters[a].Type;
+                    types[a - outParameterOffset].Identifier = Parameters[a].Identifier;
+                }
+                return unit.FetchStructType(types) as CompilationStructureType;
+            }
+
+            return null;
+        }
+
+        public long InputCount => Parameters.Length - (Parameters.Length - outParameterOffset);
     }
 }

@@ -125,6 +125,13 @@ namespace Humphrey.Backend
             if (value != null)
                 return builder.Load(value);
 
+            // Check for function - i guess we can construct this on the fly?
+            var function = symbolTable.FetchFunction(identifier);
+            if (function!=null)
+            {
+                value = new CompilationValue(function.BackendValue, function.FunctionType);
+                return value;
+            }
             throw new Exception($"Failed to find identifier {identifier}");
         }
 
@@ -156,6 +163,12 @@ namespace Humphrey.Backend
             var builder = contextRef.CreateBuilder();
             builder.PositionAtEnd(bb.BackendValue);
             return new CompilationBuilder(builder, function, bb);
+        }
+
+        public LLVMValueRef CreateI32Constant(UInt32 value)
+        {
+            var i32Type = contextRef.GetIntType(32);
+            return i32Type.CreateConstantValue(value);
         }
 
         public LLVMValueRef CreateI64Constant(UInt64 value)

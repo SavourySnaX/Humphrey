@@ -23,8 +23,22 @@ namespace Humphrey.FrontEnd
             var result = expr.ProcessExpression(unit, builder);
             CompilationValue src = Expression.ResolveExpressionToValue(unit, result, destType);
 
-            if (src.Type.Same(destType))
-                return src;
+            while (true)
+            {
+                if (src.Type.Same(destType))
+                    return src;
+
+                // Special flexible case if a structure has a single element, we can directly unpack (this may need to be in a loop)
+                if (src.Type is CompilationStructureType cst)
+                {
+                    if (cst.Elements.Length == 1)
+                    {
+                        src = cst.LoadElement(unit, builder, src, cst.Elements[0].Identifier);
+                        continue;
+                    }
+                }
+                break;
+            }
 
             // Always promote integer type to largest of two sizes if not matching is the current rule..
             var srcIntType = src.Type as CompilationIntegerType;

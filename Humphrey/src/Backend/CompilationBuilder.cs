@@ -133,6 +133,17 @@ namespace Humphrey.Backend
             throw new NotImplementedException($"Unahandled compare kind {compareKind}");
         }
 
+        public void Call(CompilationValue func, CompilationValue[] arguments)
+        {
+            var backendValues = new LLVMValueRef[arguments.Length];
+            for (int a = 0; a < arguments.Length; a++)
+            {
+                backendValues[a] = arguments[a].BackendValue;
+            }
+
+            builderRef.BuildCall(func.BackendValue, backendValues);
+        }
+
         public LLVMBuilderRef BackendValue => builderRef;
         public CompilationFunction Function => function;
         public CompilationBlock CurrentBlock => currentBlock;

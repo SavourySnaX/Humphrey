@@ -274,6 +274,39 @@ namespace Humphrey.Backend.tests
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
 
+        [Theory]
+        [InlineData(@"Bob:(a:bit,b:bit)(out:bit)={out=a+b}Main:(a:bit,b:bit)(out:bit)={out=Bob(a,b)}", "Main", 0, 0, 0)]
+        [InlineData(@"Bob:(a:bit,b:bit)(out:bit)={out=a+b}Main:(a:bit,b:bit)(out:bit)={out=Bob(a,b)}", "Main", 0, 1, 1)]
+        [InlineData(@"Bob:(a:bit,b:bit)(out:bit)={out=a+b}Main:(a:bit,b:bit)(out:bit)={out=Bob(a,b)}", "Main", 1, 0, 1)]
+        [InlineData(@"Bob:(a:bit,b:bit)(out:bit)={out=a+b}Main:(a:bit,b:bit)(out:bit)={out=Bob(a,b).out}", "Main", 0, 0, 0)]
+        [InlineData(@"Bob:(a:bit,b:bit)(out:bit)={out=a+b}Main:(a:bit,b:bit)(out:bit)={out=Bob(a,b).out}", "Main", 0, 1, 1)]
+        [InlineData(@"Bob:(a:bit,b:bit)(out:bit)={out=a+b}Main:(a:bit,b:bit)(out:bit)={out=Bob(a,b).out}", "Main", 1, 0, 1)]
+        public void CheckSimpleFunctionCall(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(InputBitBitExpectsBitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+
+        const string MultiReturnCall = @"
+Bob:(a:bit,b:bit)(out1:bit,out2:bit)=
+{
+    out1=b 
+    out2=a
+}
+Main:(a:bit,b:bit)(out:bit)=
+{
+    result:=Bob(a,b) 
+    out=result.out1+result.out2
+}";
+
+        [Theory]
+        [InlineData(MultiReturnCall, "Main", 0, 0, 0)]
+        [InlineData(MultiReturnCall, "Main", 0, 1, 1)]
+        [InlineData(MultiReturnCall, "Main", 1, 0, 1)]
+        public void CheckMultiReturnCall(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(InputBitBitExpectsBitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+
         public IntPtr CompileForTest(string input, string entryPointName)
         {
             var messages = new CompilerMessages(true, true, false);

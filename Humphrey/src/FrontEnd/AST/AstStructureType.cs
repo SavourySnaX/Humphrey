@@ -8,7 +8,6 @@ namespace Humphrey.FrontEnd
         public AstStructureType(AstStructElement[] defList)
         {
             definitions = defList;
-
         }
     
         public CompilationType CreateOrFetchType(CompilationUnit unit)

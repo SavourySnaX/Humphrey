@@ -50,7 +50,7 @@ namespace Humphrey.Backend
                     break;
                 idx++;
             }
-                
+
             CompilationType elementType = elementTypes[idx];
             var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, src, elementType);
 
@@ -58,5 +58,21 @@ namespace Humphrey.Backend
 
             builder.Store(newVal, dst.Storage);
         }
+
+        public CompilationValue AddressElement(CompilationUnit unit, CompilationBuilder builder, CompilationValue src, string identifier)
+        {
+            // Find identifier in elements
+            uint idx=0;
+            foreach (var i in elementTypes)
+            {
+                if (i.Identifier==identifier)
+                    break;
+                idx++;
+            }
+
+            return builder.InBoundsGEP(src, new LLVMValueRef[] { unit.CreateI32Constant(0), unit.CreateI32Constant(idx) });
+        }
+
+        public CompilationType[] Elements => elementTypes;
     }
 }
