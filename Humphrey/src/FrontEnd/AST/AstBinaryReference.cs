@@ -23,7 +23,7 @@ namespace Humphrey.FrontEnd
         }
 
 
-        public (CompilationStructureType type, CompilationValue value) CommonProcessExpression(CompilationUnit unit, CompilationBuilder builder)
+        public CompilationValue CommonProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             var rlhs = lhs.ProcessExpression(unit, builder);
             var vlhs = rlhs as CompilationValue;
@@ -35,21 +35,25 @@ namespace Humphrey.FrontEnd
             if (type==null)
                 throw new System.NotImplementedException($"Attempt to reference a structure member of a non structure type!");
 
-            return (type, vlhs);
+            var store = type.AddressElement(unit, builder, vlhs.Storage, rhs.Dump());
+            var loaded = new CompilationValue(builder.Load(store).BackendValue, (store.Type as CompilationPointerType).ElementType);
+            loaded.Storage = store;
+
+            return loaded;
         }
         
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            var (type, value) = CommonProcessExpression(unit, builder);
-
-            return type.LoadElement(unit, builder, value, rhs.Dump());
+            return CommonProcessExpression(unit, builder);
         }
 
         public void ProcessExpressionForStore(CompilationUnit unit, CompilationBuilder builder, IExpression value)
         {
-            var (type, dst) = CommonProcessExpression(unit, builder);
+            var dst = CommonProcessExpression(unit, builder);
 
-            type.StoreElement(unit, builder, dst, value, rhs.Dump());
+            var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, value, dst.Type);
+
+            builder.Store(storeValue, dst.Storage);
         }
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }

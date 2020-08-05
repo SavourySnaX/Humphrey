@@ -66,13 +66,13 @@ namespace Humphrey.FrontEnd
 
             if (vlhs.Type is CompilationPointerType pointerType)
             {
-                var gep = builder.InBoundsGEP(vlhs, new LLVMSharp.Interop.LLVMValueRef[] { builder.Ext(vrhs, i64Type).BackendValue });
+                var gep = builder.InBoundsGEP(vlhs, pointerType, new LLVMSharp.Interop.LLVMValueRef[] { builder.Ext(vrhs, i64Type).BackendValue });
                 var dereferenced = builder.Load(gep);
                 return new CompilationValue(dereferenced.BackendValue, pointerType.ElementType);
             }
             if (vlhs.Type is CompilationArrayType arrayType)
             {
-                var gep = builder.InBoundsGEP(vlhs.Storage, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, unit.FetchIntegerType(64)).BackendValue });
+                var gep = builder.InBoundsGEP(vlhs.Storage, vlhs.Storage.Type as CompilationPointerType, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, unit.FetchIntegerType(64)).BackendValue });
                 var dereferenced = builder.Load(gep);
                 return new CompilationValue(dereferenced.BackendValue, arrayType.ElementType);
             }
@@ -86,16 +86,16 @@ namespace Humphrey.FrontEnd
             var (vlhs, vrhs) = CommonExpressionProcess(unit, builder);
             if (vlhs.Type is CompilationPointerType pointerType)
             {
-                var gep = builder.InBoundsGEP(vlhs, new LLVMSharp.Interop.LLVMValueRef[] { builder.Ext(vrhs, i64Type).BackendValue });
                 CompilationType elementType = pointerType.ElementType;
+                var gep = builder.InBoundsGEP(vlhs, pointerType, new LLVMSharp.Interop.LLVMValueRef[] { builder.Ext(vrhs, i64Type).BackendValue });
                 var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, value, elementType);
                 builder.Store(storeValue, gep);
                 return;
             }
             if (vlhs.Type is CompilationArrayType arrayType)
             {
-                var gep = builder.InBoundsGEP(vlhs.Storage, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, i64Type).BackendValue });
                 CompilationType elementType = arrayType.ElementType;
+                var gep = builder.InBoundsGEP(vlhs.Storage, vlhs.Storage.Type as CompilationPointerType, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, i64Type).BackendValue });
                 var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, value, elementType);
                 builder.Store(storeValue, gep);
                 return;

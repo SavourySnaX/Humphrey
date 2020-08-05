@@ -70,7 +70,9 @@ namespace Humphrey.Backend
                 idx++;
             }
 
-            return builder.InBoundsGEP(src, new LLVMValueRef[] { unit.CreateI32Constant(0), unit.CreateI32Constant(idx) });
+            var resultPtrType = Extensions.Helpers.CreatePointerType(elementTypes[idx].BackendType);
+            var cPtrType = new CompilationPointerType(resultPtrType, elementTypes[idx]);
+            return builder.InBoundsGEP(src, cPtrType, new LLVMValueRef[] { unit.CreateI32Constant(0), unit.CreateI32Constant(idx) });
         }
 
         public CompilationType[] Elements => elementTypes;

@@ -102,12 +102,12 @@ namespace Humphrey.Backend
         }
 
 
-        public CompilationValue InBoundsGEP(CompilationValue ptr, LLVMValueRef[] indices)
+        public CompilationValue InBoundsGEP(CompilationValue ptr, CompilationPointerType resolvedType, LLVMValueRef[] indices)
         {
             var ptrType = ptr.Type as CompilationPointerType;
             if (ptrType==null)
                 throw new System.ArgumentException($"GEP requires a pointer value");
-            return new CompilationValue(builderRef.BuildInBoundsGEP(ptr.BackendValue, indices), ptrType);
+            return new CompilationValue(builderRef.BuildInBoundsGEP(ptr.BackendValue, indices), resolvedType);
         }
 
         public CompilationValue Ext(CompilationValue src, CompilationType toType)
