@@ -310,6 +310,8 @@ Main:(a:bit,b:bit)(out:bit)=
         [Theory]
         [InlineData("Main:()(out:bit)={local:{nest:{a:bit}}=_ local.nest.a=0 out=local.nest.a}","Main",0)]
         [InlineData("Main:()(out:bit)={local:{nest:{a:bit}}=_ local.nest.a=1 out=local.nest.a}","Main",1)]
+        [InlineData("Main:()(out:bit)={local:{nest:{deepl:{a:bit}deepr:{a:bit}}}=_ local.nest.deepl.a,local.nest.deepr.a=0 out=local.nest.deepr.a}","Main",0)]
+        [InlineData("Main:()(out:bit)={local:{nest:{deepl:{a:bit}deepr:{a:bit}}}=_ local.nest.deepl.a,local.nest.deepr.a=1 out=local.nest.deepr.a}","Main",1)]
         public void CheckAssignNestedStruct(string input, string entryPointName, byte expected)
         {
             Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");

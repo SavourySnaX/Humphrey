@@ -63,6 +63,18 @@ namespace Humphrey.FrontEnd
                     return new AstBinaryDivide(left, right);
                 case "%":
                     return new AstBinaryModulus(left, right);
+                case "==":
+                    return new AstBinaryCompareEqual(left, right);
+                case "!=":
+                    return new AstBinaryCompareNotEqual(left, right);
+                case "<=":
+                    return new AstBinaryCompareLessEqual(left, right);
+                case ">=":
+                    return new AstBinaryCompareGreaterEqual(left, right);
+                case "<":
+                    return new AstBinaryCompareLess(left, right);
+                case ">":
+                    return new AstBinaryCompareGreater(left, right);
                 default:
                     throw new NotImplementedException($"Unimplemented binary operator : {oper.Dump()}");
             }

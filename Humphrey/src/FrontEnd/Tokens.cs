@@ -34,6 +34,12 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Keyword", Example = "for")]
         KW_For,
 
+        [Token(Category = "Keyword", Example = "if")]
+        KW_If,
+
+        [Token(Category = "Keyword", Example = "else")]
+        KW_Else,
+
         [Token(Category = "Keyword", Example = "return")]
         KW_Return,
 
@@ -55,6 +61,9 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Operator", Example = "=")]
         O_Equals,
 
+        [Token(Category = "Operator", Example = "!")]
+        O_LogicalNot,
+
         [Token(Category = "Operator", Example = ".")]
         O_Dot,
         [Token(Category = "Operator", Example = "..")]
@@ -62,6 +71,25 @@ namespace Humphrey.FrontEnd
 
         [Token(Category = "Operator", Example = ":")]
         O_Colon,
+        
+        [Token(Category = "Operator", Example = "==")]
+        O_EqualsEquals,
+
+        [Token(Category = "Operator", Example = "!=")]
+        O_NotEquals,
+
+        [Token(Category = "Operator", Example = "<=")]
+        O_LessEquals,
+
+        [Token(Category = "Operator", Example = ">=")]
+        O_GreaterEquals,
+        
+        [Token(Category = "Operator", Example = "<")]
+        O_Less,
+        
+        [Token(Category = "Operator", Example = ">")]
+        O_Greater,
+
 
         [Token(Category = "Operator", Example = "as")]
         O_As,
@@ -270,6 +298,9 @@ namespace Humphrey.FrontEnd
             ['%'] = Tokens.O_Modulus,
             [':'] = Tokens.O_Colon,
             ['.'] = Tokens.O_Dot,
+            ['!'] = Tokens.O_LogicalNot,
+            ['<'] = Tokens.O_Less,
+            ['>'] = Tokens.O_Greater,
             ['='] = Tokens.O_Equals,
             [';'] = Tokens.S_SemiColon,
             [','] = Tokens.S_Comma,
@@ -284,6 +315,10 @@ namespace Humphrey.FrontEnd
         readonly Dictionary<(char, char), Tokens> _dualOperators = new Dictionary<(char, char), Tokens>
         {
             [('.', '.')] = Tokens.O_DotDot,
+            [('=', '=')] = Tokens.O_EqualsEquals,
+            [('!', '=')] = Tokens.O_NotEquals,
+            [('<', '=')] = Tokens.O_LessEquals,
+            [('>', '=')] = Tokens.O_GreaterEquals,
         };
 
         readonly Dictionary<string, Tokens> _keywords = new Dictionary<string, Tokens>
@@ -292,6 +327,8 @@ namespace Humphrey.FrontEnd
             ["bit"] = Tokens.KW_Bit,
             ["for"] = Tokens.KW_For,
             ["return"] = Tokens.KW_Return,
+            ["if"] = Tokens.KW_If,
+            ["else"] = Tokens.KW_Else,
         };
 
         protected static Result<char> SkipWhiteSpace(TokenSpan span)

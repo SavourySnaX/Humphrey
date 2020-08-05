@@ -18,6 +18,22 @@ namespace Humphrey.FrontEnd
                 {
                     case "":
                         return int.MaxValue;
+                    case "as":
+                        return 1000;
+                    case "!":
+                        return 750;
+                    case "<":
+                        return 650;
+                    case ">":
+                        return 650;
+                    case "<=":
+                        return 650;
+                    case ">=":
+                        return 650;
+                    case "==":
+                        return 600;
+                    case "!=":
+                        return 600;
                     case "+":
                         return 500;
                     case "-":
@@ -32,8 +48,6 @@ namespace Humphrey.FrontEnd
                         return 150;
                     case ":":
                         return 100;
-                    case "as":
-                        return 1000;
                     case ".":
                         return 100;
                     case "(":

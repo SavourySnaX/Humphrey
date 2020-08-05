@@ -211,6 +211,20 @@ namespace Humphrey.FrontEnd
         public IAst ReturnKeyword() { return AstItem(Tokens.KW_Return, (e) => new AstKeyword(e)); }
         public IAst ForKeyword() { return AstItem(Tokens.KW_For, (e) => new AstKeyword(e)); }
 
+        // logical_not : !
+        public IAst LogicalNotOperator() { return AstItem(Tokens.O_LogicalNot, (e) => new AstOperator(e)); }
+        // compare_equal : ==
+        public IAst CompareEqualOperator() { return AstItem(Tokens.O_EqualsEquals, (e) => new AstOperator(e)); }
+        // compare_equal : !=
+        public IAst CompareNotEqualOperator() { return AstItem(Tokens.O_NotEquals, (e) => new AstOperator(e)); }
+        // compare_equal : <=
+        public IAst CompareLessEqualOperator() { return AstItem(Tokens.O_LessEquals, (e) => new AstOperator(e)); }
+        // compare_equal : >=
+        public IAst CompareGreaterEqualOperator() { return AstItem(Tokens.O_GreaterEquals, (e) => new AstOperator(e)); }
+        // compare_equal : <
+        public IAst CompareLessOperator() { return AstItem(Tokens.O_Less, (e) => new AstOperator(e)); }
+        // compare_equal : >
+        public IAst CompareGreaterOperator() { return AstItem(Tokens.O_Greater, (e) => new AstOperator(e)); }
         // add_operator : +
         public IAst AddOperator() { return AstItem(Tokens.O_Plus, (e) => new AstOperator(e)); }
         // subtract_operator : -
@@ -251,8 +265,10 @@ namespace Humphrey.FrontEnd
         public bool UnderscoreOperator() { return Take(Tokens.S_Underscore); }
         public bool PointerOperator() { return Take(Tokens.O_Multiply); }
 
-        public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator };
-        public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator, AsOperator, ReferenceOperator, FunctionCallOperator, ArraySubscriptOperator };
+        public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, LogicalNotOperator };
+        public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator, 
+                CompareEqualOperator, CompareNotEqualOperator, CompareLessOperator, CompareLessEqualOperator, CompareGreaterOperator, CompareGreaterEqualOperator,
+                AsOperator, ReferenceOperator, FunctionCallOperator, ArraySubscriptOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
         public AstItemDelegate[] Types => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };

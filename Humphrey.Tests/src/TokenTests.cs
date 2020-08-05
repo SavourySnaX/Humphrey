@@ -27,6 +27,13 @@ namespace Humphrey.Tests.src
         [InlineData(":", Tokens.O_Colon)]
         [InlineData(".", Tokens.O_Dot)]
         [InlineData("..", Tokens.O_DotDot)]
+        [InlineData("==", Tokens.O_EqualsEquals)]
+        [InlineData("!=", Tokens.O_NotEquals)]
+        [InlineData("<=", Tokens.O_LessEquals)]
+        [InlineData(">=", Tokens.O_GreaterEquals)]
+        [InlineData("!", Tokens.O_LogicalNot)]
+        [InlineData("<", Tokens.O_Less)]
+        [InlineData(">", Tokens.O_Greater)]
         [InlineData("as", Tokens.O_As)]
         public void CheckOperatorTokens(string input, Tokens expected)
         {
@@ -52,6 +59,8 @@ namespace Humphrey.Tests.src
         [InlineData("return", Tokens.KW_Return)]
         [InlineData("bit", Tokens.KW_Bit)]
         [InlineData("for", Tokens.KW_For)]
+        [InlineData("if", Tokens.KW_If)]
+        [InlineData("else", Tokens.KW_Else)]
         public void CheckKeywordTokens(string input, Tokens expected)
         {
             TokenTest(input, new[] { expected });
