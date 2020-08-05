@@ -2,31 +2,34 @@ using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
-    public class AstBinaryLessThan : IExpression
+    public abstract class AstBinaryExpressionExpression : IExpression
     {
         IExpression lhs;
         IExpression rhs;
-        public AstBinaryLessThan(IExpression left, IExpression right)
+        public AstBinaryExpressionExpression(IExpression left, IExpression right)
         {
             lhs = left;
             rhs = right;
         }
-    
+
+        public abstract string DumpOperator();
+
         public string Dump()
         {
-            return $"< {lhs.Dump()} {rhs.Dump()}";
+            return $"{DumpOperator()} {lhs.Dump()} {rhs.Dump()}";
         }
+
+        public abstract CompilationConstantValue CompilationConstantValue(CompilationConstantValue left, CompilationConstantValue right);
 
         public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
             var valueLeft = lhs.ProcessConstantExpression(unit);
             var valueRight = rhs.ProcessConstantExpression(unit);
 
-            valueLeft.LessThan(valueRight);
-
-            return valueLeft;
+            return CompilationConstantValue(valueLeft, valueRight);
         }
 
+        public abstract ICompilationValue CompilationValue(CompilationBuilder builder, CompilationValue left, CompilationValue right);
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             var rlhs = lhs.ProcessExpression(unit, builder);
@@ -44,20 +47,16 @@ namespace Humphrey.FrontEnd
 
             var (valueLeft, valueRight) = AstBinaryExpression.FixupBinaryExpressionInputs(unit, builder, vlhs, vrhs);
 
-            bool signed = false;
-            if (valueLeft.Type is CompilationIntegerType vlt)
-            {
-                if (vlt.IsSigned)
-                    signed = true;
-            }
-
-            return builder.Compare(signed ? CompilationBuilder.CompareKind.SLT : CompilationBuilder.CompareKind.ULT, valueLeft, valueRight);
+            return CompilationValue(builder, valueLeft, valueRight);
         }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 
     }
 }
+
+
 
 
 

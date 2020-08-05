@@ -22,7 +22,7 @@ namespace Humphrey.FrontEnd
                 throw new System.NotImplementedException($"identifiers.length != rangeList.Length");
 
             if (identifiers.Length != 1)
-                throw new System.NotImplementedException($"Todo nultiple block assignments..etc");
+                throw new System.NotImplementedException($"Todo multiple block assignments..etc");
 
             for (int idx = 0; idx < identifiers.Length; idx++)
             {
@@ -41,7 +41,7 @@ namespace Humphrey.FrontEnd
             // CheckBlock performs iter end check basically
             {
                 var checkBuilder = unit.CreateBuilder(function, checkBlock);
-                var cond = new AstBinaryLessThan(identifiers[0], rangeList[0].ExclusiveEnd).ProcessExpression(unit, checkBuilder);
+                var cond = new AstBinaryCompareLess(identifiers[0], rangeList[0].ExclusiveEnd).ProcessExpression(unit, checkBuilder);
                 checkBuilder.BackendValue.BuildCondBr(Expression.ResolveExpressionToValue(unit, cond, null).BackendValue, compilationBlock.entry.BackendValue, endBlock.BackendValue);
             }
 
@@ -62,21 +62,6 @@ namespace Humphrey.FrontEnd
             // ensure our builder correctly points at end block now
             builder.PositionAtEnd(endBlock);
 
-
-            //throw new System.NotImplementedException($"Todo for statement");
-            /*uint outParamIdx = function.OutParamOffset;
-            foreach (var expr in exprList.Expressions)
-            {
-                var paramType = function.FunctionType.Parameters[outParamIdx].Type;
-                var value = AstUnaryExpression.EnsureTypeOk(unit, builder, expr, paramType);
-
-                var parameter = function.BackendValue.GetParam(outParamIdx++);
-
-                builder.BackendValue.BuildStore(value.BackendValue, parameter);
-            }
-
-            builder.BackendValue.BuildRetVoid();
-*/
             return true;
         }
 

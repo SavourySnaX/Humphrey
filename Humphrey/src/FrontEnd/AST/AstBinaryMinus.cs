@@ -2,53 +2,27 @@ using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
-    public class AstBinaryMinus : IExpression
+    public class AstBinaryMinus : AstBinaryExpressionExpression
     {
-        IExpression lhs;
-        IExpression rhs;
-        public AstBinaryMinus(IExpression left, IExpression right)
+        public AstBinaryMinus(IExpression left, IExpression right) : base(left, right)
         {
-            lhs = left;
-            rhs = right;
         }
     
-        public string Dump()
+        public override string DumpOperator()
         {
-            return $"- {lhs.Dump()} {rhs.Dump()}";
+            return "-";
         }
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public override CompilationConstantValue CompilationConstantValue(CompilationConstantValue left, CompilationConstantValue right)
         {
-            var valueLeft = lhs.ProcessConstantExpression(unit);
-            var valueRight = rhs.ProcessConstantExpression(unit);
-
-            valueLeft.Sub(valueRight);
-
-            return valueLeft;
+            left.Sub(right);
+            return left;
         }
 
-        public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
+        public override ICompilationValue CompilationValue(CompilationBuilder builder, CompilationValue left, CompilationValue right)
         {
-            var rlhs = lhs.ProcessExpression(unit, builder);
-            var rrhs = rhs.ProcessExpression(unit, builder);
-            if (rlhs is CompilationConstantValue clhs && rrhs is CompilationConstantValue crhs)
-                return ProcessConstantExpression(unit);
-
-            var vlhs = rlhs as CompilationValue;
-            var vrhs = rrhs as CompilationValue;
-
-            if (vlhs is null)
-                vlhs = (rlhs as CompilationConstantValue).GetCompilationValue(unit, vrhs.Type);
-            if (vrhs is null)
-                vrhs = (rrhs as CompilationConstantValue).GetCompilationValue(unit, vlhs.Type);
-
-            var (valueLeft, valueRight) = AstBinaryExpression.FixupBinaryExpressionInputs(unit, builder, vlhs, vrhs);
-
-            return builder.Sub(valueLeft, valueRight);
+            return builder.Sub(left, right);
         }
-        private Result<Tokens> _token;
-        public Result<Tokens> Token { get => _token; set => _token = value; }
-
     }
 }
 

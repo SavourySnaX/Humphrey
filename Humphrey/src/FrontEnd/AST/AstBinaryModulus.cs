@@ -2,59 +2,33 @@ using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
-    public class AstBinaryModulus : IExpression
+    public class AstBinaryModulus : AstBinaryExpressionExpression
     {
-        IExpression lhs;
-        IExpression rhs;
-        public AstBinaryModulus(IExpression left, IExpression right)
+        public AstBinaryModulus(IExpression left, IExpression right) : base(left, right)
         {
-            lhs = left;
-            rhs = right;
         }
     
-        public string Dump()
+        public override string DumpOperator()
         {
-            return $"% {lhs.Dump()} {rhs.Dump()}";
+            return "%";
         }
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public override CompilationConstantValue CompilationConstantValue(CompilationConstantValue left, CompilationConstantValue right)
         {
-            var valueLeft = lhs.ProcessConstantExpression(unit);
-            var valueRight = rhs.ProcessConstantExpression(unit);
-
-            valueLeft.Rem(valueRight);
-
-            return valueLeft;
+            left.Rem(right);
+            return left;
         }
 
-        public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
+        public override ICompilationValue CompilationValue(CompilationBuilder builder, CompilationValue left, CompilationValue right)
         {
-            var rlhs = lhs.ProcessExpression(unit, builder);
-            var rrhs = rhs.ProcessExpression(unit, builder);
-            if (rlhs is CompilationConstantValue clhs && rrhs is CompilationConstantValue crhs)
-                return ProcessConstantExpression(unit);
-
-            var vlhs = rlhs as CompilationValue;
-            var vrhs = rrhs as CompilationValue;
-
-            if (vlhs is null)
-                vlhs = (rlhs as CompilationConstantValue).GetCompilationValue(unit, vrhs.Type);
-            if (vrhs is null)
-                vrhs = (rrhs as CompilationConstantValue).GetCompilationValue(unit, vlhs.Type);
-
-            var (valueLeft, valueRight) = AstBinaryExpression.FixupBinaryExpressionInputs(unit, builder, vlhs, vrhs);
-
-            var leftIntType = valueLeft.Type as CompilationIntegerType;
-            var rightIntType = valueRight.Type as CompilationIntegerType;
+            var leftIntType = left.Type as CompilationIntegerType;
+            var rightIntType = right.Type as CompilationIntegerType;
 
             if (leftIntType.IsSigned || rightIntType.IsSigned)
-                return builder.SRem(valueLeft, valueRight);
+                return builder.SRem(left, right);
 
-            return builder.URem(valueLeft, valueRight);
+            return builder.URem(left, right);
         }
-        private Result<Tokens> _token;
-        public Result<Tokens> Token { get => _token; set => _token = value; }
-
     }
 }
 

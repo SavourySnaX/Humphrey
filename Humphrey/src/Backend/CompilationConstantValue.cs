@@ -124,10 +124,31 @@ namespace Humphrey.Backend
         {
             constant = constant % rhs.Constant;
         }
-        public void LessThan(CompilationConstantValue rhs)
+        public void CompareLess(CompilationConstantValue rhs)
         {
             constant = (constant < rhs.Constant) ? BigInteger.One : BigInteger.Zero;
         }
+        public void CompareLessEqual(CompilationConstantValue rhs)
+        {
+            constant = (constant <= rhs.Constant) ? BigInteger.One : BigInteger.Zero;
+        }
+        public void CompareGreater(CompilationConstantValue rhs)
+        {
+            constant = (constant > rhs.Constant) ? BigInteger.One : BigInteger.Zero;
+        }
+        public void CompareGreaterEqual(CompilationConstantValue rhs)
+        {
+            constant = (constant >= rhs.Constant) ? BigInteger.One : BigInteger.Zero;
+        }
+        public void CompareEqual(CompilationConstantValue rhs)
+        {
+            constant = (constant == rhs.Constant) ? BigInteger.One : BigInteger.Zero;
+        }
+        public void CompareNotEqual(CompilationConstantValue rhs)
+        {
+            constant = (constant != rhs.Constant) ? BigInteger.One : BigInteger.Zero;
+        }
+
         public void Cast(IType type)
         {
             resultType = type;

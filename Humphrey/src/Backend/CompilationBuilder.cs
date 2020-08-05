@@ -12,14 +12,30 @@ namespace Humphrey.Backend
 
         public enum CompareKind
         {
+            EQ,
+            NE,
+            UGT,
+            SGT,
+            UGE,
+            SGE,
             ULT,
             SLT,
+            ULE,
+            SLE,
         };
 
         readonly Dictionary<CompareKind, LLVMIntPredicate> _intPredicates = new Dictionary<CompareKind, LLVMIntPredicate>
         {
+            [CompareKind.EQ] = LLVMIntPredicate.LLVMIntEQ,
+            [CompareKind.NE] = LLVMIntPredicate.LLVMIntNE,
+            [CompareKind.UGT] = LLVMIntPredicate.LLVMIntUGT,
+            [CompareKind.SGT] = LLVMIntPredicate.LLVMIntSGT,
+            [CompareKind.ULE] = LLVMIntPredicate.LLVMIntUGE,
+            [CompareKind.SLE] = LLVMIntPredicate.LLVMIntSLE,
             [CompareKind.ULT] = LLVMIntPredicate.LLVMIntULT,
             [CompareKind.SLT] = LLVMIntPredicate.LLVMIntSLT,
+            [CompareKind.ULE] = LLVMIntPredicate.LLVMIntULE,
+            [CompareKind.SLE] = LLVMIntPredicate.LLVMIntSLE,
         };
 
         public CompilationBuilder(LLVMBuilderRef builder, CompilationFunction func, CompilationBlock block)
