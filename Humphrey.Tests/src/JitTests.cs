@@ -317,6 +317,22 @@ Main:(a:bit,b:bit)(out:bit)=
             Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
         }
 
+        [Theory]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a==99 {out=12} }", "Main", 99, 22, 12)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a==99 {out=12} }", "Main", 0, 22, 22)]
+        public void CheckIf(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+        
+        [Theory]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a==99 {out=12} else {out=b}}", "Main", 99, 22, 12)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a==99 {out=12} else {out=b}}", "Main", 6, 22, 22)]
+        public void CheckIfElse(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+
         public IntPtr CompileForTest(string input, string entryPointName)
         {
             var messages = new CompilerMessages(true, true, false);

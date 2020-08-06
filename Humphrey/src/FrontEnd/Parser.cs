@@ -210,6 +210,8 @@ namespace Humphrey.FrontEnd
         public AstBitType BitKeyword() { return AstItem(Tokens.KW_Bit, (e) => new AstBitType()) as AstBitType; }
         public IAst ReturnKeyword() { return AstItem(Tokens.KW_Return, (e) => new AstKeyword(e)); }
         public IAst ForKeyword() { return AstItem(Tokens.KW_For, (e) => new AstKeyword(e)); }
+        public IAst IfKeyword() { return AstItem(Tokens.KW_If, (e) => new AstKeyword(e)); }
+        public IAst ElseKeyword() { return AstItem(Tokens.KW_Else, (e) => new AstKeyword(e)); }
 
         // logical_not : !
         public IAst LogicalNotOperator() { return AstItem(Tokens.O_LogicalNot, (e) => new AstOperator(e)); }
@@ -273,7 +275,7 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] Types => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
-        public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement, ForStatement, CouldBeLocalScopeDefinitionOrAssignment };
+        public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement, ForStatement, IfStatement, CouldBeLocalScopeDefinitionOrAssignment };
 
         public AstItemDelegate[] StructDefinitions => new AstItemDelegate[] { StructElementDefinition };
         public AstItemDelegate[] LocalDefinition => new AstItemDelegate[] { LocalScopeDefinition };
@@ -558,6 +560,32 @@ namespace Humphrey.FrontEnd
                 return null;
 
             return new AstRange(inclusiveBegin, exclusiveEnd);
+        }
+
+        public AstIfStatement IfStatement()
+        {
+            if (IfKeyword() == null)
+                return null;
+
+            var expression = ParseExpression();
+            if (expression == null)
+                return null;
+
+            var codeBlock = CodeBlock();
+            if (codeBlock == null)
+                return null;
+
+
+            if (ElseKeyword() != null)
+            {
+                var elseCodeBlock = CodeBlock();
+                if (elseCodeBlock == null)
+                    return null;
+
+                return new AstIfStatement(expression, codeBlock, elseCodeBlock);
+            }
+
+            return new AstIfStatement(expression, codeBlock, null);
         }
 
         public AstForStatement ForStatement()

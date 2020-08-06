@@ -361,6 +361,19 @@ namespace Humphrey.FrontEnd.tests
             var parser = new HumphreyParser(tokens);
             CheckAst(input, parser.ForStatement(), expected);
         }
+        
+        [Theory]
+        [InlineData("if x == 0 {}", "if == x 0 { }")]
+        [InlineData("if x == 0 {} else {}", "if == x 0 { } else { }")]
+        [InlineData("if x == 0 {if b{}} else {}", "if == x 0 { if b { }} else { }")]
+        public void CheckIfStatement(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.IfStatement(), expected);
+        }
+
 
         [Theory]
         [InlineData("[]", null)]
