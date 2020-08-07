@@ -4,7 +4,7 @@ namespace Humphrey.Backend
 {
     public abstract class CompilationType
     {
-        string identifier;
+        protected string identifier;
         LLVMTypeRef typeRef;
 
         public CompilationType(LLVMTypeRef type)
@@ -13,9 +13,11 @@ namespace Humphrey.Backend
             identifier = "";
         }
 
+        public abstract CompilationType CopyAs(string identifier);
+
         public LLVMTypeRef BackendType => typeRef;
 
         public abstract bool Same(CompilationType t);
-        public string Identifier { get { return identifier; } set { identifier = value; } }
+        public string Identifier => identifier;
     }
 }

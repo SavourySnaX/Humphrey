@@ -29,13 +29,26 @@ namespace Humphrey.FrontEnd
             var vlhs = rlhs as CompilationValue;
             if (vlhs is null)
                 throw new System.NotImplementedException($"Not sure it makes sense to have an a constant here");
-            
-            // we should now have a type on the left, and an identifier on the right
+
+            // we should now have a struct type on the left, and an identifier on the right
+            var pointerToValue = vlhs.Storage;
             var type = vlhs.Type as CompilationStructureType;
             if (type==null)
-                throw new System.NotImplementedException($"Attempt to reference a structure member of a non structure type!");
+            {
+                var pointerType = vlhs.Type as CompilationPointerType;
+                if (pointerType != null && pointerType.ElementType is CompilationStructureType)
+                {
+                    type = pointerType.ElementType as CompilationStructureType;
+                    pointerToValue = vlhs;
+                }
+                else
+                {
+                    // Compilation error... cannot fetch field from a non structure type 
+                    throw new System.NotImplementedException($"Attempt to reference a structure member of a non structure type!");
+                }
+            }
 
-            var store = type.AddressElement(unit, builder, vlhs.Storage, rhs.Dump());
+            var store = type.AddressElement(unit, builder, pointerToValue, rhs.Dump());
             var loaded = new CompilationValue(builder.Load(store).BackendValue, (store.Type as CompilationPointerType).ElementType);
             loaded.Storage = store;
 

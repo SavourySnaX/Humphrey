@@ -26,6 +26,13 @@ namespace Humphrey.Backend
             return Identifier == check.Identifier;
         }
 
+        public override CompilationType CopyAs(string identifier)
+        {
+            var clone = new CompilationStructureType(BackendType, elementTypes);
+            clone.identifier = identifier;
+            return clone;
+        }
+
         public CompilationValue LoadElement(CompilationUnit unit, CompilationBuilder builder, CompilationValue src, string identifier)
         {
             // Find identifier in elements
@@ -35,6 +42,11 @@ namespace Humphrey.Backend
                 if (i.Identifier==identifier)
                     break;
                 idx++;
+            }
+            if (idx==elementTypes.Length)
+            {
+                // Compilation error, struct xxx does not contain field yyy
+                throw new System.Exception($"Need error message and partial recovery -struct does not contain field {identifier}");
             }
 
             return builder.ExtractValue(src,elementTypes[idx], idx);
@@ -49,6 +61,11 @@ namespace Humphrey.Backend
                 if (i.Identifier==identifier)
                     break;
                 idx++;
+            }
+            if (idx==elementTypes.Length)
+            {
+                // Compilation error, struct xxx does not contain field yyy
+                throw new System.Exception($"Need error message and partial recovery -struct does not contain field {identifier}");
             }
 
             CompilationType elementType = elementTypes[idx];
@@ -68,6 +85,11 @@ namespace Humphrey.Backend
                 if (i.Identifier==identifier)
                     break;
                 idx++;
+            }
+            if (idx==elementTypes.Length)
+            {
+                // Compilation error, struct xxx does not contain field yyy
+                throw new System.Exception($"Need error message and partial recovery -struct does not contain field {identifier}");
             }
 
             var resultPtrType = Extensions.Helpers.CreatePointerType(elementTypes[idx].BackendType);

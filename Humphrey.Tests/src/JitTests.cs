@@ -3,6 +3,7 @@ using Xunit;
 using Humphrey.FrontEnd;
 using System.Runtime.InteropServices;
 using System;
+using System.Collections.Generic;
 
 namespace Humphrey.Backend.tests
 {
@@ -261,7 +262,7 @@ namespace Humphrey.Backend.tests
         {
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
-        
+
         [Theory]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(returnValue:[8]bit)={ x,y,z:[8]bit=0 for x=a..b{for y=a..b{z=z+1}}returnValue=z}", "Main", 0, 0, 0)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(returnValue:[8]bit)={ x,y,z:[8]bit=0 for x=a..b{for y=a..b{z=z+1}}returnValue=z}", "Main", 0, 1, 1)]
@@ -308,10 +309,10 @@ Main:(a:bit,b:bit)(out:bit)=
         }
 
         [Theory]
-        [InlineData("Main:()(out:bit)={local:{nest:{a:bit}}=_ local.nest.a=0 out=local.nest.a}","Main",0)]
-        [InlineData("Main:()(out:bit)={local:{nest:{a:bit}}=_ local.nest.a=1 out=local.nest.a}","Main",1)]
-        [InlineData("Main:()(out:bit)={local:{nest:{deepl:{a:bit}deepr:{a:bit}}}=_ local.nest.deepl.a,local.nest.deepr.a=0 out=local.nest.deepr.a}","Main",0)]
-        [InlineData("Main:()(out:bit)={local:{nest:{deepl:{a:bit}deepr:{a:bit}}}=_ local.nest.deepl.a,local.nest.deepr.a=1 out=local.nest.deepr.a}","Main",1)]
+        [InlineData("Main:()(out:bit)={local:{nest:{a:bit}}=_ local.nest.a=0 out=local.nest.a}", "Main", 0)]
+        [InlineData("Main:()(out:bit)={local:{nest:{a:bit}}=_ local.nest.a=1 out=local.nest.a}", "Main", 1)]
+        [InlineData("Main:()(out:bit)={local:{nest:{deepl:{a:bit}deepr:{a:bit}}}=_ local.nest.deepl.a,local.nest.deepr.a=0 out=local.nest.deepr.a}", "Main", 0)]
+        [InlineData("Main:()(out:bit)={local:{nest:{deepl:{a:bit}deepr:{a:bit}}}=_ local.nest.deepl.a,local.nest.deepr.a=1 out=local.nest.deepr.a}", "Main", 1)]
         public void CheckAssignNestedStruct(string input, string entryPointName, byte expected)
         {
             Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
@@ -324,7 +325,7 @@ Main:(a:bit,b:bit)(out:bit)=
         {
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
-        
+
         [Theory]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a==99 {out=12} else {out=b}}", "Main", 99, 22, 12)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a==99 {out=12} else {out=b}}", "Main", 6, 22, 22)]
@@ -332,6 +333,111 @@ Main:(a:bit,b:bit)(out:bit)=
         {
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct RGBA_CSharp
+        {
+            [FieldOffset(0)] public byte red;
+            [FieldOffset(1)] public byte green;
+            [FieldOffset(2)] public byte blue;
+            [FieldOffset(3)] public byte alpha;
+        }
+
+        const string rgbaTestProgram = @"
+U8 : [8]bit
+
+RGBA:
+{
+    r:U8 
+    g:U8 
+    b:U8 
+    a:U8
+} 
+
+FetchRed:(colour:*RGBA)(red:U8)=
+{
+    red=colour.r
+}
+
+FetchGreen:(colour:*RGBA)(green:U8)=
+{
+    green=colour.g
+}
+
+FetchBlue:(colour:*RGBA)(blue:U8)=
+{
+    blue=colour.b
+}
+
+FetchAlpha:(colour:*RGBA)(alpha:U8)=
+{
+    alpha=colour.a
+}
+
+InsertRed:(colour:*RGBA, red:U8)()=
+{
+    colour.r=red
+}
+
+InsertGreen:(colour:*RGBA, green:U8)()=
+{
+    colour.g=green
+}
+
+InsertBlue:(colour:*RGBA, blue:U8)()=
+{
+    colour.b=blue
+}
+
+InsertAlpha:(colour:*RGBA, alpha:U8)()=
+{
+    colour.a=alpha
+}
+";
+
+        public static IEnumerable<object[]> PointerToStructReadData => new List<object[]>
+            {
+                new object[] { rgbaTestProgram, "FetchRed", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 44 },
+                new object[] { rgbaTestProgram, "FetchRed", new RGBA_CSharp { red = 11, green = 22, blue = 33, alpha = 44 }, 11 },
+                new object[] { rgbaTestProgram, "FetchGreen", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 33 },
+                new object[] { rgbaTestProgram, "FetchGreen", new RGBA_CSharp { red = 11, green = 22, blue = 33, alpha = 44 }, 22 },
+                new object[] { rgbaTestProgram, "FetchBlue", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 22 },
+                new object[] { rgbaTestProgram, "FetchBlue", new RGBA_CSharp { red = 11, green = 22, blue = 33, alpha = 44 }, 33 },
+                new object[] { rgbaTestProgram, "FetchAlpha", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 11 },
+                new object[] { rgbaTestProgram, "FetchAlpha", new RGBA_CSharp { red = 11, green = 22, blue = 33, alpha = 44 }, 44 },
+            };
+
+        [Theory]
+        [MemberData(nameof(PointerToStructReadData))]
+        public void CheckPointerToStructureRead(string input, string entryPointName, RGBA_CSharp testStruct, byte expected)
+        {
+            Assert.True(InputPointerToStructReturns8BitValue<RGBA_CSharp>(CompileForTest(input, entryPointName), testStruct, expected), $"Test {entryPointName},{input},{testStruct},{expected}");
+        }
+
+        public static IEnumerable<object[]> PointerToStructWriteData => new List<object[]>
+            {
+                new object[] { rgbaTestProgram, "InsertRed", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 12, new RGBA_CSharp { red = 12, green = 33, blue = 22, alpha = 11 } },
+                new object[] { rgbaTestProgram, "InsertRed", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 0, new RGBA_CSharp { red = 0, green = 33, blue = 22, alpha = 11 } },
+                new object[] { rgbaTestProgram, "InsertRed", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 255, new RGBA_CSharp { red = 255, green = 33, blue = 22, alpha = 11 } },
+                new object[] { rgbaTestProgram, "InsertGreen", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 12, new RGBA_CSharp { red = 44, green = 12, blue = 22, alpha = 11 } },
+                new object[] { rgbaTestProgram, "InsertGreen", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 0, new RGBA_CSharp { red = 44, green = 0, blue = 22, alpha = 11 } },
+                new object[] { rgbaTestProgram, "InsertGreen", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 255, new RGBA_CSharp { red = 44, green = 255, blue = 22, alpha = 11 } },
+                new object[] { rgbaTestProgram, "InsertBlue", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 12, new RGBA_CSharp { red = 44, green = 33, blue = 12, alpha = 11 } },
+                new object[] { rgbaTestProgram, "InsertBlue", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 0, new RGBA_CSharp { red = 44, green = 33, blue = 0, alpha = 11 } },
+                new object[] { rgbaTestProgram, "InsertBlue", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 255, new RGBA_CSharp { red = 44, green = 33, blue = 255, alpha = 11 } },
+                new object[] { rgbaTestProgram, "InsertAlpha", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 12, new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 12 } },
+                new object[] { rgbaTestProgram, "InsertAlpha", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 0, new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 0 } },
+                new object[] { rgbaTestProgram, "InsertAlpha", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 255, new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 255 } },
+            };
+
+        [Theory]
+        [MemberData(nameof(PointerToStructWriteData))]
+        public void CheckPointerToStructureWrite(string input, string entryPointName, RGBA_CSharp testStruct, byte insert, RGBA_CSharp expected)
+        {
+            Assert.True(InputPointerToStructByteReturnsVoid<RGBA_CSharp>(CompileForTest(input, entryPointName), testStruct, insert, expected), $"Test {entryPointName},{input},{testStruct},{insert},{expected}");
+        }
+
+
 
         public IntPtr CompileForTest(string input, string entryPointName)
         {
@@ -457,6 +563,32 @@ Main:(a:bit,b:bit)(out:bit)=
             byte returnValue1, returnValue2;
             func(input1, input2, &returnValue1, &returnValue2);
             return returnValue1 == expected1 && returnValue2 == expected2;
+        }
+        
+        delegate void InputPointerToStructOutput8Bit(void* inputVal, byte* returnVal);
+
+        public static bool InputPointerToStructReturns8BitValue<T>(IntPtr ee, T input, byte expected)
+        {
+            var unmanagedAddr = Marshal.AllocHGlobal(Marshal.SizeOf(input));
+            Marshal.StructureToPtr(input, unmanagedAddr, true);
+            var func = Marshal.GetDelegateForFunctionPointer<InputPointerToStructOutput8Bit>(ee);
+            byte returnValue;
+            func(unmanagedAddr.ToPointer(), &returnValue);
+            Marshal.FreeHGlobal(unmanagedAddr);
+            return returnValue == expected;
+        }
+        
+        delegate void InputPointerToStructByteOutputVoid(void* inputVal, byte insert);
+
+        public static bool InputPointerToStructByteReturnsVoid<T>(IntPtr ee, T input, byte insert, T expected)
+        {
+            var unmanagedAddr = Marshal.AllocHGlobal(Marshal.SizeOf(input));
+            Marshal.StructureToPtr(input, unmanagedAddr, true);
+            var func = Marshal.GetDelegateForFunctionPointer<InputPointerToStructByteOutputVoid>(ee);
+            func(unmanagedAddr.ToPointer(), insert);
+            T afterFunction=Marshal.PtrToStructure<T>(unmanagedAddr);
+            Marshal.FreeHGlobal(unmanagedAddr);
+            return afterFunction.Equals(expected);
         }
     }
 }

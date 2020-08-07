@@ -18,5 +18,13 @@ namespace Humphrey.Backend
                 return false;
             return  Identifier == check.Identifier && element.Same(check.element);
         }
+        
+        public override CompilationType CopyAs(string identifier)
+        {
+            var clone = new CompilationPointerType(BackendType, element);
+            clone.identifier = identifier;
+            return clone;
+        }
+
     }
 }

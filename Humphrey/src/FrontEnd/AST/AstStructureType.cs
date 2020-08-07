@@ -21,8 +21,7 @@ namespace Humphrey.FrontEnd
             {
                 for (int a = 0; a < element.NumElements; a++)
                 {
-                    var type = element.Type.CreateOrFetchType(unit);
-                    type.Identifier = element.Identifiers[a].Dump();
+                    var type = element.Type.CreateOrFetchType(unit).CopyAs(element.Identifiers[a].Dump());
                     elementTypes[idx++] = type;
                 }
             }

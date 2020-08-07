@@ -20,6 +20,13 @@ namespace Humphrey.Backend
             return elementCount == check.elementCount && Identifier == check.Identifier && element.Same(check.element);
         }
 
+        public override CompilationType CopyAs(string identifier)
+        {
+            var clone = new CompilationArrayType(BackendType, element, elementCount);
+            clone.identifier = identifier;
+            return clone;
+        }
+
         public CompilationType ElementType => element;
     }
 }

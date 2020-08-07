@@ -21,5 +21,12 @@ namespace Humphrey.Backend
                 return false;
             return signedType == check.signedType && Identifier == check.Identifier && IntegerWidth == check.IntegerWidth;
         }
+        public override CompilationType CopyAs(string identifier)
+        {
+            var clone = new CompilationIntegerType(BackendType, signedType);
+            clone.identifier = identifier;
+            return clone;
+        }
+
     }
 }

@@ -70,8 +70,8 @@ namespace Humphrey.Backend
 
         public void CreateNamedType(string identifier, CompilationType type)
         {
-            type.Identifier = identifier;
-            symbolTable.AddType(identifier, type);
+            var symbTabType = type.CopyAs(identifier);
+            symbolTable.AddType(identifier, symbTabType);
         }
 
         public CompilationType FetchStructType(CompilationType[] elements)

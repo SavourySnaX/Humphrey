@@ -40,13 +40,19 @@ namespace Humphrey.Backend
                 var types = new CompilationType[Parameters.Length - outParameterOffset];
                 for (uint a = outParameterOffset; a < Parameters.Length; a++)
                 {
-                    types[a-outParameterOffset] = Parameters[a].Type;
-                    types[a - outParameterOffset].Identifier = Parameters[a].Identifier;
+                    types[a - outParameterOffset] = Parameters[a].Type.CopyAs(Parameters[a].Identifier);
                 }
                 return unit.FetchStructType(types) as CompilationStructureType;
             }
 
             return null;
+        }
+
+        public override CompilationType CopyAs(string identifier)
+        {
+            var clone = new CompilationFunctionType(BackendType, parameters, OutParamOffset);
+            clone.identifier = identifier;
+            return clone;
         }
 
         public long InputCount => Parameters.Length - (Parameters.Length - outParameterOffset);
