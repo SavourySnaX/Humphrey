@@ -321,9 +321,45 @@ Main:(a:bit,b:bit)(out:bit)=
         [Theory]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a==99 {out=12} }", "Main", 99, 22, 12)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a==99 {out=12} }", "Main", 0, 22, 22)]
-        public void CheckIf(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a!=99 {out=12} }", "Main", 99, 22, 22)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a!=99 {out=12} }", "Main", 0, 22, 12)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a<=99 {out=12} }", "Main", 99, 22, 12)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a<=99 {out=12} }", "Main", 0, 22, 12)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a<=99 {out=12} }", "Main", 100, 22, 22)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a<99 {out=12} }", "Main", 99, 22, 22)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a<99 {out=12} }", "Main", 0, 22, 12)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a<99 {out=12} }", "Main", 100, 22, 22)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a>=99 {out=12} }", "Main", 99, 22, 12)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a>=99 {out=12} }", "Main", 0, 22, 22)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a>=99 {out=12} }", "Main", 100, 22, 12)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a>99 {out=12} }", "Main", 99, 22, 22)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a>99 {out=12} }", "Main", 0, 22, 22)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=b if a>99 {out=12} }", "Main", 100, 22, 12)]
+        public void CheckIfUnsigned(string input, string entryPointName, byte ival1, byte ival2, byte expected)
         {
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a==99 {out=12} }", "Main", 99, 22, 12)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a==99 {out=12} }", "Main", -99, 22, 22)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a!=99 {out=12} }", "Main", 99, 22, 22)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a!=99 {out=12} }", "Main", -99, 22, 12)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a<=99 {out=12} }", "Main", 99, 22, 12)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a<=99 {out=12} }", "Main", -99, 22, 12)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a<=99 {out=12} }", "Main", 100, 22, 22)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a<99 {out=12} }", "Main", 99, 22, 22)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a<99 {out=12} }", "Main", -99, 22, 12)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a<99 {out=12} }", "Main", 100, 22, 22)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a>=99 {out=12} }", "Main", 99, 22, 12)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a>=99 {out=12} }", "Main", -99, 22, 22)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a>=99 {out=12} }", "Main", 100, 22, 12)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a>99 {out=12} }", "Main", 99, 22, 22)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a>99 {out=12} }", "Main", -99, 22, 22)]
+        [InlineData(@"Main:(a:[-8]bit,b:[-8]bit)(out:[-8]bit)={out=b if a>99 {out=12} }", "Main", 100, 22, 12)]
+        public void CheckIfSigned(string input, string entryPointName, sbyte ival1, sbyte ival2, sbyte expected)
+        {
+            Assert.True(InputS8BitS8BitExpectsS8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
 
         [Theory]
