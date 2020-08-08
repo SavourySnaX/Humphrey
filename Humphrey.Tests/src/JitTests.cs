@@ -473,8 +473,6 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
             Assert.True(InputPointerToStructByteReturnsVoid<RGBA_CSharp>(CompileForTest(input, entryPointName), testStruct, insert, expected), $"Test {entryPointName},{input},{testStruct},{insert},{expected}");
         }
 
-
-
         public IntPtr CompileForTest(string input, string entryPointName)
         {
             var messages = new CompilerMessages(true, true, false);

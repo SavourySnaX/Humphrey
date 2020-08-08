@@ -195,6 +195,8 @@ namespace Humphrey.FrontEnd
 
         // identifier : Identifier
         public AstIdentifier Identifier() { return AstItem(Tokens.Identifier, (e) => new AstIdentifier(e)) as AstIdentifier; }
+        // anonymous : _
+        public AstAnonymousIdentifier AnonymousIdentifier() { return AstItem(Tokens.S_Underscore, (e) => new AstAnonymousIdentifier()) as AstAnonymousIdentifier; }
         // identifier : Identifier
         public bool PeekIdentifier() { return Peek(Tokens.Identifier); }
         // loadable_identifier : Identifier
@@ -259,6 +261,7 @@ namespace Humphrey.FrontEnd
         public bool PeekOpenParanthesis() { return Peek(Tokens.S_OpenParanthesis); }
         public bool CloseParenthesis() { return Take(Tokens.S_CloseParanthesis); }
         public bool OpenCurlyBrace() { return Take(Tokens.S_OpenCurlyBrace); }
+        public bool PeekOpenCurlyBrace() { return Peek(Tokens.S_OpenCurlyBrace); }
         public bool CloseCurlyBrace() { return Take(Tokens.S_CloseCurlyBrace); }
         public bool PeekCloseCurlyBrace() { return Peek(Tokens.S_CloseCurlyBrace); }
         public bool OpenSquareBracket() { return Take(Tokens.S_OpenSquareBracket); }
@@ -272,12 +275,15 @@ namespace Humphrey.FrontEnd
                 CompareEqualOperator, CompareNotEqualOperator, CompareLessOperator, CompareLessEqualOperator, CompareGreaterOperator, CompareGreaterEqualOperator,
                 AsOperator, ReferenceOperator, FunctionCallOperator, ArraySubscriptOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
-        public AstItemDelegate[] Types => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
+        public AstItemDelegate[] BaseTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
+        public AstItemDelegate[] Types => new AstItemDelegate[] { BaseTypeOrEnumType };
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
+        public AstItemDelegate[] IdentifierOrAnonymous => new AstItemDelegate[] { Identifier, AnonymousIdentifier };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
         public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement, ForStatement, IfStatement, CouldBeLocalScopeDefinitionOrAssignment };
 
         public AstItemDelegate[] StructDefinitions => new AstItemDelegate[] { StructElementDefinition };
+        public AstItemDelegate[] EnumDefinitions => new AstItemDelegate[] { EnumElementDefinition };
         public AstItemDelegate[] LocalDefinition => new AstItemDelegate[] { LocalScopeDefinition };
         public AstItemDelegate[] GlobalDefinition => new AstItemDelegate[] { GlobalScopeDefinition };
 
@@ -437,6 +443,20 @@ namespace Humphrey.FrontEnd
             }
             return exprList;
         }
+        
+        // BaseType, or EnumType
+        public IType BaseTypeOrEnumType()
+        {
+            var type = BaseType();
+            if (type == null)
+                return null;
+
+            if (!PeekOpenCurlyBrace())
+                return type;
+
+            return EnumType(type);
+        }
+
 
         // Used to distinguish between localscope definition or an assignment without requiring significant lookaheads
         public IStatement CouldBeLocalScopeDefinitionOrAssignment()
@@ -787,44 +807,73 @@ namespace Humphrey.FrontEnd
             return new AstFunctionType(inputs, outputs);
         }
         
+        // enum_type : type { enum_element }
+        public AstEnumType EnumType(IType type)
+        {
+            if (!OpenCurlyBrace())
+                return null;
+
+            var definitionList = ManyOf<AstEnumElement>(EnumDefinitions);
+            if (definitionList == null)
+                return null;
+
+            if (!CloseCurlyBrace())
+                return null;
+
+            return new AstEnumType(type, definitionList);
+        }
+
         // struct_type : { struct_element* }
         public AstStructureType StructType()
         {
             if (!OpenCurlyBrace())
                 return null;
 
-            var definitionList = new List<AstStructElement>();
-            AstStructElement def = null;
-            do
-            {
-                def = OneOf(StructDefinitions) as AstStructElement;
-                if (def != null)
-                    definitionList.Add(def);
-            } while (def != null);
+            var definitionList = ManyOf<AstStructElement>(StructDefinitions);
+            if (definitionList==null)
+                return null;
 
             if (!CloseCurlyBrace())
                 return null;
 
-            return new AstStructureType(definitionList.ToArray());
+            return new AstStructureType(definitionList);
         }
 
         // type : bit                       // builtin
         //      | identifier                // type
         //      | struct_type               // struct
         //      | function_type             // function
+        public IType BaseType() { return OneOf(BaseTypes) as IType; }
+
+        // type : base_type or enum type
         public IType Type() { return OneOf(Types) as IType; }
         public IType NonFunctionType() { return OneOf(NonFunctionTypes) as IType; }
+
+        public IIdentifier IdentifierOrAnon() { return OneOf(IdentifierOrAnonymous) as IIdentifier; }
 
         // assignable : { statements }      // function body
         //            | expression
         public IAssignable Assignable() { return OneOf(Assignables) as IAssignable; }
+
+        // enum_element_definition : identifier := assignable
+        //                           
+        public AstEnumElement EnumElementDefinition()
+        {
+            var (ok, identifierList, typeSpecifier, assignable) = Definition<AstIdentifier>(Identifier, NonFunctionType, Assignable);
+            if (!ok)
+                return null;
+            if (typeSpecifier!=null || assignable==null)
+                throw new System.NotImplementedException($"TODO - This should be an error, enums must be of the format identifier:= assignable");
+
+            return new AstEnumElement(identifierList, assignable);
+        }
 
         // struct_element_definition : identifier : non_function_type
         //                           | identifier := assignable
         //                           | identifier : non_function_type = assignable
         public AstStructElement StructElementDefinition()
         {
-            var (ok, identifierList, typeSpecifier, assignable) = Definition(Identifier, NonFunctionType, Assignable);
+            var (ok, identifierList, typeSpecifier, assignable) = Definition<IIdentifier>(IdentifierOrAnon, NonFunctionType, Assignable);
             if (!ok)
                 return null;
             return new AstStructElement(identifierList, typeSpecifier, assignable);
@@ -835,7 +884,7 @@ namespace Humphrey.FrontEnd
         //                   | identifier : non_function_type = assignable
         public AstGlobalDefinition GlobalScopeDefinition()
         {
-            var (ok, identifierList, typeSpecifier, assignable) = Definition(Identifier, Type, Assignable);
+            var (ok, identifierList, typeSpecifier, assignable) = Definition<AstIdentifier>(Identifier, Type, Assignable);
             if (!ok)
                 return null;
             return new AstGlobalDefinition(identifierList, typeSpecifier, assignable);
@@ -846,7 +895,7 @@ namespace Humphrey.FrontEnd
         //                   | identifier : non_function_type = assignable
         public AstLocalDefinition LocalScopeDefinition()
         {
-            var (ok, identifierList, typeSpecifier, assignable) = Definition(Identifier, Type, Assignable);
+            var (ok, identifierList, typeSpecifier, assignable) = Definition<AstIdentifier>(Identifier, Type, Assignable);
             if (!ok)
                 return null;
             return new AstLocalDefinition(identifierList, typeSpecifier, assignable);
@@ -855,9 +904,9 @@ namespace Humphrey.FrontEnd
         // definition : identifier : type
         //            | identifier := assignable
         //            | identifier : type = assignable
-        public (bool ok, AstIdentifier[] identifierList,IType typeSpecifier, IAssignable assignable) Definition(AstItemDelegate identifierDelegate,AstItemDelegate typeDelegate, AstItemDelegate assignableDelegate)
+        public (bool ok, T[] identifierList,IType typeSpecifier, IAssignable assignable) Definition<T>(AstItemDelegate identifierDelegate,AstItemDelegate typeDelegate, AstItemDelegate assignableDelegate) where T : class
         {
-            var identifier = CommaSeperatedItemList<AstIdentifier>(identifierDelegate);
+            var identifier = CommaSeperatedItemList<T>(identifierDelegate);
             if (identifier == null)
                 return (false, null, null, null);
 

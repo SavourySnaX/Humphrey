@@ -2,20 +2,18 @@ using System.Text;
 using Humphrey.Backend;
 namespace Humphrey.FrontEnd
 {
-    public class AstStructElement : IExpression
+    public class AstEnumElement : IExpression
     {
-        IIdentifier[] identifiers;
-        IType type;
+        AstIdentifier[] identifiers;
         IAssignable initialiser;
-        public AstStructElement(IIdentifier[] identifierList, IType itype, IAssignable init)
+        public AstEnumElement(AstIdentifier[] identifierList, IAssignable init)
         {
             identifiers = identifierList;
-            type = itype;
             initialiser = init;
         }
 
         public int NumElements => identifiers.Length;
-        public IIdentifier[] Identifiers => identifiers;
+        public AstIdentifier[] Identifiers => identifiers;
         public string Dump()
         {
             var s = new StringBuilder();
@@ -25,17 +23,9 @@ namespace Humphrey.FrontEnd
                     s.Append(" , ");
                 s.Append(identifiers[a].Dump());
             }
-            if (type==null)
-                s.Append($" := {initialiser.Dump()}");
-            else if (initialiser==null)
-                s.Append($" : {type.Dump()}");
-            else
-                s.Append($" : {type.Dump()} = {initialiser.Dump()}");
-
+            s.Append($" := {initialiser.Dump()}");
             return s.ToString();
         }
-
-        public IType Type => type;
 
         public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {

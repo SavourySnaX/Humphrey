@@ -140,7 +140,7 @@ namespace Humphrey.FrontEnd.tests
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
-            CheckAst(input, parser.Type(), expected);
+            CheckAst(input, parser.BaseType(), expected);
         }
         
         [Theory]
@@ -269,6 +269,7 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("{bob:bit squee:[8]bit}","{ bob : bit squee : [8] bit}")]
         [InlineData("{bob,carol:bit squee,bees:[8]bit}","{ bob , carol : bit squee , bees : [8] bit}")]
         [InlineData("{bob:apple}","{ bob : apple}")]
+        [InlineData("{_:apple}","{ _ : apple}")]
         [InlineData("{bob:()()}", null)]
         public void CheckStructType(string input, string expected)
         {
@@ -276,6 +277,20 @@ namespace Humphrey.FrontEnd.tests
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
             CheckAst(input, parser.StructType(), expected);
+        }
+
+        [Theory]
+        [InlineData("{}",null)]
+        [InlineData("bit{}","bit { }")]
+        [InlineData("bit{False:=0 True:=1}","bit { False := 0 True := 1}")]
+        [InlineData("bit{False:=0 True:=!False}","bit { False := 0 True := ! False}")]
+        [InlineData("[32]bit{Red:=0xFF000000 Green:=0x00FF0000 Blue:=0x0000FF00}","[32] bit { Red := 4278190080 Green := 16711680 Blue := 65280}")]
+        public void CheckEnumType(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.EnumType(parser.BaseType()), expected);
         }
 
         [Theory]
@@ -390,6 +405,7 @@ namespace Humphrey.FrontEnd.tests
             var parser = new HumphreyParser(tokens);
             CheckAst(input, CheckArraySubscriptHelper(parser), expected);
         }
+
         IAst CheckArraySubscriptHelper(HumphreyParser parser)
         {
             if (parser.OpenSquareBracket())

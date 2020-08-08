@@ -2,7 +2,7 @@ using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
-    public class AstIdentifier : IExpression,IType
+    public class AstIdentifier : IExpression, IType, IIdentifier
     {
         string temp;
         public AstIdentifier(string value)
