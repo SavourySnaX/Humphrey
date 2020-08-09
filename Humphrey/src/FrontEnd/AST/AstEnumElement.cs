@@ -29,7 +29,11 @@ namespace Humphrey.FrontEnd
 
         public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
-            throw new System.NotImplementedException($"Todo implement constant expression processing");
+            var expr = initialiser as IExpression;
+            if (expr == null)
+                throw new System.Exception($"Cannot assign a code block to an enum value");
+
+            return expr.ProcessConstantExpression(unit);
         }
 
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)

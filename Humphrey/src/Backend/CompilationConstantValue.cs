@@ -19,6 +19,15 @@ namespace Humphrey.Backend
             resultType = null;
         }
 
+        public bool Same(CompilationConstantValue other)
+        {
+            if (undefValue!=other.undefValue)
+                return false;
+            if (undefValue)
+                return true;
+            return constant==other.constant;
+        }
+
         public CompilationConstantValue(AstNumber val)
         {
             constant = BigInteger.Parse(val.Dump());

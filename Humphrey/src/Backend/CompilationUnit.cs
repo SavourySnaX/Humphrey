@@ -5,6 +5,7 @@ using Humphrey.FrontEnd;
 using System.Numerics;
 using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace Humphrey.Backend
 {
@@ -84,6 +85,11 @@ namespace Humphrey.Backend
             return new CompilationStructureType(contextRef.GetStructType(types, true), elements);
         }
 
+        public CompilationType FetchEnumType(CompilationType type, CompilationConstantValue[] values, Dictionary<string,uint> names)
+        {
+            return new CompilationEnumType(type, values ,names);
+        }
+
         public CompilationFunctionType CreateFunctionType(CompilationParam[] inputs, CompilationParam[] outputs)
         {
             var allParams = new CompilationParam[inputs.Length + outputs.Length];
@@ -132,6 +138,15 @@ namespace Humphrey.Backend
                 value = new CompilationValue(function.BackendValue, function.FunctionType);
                 return value;
             }
+
+            // Check for named type (an enum is actually a value type) - might be better done at definition actually
+            var nType = symbolTable.FetchType(identifier);
+            if (nType!=null)
+            {
+                value = CreateUndef(nType);
+                return value;
+            }
+
             throw new Exception($"Failed to find identifier {identifier}");
         }
 

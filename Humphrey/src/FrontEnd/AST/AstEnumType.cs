@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text;
 using Humphrey.Backend;
 namespace Humphrey.FrontEnd
@@ -14,24 +15,24 @@ namespace Humphrey.FrontEnd
     
         public CompilationType CreateOrFetchType(CompilationUnit unit)
         {
-            throw new System.Exception($"TODO");
-            /*
-            int numElements = 0;
-            foreach (var element in definitions)
-                numElements += element.NumElements;
-            var elementTypes = new CompilationType[numElements];
-            int idx = 0;
+            // An enum, is essentially a constant array of constant values
+            //Indexed by name rather than integer
+
+            var enumType = type.CreateOrFetchType(unit);
+            var values = new CompilationConstantValue[definitions.Length];
+            var names = new Dictionary<string, uint>();
+            uint idx = 0;
             foreach(var element in definitions)
             {
+                values[idx] = element.ProcessConstantExpression(unit);
                 for (int a = 0; a < element.NumElements; a++)
                 {
-                    var type = element.Type.CreateOrFetchType(unit).CopyAs(element.Identifiers[a].Dump());
-                    elementTypes[idx++] = type;
+                    names[element.Identifiers[a].Dump()] = idx;
                 }
+                idx++;
             }
 
-            return unit.FetchStructType(elementTypes);
-            */
+            return unit.FetchEnumType(enumType, values, names);
         }
     
         public bool IsFunctionType => false;

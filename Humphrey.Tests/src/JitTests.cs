@@ -370,6 +370,15 @@ Main:(a:bit,b:bit)(out:bit)=
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
 
+        [Theory]
+        [InlineData(@"ByteEnum:[8]bit{None:=0 All:=255} Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=ByteEnum.None}", "Main", 99, 22, 0)]
+        [InlineData(@"ByteEnum:[8]bit{None:=0 All:=255} Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=ByteEnum.All}", "Main", 99, 22, 255)]
+        public void CheckEnumUnsigned(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+
+
         [StructLayout(LayoutKind.Explicit)]
         public struct RGBA_CSharp
         {

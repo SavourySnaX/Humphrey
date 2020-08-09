@@ -35,7 +35,7 @@ BootBoot :
     smbiPtr             : [64]bit
     efiPtr              : [64]bit
     mpPtr               : [64]bit
-    unused              : [256]bit  # Would be preferable here to use _ : [256]bit   since we don't need a name
+    _                   : [256]bit
 }
 
 bootboot    := 0xFFFFFFFFFFE00000 as *BootBoot

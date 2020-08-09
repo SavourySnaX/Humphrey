@@ -82,9 +82,18 @@ namespace Humphrey.FrontEnd
 
         public static (CompilationValue lhs, CompilationValue rhs) FixupBinaryExpressionInputs(CompilationUnit unit, CompilationBuilder builder, CompilationValue left, CompilationValue right)
         {
+            var leftEnum = left.Type as CompilationEnumType;
+            var rightEnum = right.Type as CompilationEnumType;
+
             // Always promote integer type to largest of two sizes if not matching is the current rule..
             var leftIntType = left.Type as CompilationIntegerType;
             var rightIntType = right.Type as CompilationIntegerType;
+
+            if (leftEnum != null)
+                leftIntType = leftEnum.ElementType as CompilationIntegerType;
+            if (rightEnum != null)
+                rightIntType = rightEnum.ElementType as CompilationIntegerType;
+
             if (leftIntType != null && rightIntType != null)
             {
                 if (leftIntType.IntegerWidth == rightIntType.IntegerWidth)

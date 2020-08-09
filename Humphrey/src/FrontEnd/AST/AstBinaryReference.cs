@@ -22,6 +22,10 @@ namespace Humphrey.FrontEnd
             throw new System.NotImplementedException($"ProcessConstantExpression for reference operator is not implemented");
         }
 
+        public CompilationValue CommonProcessEnum(CompilationEnumType enumType, CompilationUnit unit, CompilationBuilder builder)
+        {
+            return enumType.LoadElement(unit, builder, rhs.Dump());
+        }
 
         public CompilationValue CommonProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
@@ -29,6 +33,10 @@ namespace Humphrey.FrontEnd
             var vlhs = rlhs as CompilationValue;
             if (vlhs is null)
                 throw new System.NotImplementedException($"Not sure it makes sense to have an a constant here");
+
+            var enumType = vlhs.Type as CompilationEnumType;
+            if (enumType!=null)
+                return CommonProcessEnum(enumType, unit, builder);
 
             // we should now have a struct type on the left, and an identifier on the right
             var pointerToValue = vlhs.Storage;
