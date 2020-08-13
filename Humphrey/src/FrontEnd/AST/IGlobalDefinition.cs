@@ -6,5 +6,7 @@ namespace Humphrey.FrontEnd
     public interface IGlobalDefinition : IAst
     {
         bool Compile(CompilationUnit unit);
+
+        AstIdentifier[] Identifiers { get; }
     }
 }

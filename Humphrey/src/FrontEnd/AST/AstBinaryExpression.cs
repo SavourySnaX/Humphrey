@@ -82,6 +82,23 @@ namespace Humphrey.FrontEnd
 
         public static (CompilationValue lhs, CompilationValue rhs) FixupBinaryExpressionInputs(CompilationUnit unit, CompilationBuilder builder, CompilationValue left, CompilationValue right)
         {
+            while (true)
+            {
+                if (left.Type.Same(right.Type))
+                    return (left, right);
+
+                // Special flexible case if a structure has a single element, we can directly unpack (this may need to be in a loop)
+                if (left.Type is CompilationStructureType cst)
+                {
+                    if (cst.Elements.Length == 1)
+                    {
+                        left = cst.LoadElement(unit, builder, left, cst.Elements[0].Identifier);
+                        continue;
+                    }
+                }
+                break;
+            }
+
             var leftEnum = left.Type as CompilationEnumType;
             var rightEnum = right.Type as CompilationEnumType;
 

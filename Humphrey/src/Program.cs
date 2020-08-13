@@ -158,12 +158,8 @@ namespace Humphrey.Experiments
 
             if (!messages.HasErrors)
             {
-                var cu = new CompilationUnit("testing", messages);
-
-                foreach (var def in parse)
-                {
-                    def.Compile(cu);
-                }
+                var compiler = new HumphreyCompiler(messages);
+                var cu = compiler.Compile(parse, "testing");
 
                 if (!messages.HasErrors)
                 {

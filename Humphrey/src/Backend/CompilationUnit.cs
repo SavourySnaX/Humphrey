@@ -17,7 +17,9 @@ namespace Humphrey.Backend
 
         CompilerMessages messages;
 
-        public CompilationUnit(string name, CompilerMessages overrideDefaultMessages = null)
+        Dictionary<string, IGlobalDefinition> pendingDefinitions;
+
+        public CompilationUnit(string name, IGlobalDefinition[] definitions, CompilerMessages overrideDefaultMessages = null)
         {
             messages = overrideDefaultMessages;
             if (messages==null)
@@ -34,6 +36,38 @@ namespace Humphrey.Backend
             symbolTable = new SymbolTable();
             contextRef = CreateContext();
             moduleRef = contextRef.CreateModuleWithName(name);
+
+            pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
+            foreach (var def in definitions)
+            {
+                foreach (var ident in def.Identifiers)
+                {
+                    pendingDefinitions.Add(ident.Dump(), def);
+                }
+            }
+        }
+
+        public void Compile()
+        {
+            while (pendingDefinitions.Count!=0)
+            {
+                var enumerator = pendingDefinitions.Keys.GetEnumerator();
+                enumerator.MoveNext();
+                CompileMissing(enumerator.Current);
+            }
+        }
+        public bool CompileMissing(string identifier)
+        {
+            if (pendingDefinitions.TryGetValue(identifier, out var definition))
+            {
+                definition.Compile(this);
+                foreach (var ident in definition.Identifiers)
+                {
+                    pendingDefinitions.Remove(ident.Dump());
+                }
+                return true;
+            }
+            return false;
         }
 
         public string Dump()
@@ -109,7 +143,7 @@ namespace Humphrey.Backend
             return new CompilationFunctionType(Extensions.Helpers.CreateFunctionType(contextRef.VoidType, allBackendParams, false), allParams, (uint)inputs.Length);
         }
 
-        public CompilationValue FetchValue(string identifier, CompilationBuilder builder)
+        public CompilationValue FetchValueInternal(string identifier, CompilationBuilder builder)
         {
             // Check for function paramter
             var value = symbolTable.FetchFunctionInputParam(identifier, builder.Function);
@@ -147,10 +181,26 @@ namespace Humphrey.Backend
                 return value;
             }
 
-            throw new Exception($"Failed to find identifier {identifier}");
+            return null;
         }
 
-        public CompilationValue FetchLocation(string identifier, CompilationBuilder builder)
+        public CompilationValue FetchValue(string identifier, CompilationBuilder builder)
+        {
+            var resolved = FetchValueInternal(identifier, builder);
+            if (resolved==null)
+            {
+                if (CompileMissing(identifier))
+                {
+                    resolved = FetchValueInternal(identifier, builder);
+                }
+            }
+            if (resolved == null)
+                throw new Exception($"Failed to find identifier {identifier}");
+
+            return resolved;
+        }
+
+        private CompilationValue FetchLocationInternal(string identifier, CompilationBuilder builder)
         {
             // Check for global value
             var value = symbolTable.FetchGlobalValue(identifier);
@@ -169,8 +219,23 @@ namespace Humphrey.Backend
                 builder.Function.MarkUsed(identifier);
                 return value;
             }
+            return null;
+        }
 
-            throw new Exception($"Failed to find identifier {identifier}");
+        public CompilationValue FetchLocation(string identifier, CompilationBuilder builder)
+        {
+            var resolved = FetchLocationInternal(identifier, builder);
+            if (resolved==null)
+            {
+                if (CompileMissing(identifier))
+                {
+                    resolved = FetchLocationInternal(identifier, builder);
+                }
+            }
+            if (resolved == null)
+                throw new Exception($"Failed to find identifier {identifier}");
+
+            return resolved;
         }
 
         public CompilationBuilder CreateBuilder(CompilationFunction function, CompilationBlock bb)

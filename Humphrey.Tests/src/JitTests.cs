@@ -378,6 +378,23 @@ Main:(a:bit,b:bit)(out:bit)=
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
 
+        [Theory]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=Add(a,b)} Add:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=a+b}", "Main", 1,3,4)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=a+b+c+d} c,d:[8]bit=6", "Main", 1,3,16)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=a+b+c.V1+c.V2} c:[8]bit{V1:=5 V2:=10}", "Main", 1,3,19)]
+        public void CheckUseBeforeDef(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+        
+        [Theory]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+b} else {out=b}}", "Main", 0,3,3)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+b} else {out=b}}", "Main", 1,3,6)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+b} else {out=b}}", "Main", 2,2,6)]
+        public void CheckRecursive(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
 
         [StructLayout(LayoutKind.Explicit)]
         public struct RGBA_CSharp
@@ -489,18 +506,15 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens, messages);
             var parsed = parser.File();
-            var compiler = new CompilationUnit("test", messages);
-            foreach (var def in parsed)
-            {
-                def.Compile(compiler);
-            }
+            var compiler = new HumphreyCompiler(messages);
+            var unit = compiler.Compile(parsed, "test");
 
             if (messages.HasErrors)
             {
                 throw new Exception($"{messages.Dump()}");
             }
 
-            return compiler.JitMethod(entryPointName);
+            return unit.JitMethod(entryPointName);
         }
 
         delegate void InputVoidOutputBit(byte* returnVal);

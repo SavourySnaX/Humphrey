@@ -473,6 +473,12 @@ namespace Humphrey.FrontEnd
             var definition = false;
             while (true)
             {
+                if (!lookahead.HasValue)
+                {
+                    RestoreTokens();
+                    return null;
+                }
+                
                 SaveNextToken();
 
                 if (PeekColonOperator())
