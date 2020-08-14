@@ -391,6 +391,8 @@ Main:(a:bit,b:bit)(out:bit)=
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+b} else {out=b}}", "Main", 0,3,3)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+b} else {out=b}}", "Main", 1,3,6)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+b} else {out=b}}", "Main", 2,2,6)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=b+Main(a-1,b)} else {out=b}}", "Main", 2,2,6)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+Main(a-1,b)} else {out=b}}", "Main", 2,2,8)]
         public void CheckRecursive(string input, string entryPointName, byte ival1, byte ival2, byte expected)
         {
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");

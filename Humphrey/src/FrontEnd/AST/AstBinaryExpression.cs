@@ -84,16 +84,26 @@ namespace Humphrey.FrontEnd
         {
             while (true)
             {
-                if (left.Type.Same(right.Type))
-                    return (left, right);
-
                 // Special flexible case if a structure has a single element, we can directly unpack (this may need to be in a loop)
-                if (left.Type is CompilationStructureType cst)
                 {
-                    if (cst.Elements.Length == 1)
+                    if (left.Type is CompilationStructureType cst)
                     {
-                        left = cst.LoadElement(unit, builder, left, cst.Elements[0].Identifier);
-                        continue;
+                        if (cst.Elements.Length == 1)
+                        {
+                            left = cst.LoadElement(unit, builder, left, cst.Elements[0].Identifier);
+                            continue;
+                        }
+                    }
+                }
+                // Special flexible case if a structure has a single element, we can directly unpack (this may need to be in a loop)
+                {
+                    if (right.Type is CompilationStructureType cst)
+                    {
+                        if (cst.Elements.Length == 1)
+                        {
+                            right = cst.LoadElement(unit, builder, right, cst.Elements[0].Identifier);
+                            continue;
+                        }
                     }
                 }
                 break;
