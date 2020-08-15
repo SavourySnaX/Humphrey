@@ -141,6 +141,16 @@ namespace Humphrey.Backend
             throw new NotImplementedException($"Unhandled type in extension");
         }
 
+        public CompilationValue Cast(CompilationValue src, CompilationType toType)
+        {
+            if (src.Type is CompilationPointerType && toType is CompilationIntegerType)
+                return new CompilationValue(builderRef.BuildPtrToInt(src.BackendValue, toType.BackendType), toType);
+            if (src.Type is CompilationIntegerType && toType is CompilationPointerType)
+                return new CompilationValue(builderRef.BuildIntToPtr(src.BackendValue, toType.BackendType), toType);
+
+            return new CompilationValue(builderRef.BuildBitCast(src.BackendValue, toType.BackendType), toType);
+        }
+        
         public CompilationValue Compare(CompareKind compareKind, CompilationValue left, CompilationValue right)
         {
             if (_intPredicates.TryGetValue(compareKind, out var intPredicate))

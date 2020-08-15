@@ -30,28 +30,13 @@ namespace Humphrey.FrontEnd
             if (vlhs is CompilationConstantValue)
                 return ProcessConstantExpression(unit);
 
-            throw new System.NotImplementedException($"Todo ProcessExpression as");
-            /*
-            var rlhs = lhs.ProcessExpression(unit, builder);
-            var rrhs = rhs.ProcessExpression(unit, builder);
-            if (rlhs is CompilationConstantValue clhs && rrhs is CompilationConstantValue crhs)
-                return ProcessConstantExpression(unit);
+            var valueLeft = vlhs as CompilationValue;
+            var typeRight = rhs.CreateOrFetchType(unit);
 
-            var vlhs = rlhs as CompilationValue;
-            var vrhs = rrhs as CompilationValue;
+            if (valueLeft.Type.Same(typeRight))
+                return valueLeft;
 
-            if (vlhs is null)
-                vlhs = (rlhs as CompilationConstantValue).GetCompilationValue(unit, vrhs.Type);
-            if (vrhs is null)
-                vrhs = (rrhs as CompilationConstantValue).GetCompilationValue(unit, vlhs.Type);
-
-            var (valueLeft, valueRight) = AstBinaryExpression.FixupBinaryExpressionInputs(unit, builder, vlhs, vrhs);
-
-            if (valueLeft.Type.IsSigned || valueRight.Type.IsSigned)
-                return builder.SDiv(valueLeft, valueRight);
-
-            return builder.UDiv(valueLeft, valueRight);
-            */
+            return builder.Cast(valueLeft, typeRight);
         }
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }

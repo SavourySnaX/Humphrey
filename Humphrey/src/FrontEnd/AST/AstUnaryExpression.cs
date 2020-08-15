@@ -33,18 +33,26 @@ namespace Humphrey.FrontEnd
                 // Special flexible case if a structure has a single element, we can directly unpack (this may need to be in a loop)
                 if (src.Type is CompilationStructureType cst)
                 {
-                    if (cst.Elements.Length == 1)
+                    if (cst.Fields.Length == 1)
                     {
-                        src = cst.LoadElement(unit, builder, src, cst.Elements[0].Identifier);
+                        src = cst.LoadElement(unit, builder, src, cst.Fields[0]);
                         continue;
                     }
                 }
                 break;
             }
+            var srcEnum = src.Type as CompilationEnumType;
+            var destEnum = destType as CompilationEnumType;
 
             // Always promote integer type to largest of two sizes if not matching is the current rule..
             var srcIntType = src.Type as CompilationIntegerType;
             var destIntType = destType as CompilationIntegerType;
+
+            if (srcEnum != null)
+                srcIntType = srcEnum.ElementType as CompilationIntegerType;
+            if (destEnum != null)
+                destIntType = destEnum.ElementType as CompilationIntegerType;
+
             if (srcIntType != null && destIntType != null)
             {
                 if (srcIntType.IntegerWidth == destIntType.IntegerWidth)

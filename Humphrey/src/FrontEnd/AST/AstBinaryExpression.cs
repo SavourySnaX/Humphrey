@@ -88,9 +88,9 @@ namespace Humphrey.FrontEnd
                 {
                     if (left.Type is CompilationStructureType cst)
                     {
-                        if (cst.Elements.Length == 1)
+                        if (cst.Fields.Length == 1)
                         {
-                            left = cst.LoadElement(unit, builder, left, cst.Elements[0].Identifier);
+                            left = cst.LoadElement(unit, builder, left, cst.Fields[0]);
                             continue;
                         }
                     }
@@ -99,9 +99,9 @@ namespace Humphrey.FrontEnd
                 {
                     if (right.Type is CompilationStructureType cst)
                     {
-                        if (cst.Elements.Length == 1)
+                        if (cst.Fields.Length == 1)
                         {
-                            right = cst.LoadElement(unit, builder, right, cst.Elements[0].Identifier);
+                            right = cst.LoadElement(unit, builder, right, cst.Fields[0]);
                             continue;
                         }
                     }
@@ -131,6 +131,15 @@ namespace Humphrey.FrontEnd
                     }
 
                     throw new NotImplementedException($"TODO - signed/unsigned mismatch");
+                }
+
+                if (leftIntType.IntegerWidth<rightIntType.IntegerWidth)
+                {
+                    return (builder.Ext(left, rightIntType), right);
+                }
+                if (rightIntType.IntegerWidth<leftIntType.IntegerWidth)
+                {
+                    return (left, builder.Ext(right, leftIntType));
                 }
 
                 throw new NotImplementedException($"TODO - Integer Bit width does not match");

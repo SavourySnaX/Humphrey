@@ -6,9 +6,11 @@ namespace Humphrey.Backend
     public class CompilationStructureType : CompilationType
     {
         CompilationType[] elementTypes;
-        public CompilationStructureType(LLVMTypeRef type, CompilationType[] elements) : base(type)
+        string[] elementNames;
+        public CompilationStructureType(LLVMTypeRef type, CompilationType[] elements, string[] names) : base(type)
         {
             elementTypes = elements;
+            elementNames = names;
         }
         public override bool Same(CompilationType obj)
         {
@@ -22,13 +24,15 @@ namespace Humphrey.Backend
             {
                 if (!elementTypes[a].Same(check.elementTypes[a]))
                     return false;
+                if (elementNames[a]!=check.elementNames[a])
+                    return false;
             }
             return Identifier == check.Identifier;
         }
 
         public override CompilationType CopyAs(string identifier)
         {
-            var clone = new CompilationStructureType(BackendType, elementTypes);
+            var clone = new CompilationStructureType(BackendType, elementTypes, elementNames);
             clone.identifier = identifier;
             return clone;
         }
@@ -37,9 +41,9 @@ namespace Humphrey.Backend
         {
             // Find identifier in elements
             uint idx=0;
-            foreach (var i in elementTypes)
+            foreach (var i in elementNames)
             {
-                if (i.Identifier==identifier)
+                if (i == identifier)
                     break;
                 idx++;
             }
@@ -56,9 +60,9 @@ namespace Humphrey.Backend
         {
             // Find identifier in elements
             uint idx=0;
-            foreach (var i in elementTypes)
+            foreach (var i in elementNames)
             {
-                if (i.Identifier==identifier)
+                if (i == identifier)
                     break;
                 idx++;
             }
@@ -80,9 +84,9 @@ namespace Humphrey.Backend
         {
             // Find identifier in elements
             uint idx=0;
-            foreach (var i in elementTypes)
+            foreach (var i in elementNames)
             {
-                if (i.Identifier==identifier)
+                if (i == identifier)
                     break;
                 idx++;
             }
@@ -97,6 +101,6 @@ namespace Humphrey.Backend
             return builder.InBoundsGEP(src, cPtrType, new LLVMValueRef[] { unit.CreateI32Constant(0), unit.CreateI32Constant(idx) });
         }
 
-        public CompilationType[] Elements => elementTypes;
+        public string[] Fields => elementNames;
     }
 }

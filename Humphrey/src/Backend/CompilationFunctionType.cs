@@ -38,11 +38,13 @@ namespace Humphrey.Backend
             if (HasOutputs)
             {
                 var types = new CompilationType[Parameters.Length - outParameterOffset];
+                var names = new string[Parameters.Length - outParameterOffset];
                 for (uint a = outParameterOffset; a < Parameters.Length; a++)
                 {
-                    types[a - outParameterOffset] = Parameters[a].Type.CopyAs(Parameters[a].Identifier);
+                    types[a - outParameterOffset] = Parameters[a].Type;
+                    names[a - outParameterOffset] = Parameters[a].Identifier;
                 }
-                return unit.FetchStructType(types) as CompilationStructureType;
+                return unit.FetchStructType(types, names) as CompilationStructureType;
             }
 
             return null;

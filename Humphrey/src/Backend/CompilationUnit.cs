@@ -109,14 +109,14 @@ namespace Humphrey.Backend
             symbolTable.AddType(identifier, symbTabType);
         }
 
-        public CompilationType FetchStructType(CompilationType[] elements)
+        public CompilationType FetchStructType(CompilationType[] elements, string[] names)
         {
             var types = new LLVMTypeRef[elements.Length];
             int idx = 0;
             foreach(var element in elements)
                 types[idx++] = element.BackendType;
 
-            return new CompilationStructureType(contextRef.GetStructType(types, true), elements);
+            return new CompilationStructureType(contextRef.GetStructType(types, true), elements, names);
         }
 
         public CompilationType FetchEnumType(CompilationType type, CompilationConstantValue[] values, Dictionary<string,uint> names)

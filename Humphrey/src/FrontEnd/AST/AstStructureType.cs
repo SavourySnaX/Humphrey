@@ -16,17 +16,18 @@ namespace Humphrey.FrontEnd
             foreach (var element in definitions)
                 numElements += element.NumElements;
             var elementTypes = new CompilationType[numElements];
+            var names = new string[numElements];
             int idx = 0;
             foreach(var element in definitions)
             {
                 for (int a = 0; a < element.NumElements; a++)
                 {
-                    var type = element.Type.CreateOrFetchType(unit).CopyAs(element.Identifiers[a].Dump());
-                    elementTypes[idx++] = type;
+                    names[idx] = element.Identifiers[a].Dump();
+                    elementTypes[idx++] = element.Type.CreateOrFetchType(unit);
                 }
             }
 
-            return unit.FetchStructType(elementTypes);
+            return unit.FetchStructType(elementTypes, names);
         }
     
         public bool IsFunctionType => false;

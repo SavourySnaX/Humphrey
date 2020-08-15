@@ -388,6 +388,31 @@ Main:(a:bit,b:bit)(out:bit)=
         }
         
         [Theory]
+        [InlineData(@"Bool:bit{True:=1 False:=0}Pair:{a:Bool b:Bool}Main:()(out:Bool)={v:Pair=_ v.a=Bool.True v.b=Bool.False out=v.a}", "Main", 1)]
+        [InlineData(@"Bool:bit{True:=1 False:=0}Pair:{a:Bool b:Bool}Main:()(out:Bool)={v:Pair=_ v.a=Bool.True v.b=Bool.False out=v.a==v.b}", "Main", 0)]
+        public void CheckStructEnum(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"value1:[64]bit=99 value2:=99 as *[8]bit Main:()(out:bit)={ out=value1==(value2 as [64]bit)}", "Main", 1)]
+        [InlineData(@"PointerAsInt:(in:*[8]bit)(out:[64]bit)={out=in as [64]bit} Main:()(out:bit)={ val:[64]bit=99 out=PointerAsInt(val as *[8]bit)==val}", "Main", 1)]
+        [InlineData(@"PointerAsInt:(in:*[8]bit)(out:[64]bit)={out=in as [64]bit} Main:()(out:bit)={ val:[64]bit=99 out=val==PointerAsInt(val as *[8]bit)}", "Main", 1)]
+        public void CheckPtrIntCast(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"value1:=99 value2:=99 as *[8]bit Main:()(out:bit)={ out=value1==(value2 as [64]bit)}", "Main", 1)]
+        [InlineData(@"value1:=99 value2:=99 as *[8]bit Main:()(out:bit)={ out=(value2 as [64]bit)==value1}", "Main", 1)]
+        public void CheckIntExtension(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
+
+        [Theory]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+b} else {out=b}}", "Main", 0,3,3)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+b} else {out=b}}", "Main", 1,3,6)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+b} else {out=b}}", "Main", 2,2,6)]
