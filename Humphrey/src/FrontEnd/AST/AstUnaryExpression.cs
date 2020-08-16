@@ -51,7 +51,10 @@ namespace Humphrey.FrontEnd
             var destIntType = destType as CompilationIntegerType;
 
             if (srcEnum != null)
+            {
                 srcIntType = srcEnum.ElementType as CompilationIntegerType;
+                src = new CompilationValue(src.BackendValue, srcIntType);
+            }
             if (destEnum != null)
                 destIntType = destEnum.ElementType as CompilationIntegerType;
 

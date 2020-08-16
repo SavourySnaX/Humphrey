@@ -410,6 +410,11 @@ Main:(a:bit,b:bit)(out:bit)=
         [Theory]
         [InlineData(@"ByteEnum:[8]bit{None:=0 All:=255} Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=ByteEnum.None}", "Main", 99, 22, 0)]
         [InlineData(@"ByteEnum:[8]bit{None:=0 All:=255} Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=ByteEnum.All}", "Main", 99, 22, 255)]
+        [InlineData(@"ByteEnum:[8]bit{None:=0 All:=255} Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=ByteEnum.All&0x1F}", "Main", 99, 22, 0x1F)]
+        [InlineData(@"ByteEnum:[4]bit{None:=0 All:=15} Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=ByteEnum.All&3}", "Main", 99, 22, 3)]
+        [InlineData(@"ByteEnum:[8]bit{None:=0 All:=255} EnumToInt:(in:ByteEnum)(out:[8]bit)={out=in&0xFF} Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=EnumToInt(ByteEnum.All)}", "Main", 99, 22, 255)]
+        [InlineData(@"ByteEnum:[4]bit{None:=0 All:=15} EnumToInt:(in:ByteEnum)(out:[8]bit)={out=in&3} Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=EnumToInt(ByteEnum.All)}", "Main", 99, 22, 3)]
+        [InlineData(@"ByteEnum:[8]bit{None:=0 All:=255} Struct:{a:[8]bit b:[8]bit} EnumToInt:(in:ByteEnum)(out:Struct)={t:Struct=_ t.a=1 t.b=in&0xFF out=t} Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=EnumToInt(ByteEnum.All).out.b}", "Main", 99, 22, 255)]
         public void CheckEnumUnsigned(string input, string entryPointName, byte ival1, byte ival2, byte expected)
         {
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");

@@ -79,6 +79,9 @@ namespace Humphrey.Backend
             if (destType == null)
                 return unit.CreateConstant(this, numBits, isSigned);
 
+            if (destType is CompilationEnumType compilationEnumType)
+                destType = compilationEnumType.ElementType;
+
             if (destType is CompilationIntegerType destIntType)
             {
                 if (numBits < destIntType.IntegerWidth)
