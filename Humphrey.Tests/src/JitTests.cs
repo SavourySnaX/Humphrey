@@ -140,6 +140,10 @@ namespace Humphrey.Backend.tests
         [InlineData(@"Main : (a : bit) (returnValue : bit) = { returnValue=+a}", "Main", 1, 1)]
         [InlineData(@"Main : (a : bit) (returnValue : bit) = { returnValue=-a}", "Main", 0, 0)]
         [InlineData(@"Main : (a : bit) (returnValue : bit) = { returnValue=-a}", "Main", 1, 1)]
+        [InlineData(@"Main : (a : bit) (returnValue : bit) = { returnValue=!a}", "Main", 0, 1)]
+        [InlineData(@"Main : (a : bit) (returnValue : bit) = { returnValue=!a}", "Main", 1, 0)]
+        [InlineData(@"Main : (a : bit) (returnValue : bit) = { returnValue=~a}", "Main", 0, 1)]
+        [InlineData(@"Main : (a : bit) (returnValue : bit) = { returnValue=~a}", "Main", 1, 0)]
         public void CheckBitExpectsBit(string input, string entryPointName, byte ival, byte expected)
         {
             Assert.True(InputBitExpectsBitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input}");
@@ -167,6 +171,39 @@ namespace Humphrey.Backend.tests
         {
             Assert.True(InputBitBitExpectsBitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input}");
         }
+
+        [Theory]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a&&b}", "Main", 0, 0, 0)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a&&b}", "Main", 0, 1, 0)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a&&b}", "Main", 1, 0, 0)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a&&b}", "Main", 1, 1, 1)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a||b}", "Main", 0, 0, 0)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a||b}", "Main", 0, 1, 1)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a||b}", "Main", 1, 0, 1)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a||b}", "Main", 1, 1, 1)]
+        public void CheckLogicalBinaryOperators(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(InputBitBitExpectsBitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a&b}", "Main", 0, 0, 0)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a&b}", "Main", 0, 1, 0)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a&b}", "Main", 1, 0, 0)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a&b}", "Main", 1, 1, 1)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a|b}", "Main", 0, 0, 0)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a|b}", "Main", 0, 1, 1)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a|b}", "Main", 1, 0, 1)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a|b}", "Main", 1, 1, 1)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a^b}", "Main", 0, 0, 0)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a^b}", "Main", 0, 1, 1)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a^b}", "Main", 1, 0, 1)]
+        [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a^b}", "Main", 1, 1, 0)]
+        public void CheckBinaryBinaryOperators(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(InputBitBitExpectsBitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input}");
+        }
+
 
         [Theory]
         [InlineData(@"Main : (a : bit, b : bit) (returnB : bit , returnA : bit) = { returnB=b returnA=a}", "Main", 1, 0, 0, 1)]
@@ -419,8 +456,6 @@ Main:(a:bit,b:bit)(out:bit)=
         {
             Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
         }
-
-
 
         [Theory]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+b} else {out=b}}", "Main", 0,3,3)]

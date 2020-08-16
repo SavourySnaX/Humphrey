@@ -63,6 +63,24 @@ namespace Humphrey.FrontEnd
 
         [Token(Category = "Operator", Example = "!")]
         O_LogicalNot,
+        
+        [Token(Category = "Operator", Example = "||")]
+        O_LogicalOr,
+        
+        [Token(Category = "Operator", Example = "&&")]
+        O_LogicalAnd,
+
+        [Token(Category = "Operator", Example = "~")]
+        O_BinaryNot,
+        
+        [Token(Category = "Operator", Example = "|")]
+        O_BinaryOr,
+        
+        [Token(Category = "Operator", Example = "&")]
+        O_BinaryAnd,
+
+        [Token(Category = "Operator", Example = "^")]
+        O_BinaryXor,
 
         [Token(Category = "Operator", Example = ".")]
         O_Dot,
@@ -225,7 +243,10 @@ namespace Humphrey.FrontEnd
                 end++;
             }
 
-            for (int a = scan; a < end; a++)
+            if (end >= encompass.Length)
+                end--;
+
+            for (int a = scan; a <= end; a++)
                 s.Append(encompass[a]);
             s.AppendLine();
             for (int a = scan; a < position; a++)
@@ -299,6 +320,10 @@ namespace Humphrey.FrontEnd
             [':'] = Tokens.O_Colon,
             ['.'] = Tokens.O_Dot,
             ['!'] = Tokens.O_LogicalNot,
+            ['~'] = Tokens.O_BinaryNot,
+            ['&'] = Tokens.O_BinaryAnd,
+            ['|'] = Tokens.O_BinaryOr,
+            ['^'] = Tokens.O_BinaryXor,
             ['<'] = Tokens.O_Less,
             ['>'] = Tokens.O_Greater,
             ['='] = Tokens.O_Equals,
@@ -319,6 +344,8 @@ namespace Humphrey.FrontEnd
             [('!', '=')] = Tokens.O_NotEquals,
             [('<', '=')] = Tokens.O_LessEquals,
             [('>', '=')] = Tokens.O_GreaterEquals,
+            [('&', '&')] = Tokens.O_LogicalAnd,
+            [('|', '|')] = Tokens.O_LogicalOr,
         };
 
         readonly Dictionary<string, Tokens> _keywords = new Dictionary<string, Tokens>

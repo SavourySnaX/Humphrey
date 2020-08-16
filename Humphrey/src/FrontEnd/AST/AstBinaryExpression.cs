@@ -75,6 +75,16 @@ namespace Humphrey.FrontEnd
                     return new AstBinaryCompareLess(left, right);
                 case ">":
                     return new AstBinaryCompareGreater(left, right);
+                case "&":
+                    return new AstBinaryBinaryAnd(left, right);
+                case "|":
+                    return new AstBinaryBinaryOr(left, right);
+                case "^":
+                    return new AstBinaryBinaryXor(left, right);
+                case "&&":
+                    return new AstBinaryLogicalAnd(left, right);
+                case "||":
+                    return new AstBinaryLogicalOr(left, right);
                 default:
                     throw new NotImplementedException($"Unimplemented binary operator : {oper.Dump()}");
             }

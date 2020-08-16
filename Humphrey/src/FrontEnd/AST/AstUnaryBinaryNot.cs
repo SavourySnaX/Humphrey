@@ -1,23 +1,23 @@
 using Humphrey.Backend;
 namespace Humphrey.FrontEnd
 {
-    public class AstUnaryLogicalNot : IExpression
+    public class AstUnaryBinaryNot : IExpression
     {
         IExpression expr;
-        public AstUnaryLogicalNot(IExpression expression)
+        public AstUnaryBinaryNot(IExpression expression)
         {
             expr = expression;
         }
     
         public string Dump()
         {
-            return $"! {expr.Dump()}";
+            return $"~ {expr.Dump()}";
         }
 
         public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
             var result = expr.ProcessConstantExpression(unit);
-            result.LogicalNot();
+            result.Not();
             return result;
         }
 
@@ -26,11 +26,11 @@ namespace Humphrey.FrontEnd
             var value = expr.ProcessExpression(unit, builder);
             if (value is CompilationConstantValue constantValue)
             {
-                constantValue.LogicalNot();
+                constantValue.Not();
                 return constantValue;
             }
             else
-                return builder.LogicalNot(value as CompilationValue);
+                return builder.Not(value as CompilationValue);
         }
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }

@@ -228,6 +228,8 @@ namespace Humphrey.FrontEnd
 
         // logical_not : !
         public IAst LogicalNotOperator() { return AstItem(Tokens.O_LogicalNot, (e) => new AstOperator(e)); }
+        // binary_not : ~
+        public IAst BinaryNotOperator() { return AstItem(Tokens.O_BinaryNot, (e) => new AstOperator(e)); }
         // compare_equal : ==
         public IAst CompareEqualOperator() { return AstItem(Tokens.O_EqualsEquals, (e) => new AstOperator(e)); }
         // compare_equal : !=
@@ -250,6 +252,16 @@ namespace Humphrey.FrontEnd
         public IAst DivideOperator() { return AstItem(Tokens.O_Divide, (e) => new AstOperator(e)); }
         // modulus_operator : %
         public IAst ModulusOperator() { return AstItem(Tokens.O_Modulus, (e) => new AstOperator(e)); }
+        // logical_and_operator : %
+        public IAst LogicalAndOperator() { return AstItem(Tokens.O_LogicalAnd, (e) => new AstOperator(e)); }
+        // logical_or_operator : %
+        public IAst LogicalOrOperator() { return AstItem(Tokens.O_LogicalOr, (e) => new AstOperator(e)); }
+        // binary_and_operator : %
+        public IAst BinaryAndOperator() { return AstItem(Tokens.O_BinaryAnd, (e) => new AstOperator(e)); }
+        // binary_or_operator : %
+        public IAst BinaryOrOperator() { return AstItem(Tokens.O_BinaryOr, (e) => new AstOperator(e)); }
+        // binary_xor_operator : %
+        public IAst BinaryXorOperator() { return AstItem(Tokens.O_BinaryXor, (e) => new AstOperator(e)); }
         // as_operator : %
         public IAst AsOperator() { return AstItem(Tokens.O_As, (e) => new AstOperator(e)); }
         // reference_operator : .
@@ -281,10 +293,11 @@ namespace Humphrey.FrontEnd
         public bool UnderscoreOperator() { return Take(Tokens.S_Underscore); }
         public bool PointerOperator() { return Take(Tokens.O_Multiply); }
 
-        public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, LogicalNotOperator };
+        public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, LogicalNotOperator, BinaryNotOperator };
         public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator, 
                 CompareEqualOperator, CompareNotEqualOperator, CompareLessOperator, CompareLessEqualOperator, CompareGreaterOperator, CompareGreaterEqualOperator,
-                AsOperator, ReferenceOperator, FunctionCallOperator, ArraySubscriptOperator };
+                AsOperator, ReferenceOperator, FunctionCallOperator, ArraySubscriptOperator,
+                LogicalAndOperator, LogicalOrOperator, BinaryAndOperator, BinaryOrOperator, BinaryXorOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
         public AstItemDelegate[] BaseTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
         public AstItemDelegate[] Types => new AstItemDelegate[] { BaseTypeOrEnumType };

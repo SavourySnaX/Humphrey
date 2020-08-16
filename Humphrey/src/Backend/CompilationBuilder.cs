@@ -97,9 +97,44 @@ namespace Humphrey.Backend
             return new CompilationValue(builderRef.BuildSub(left.BackendValue, right.BackendValue), left.Type);
         }
 
+        public CompilationValue LogicalAnd(CompilationValue left, CompilationValue right)
+        {
+            return new CompilationValue(builderRef.BuildAnd(left.BackendValue, right.BackendValue), left.Type);
+        }
+        
+        public CompilationValue LogicalOr(CompilationValue left, CompilationValue right)
+        {
+            return new CompilationValue(builderRef.BuildOr(left.BackendValue, right.BackendValue), left.Type);
+        }
+
+        public CompilationValue And(CompilationValue left, CompilationValue right)
+        {
+            return new CompilationValue(builderRef.BuildAnd(left.BackendValue, right.BackendValue), left.Type);
+        }
+
+        public CompilationValue Or(CompilationValue left, CompilationValue right)
+        {
+            return new CompilationValue(builderRef.BuildOr(left.BackendValue, right.BackendValue), left.Type);
+        }
+
+        public CompilationValue Xor(CompilationValue left, CompilationValue right)
+        {
+            return new CompilationValue(builderRef.BuildXor(left.BackendValue, right.BackendValue), left.Type);
+        }
+
         public CompilationValue Negate(CompilationValue src)
         {
             return new CompilationValue(builderRef.BuildNeg(src.BackendValue), src.Type);
+        }
+
+        public CompilationValue LogicalNot(CompilationValue src)
+        {
+            return new CompilationValue(builderRef.BuildNot(src.BackendValue), src.Type);
+        }
+
+        public CompilationValue Not(CompilationValue src)
+        {
+            return new CompilationValue(builderRef.BuildNot(src.BackendValue), src.Type);
         }
 
         public CompilationValue Alloca(CompilationType type)

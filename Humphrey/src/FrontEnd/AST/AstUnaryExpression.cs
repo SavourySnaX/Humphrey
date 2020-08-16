@@ -16,6 +16,8 @@ namespace Humphrey.FrontEnd
                     return new AstUnaryDereference(expression);
                 case "!":
                     return new AstUnaryLogicalNot(expression);
+                case "~":
+                    return new AstUnaryBinaryNot(expression);
                 default:
                     throw new NotImplementedException($"Unimplemented unary operator : {oper.Dump()}");
             }

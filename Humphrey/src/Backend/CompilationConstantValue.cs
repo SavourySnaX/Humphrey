@@ -158,6 +158,40 @@ namespace Humphrey.Backend
             constant = (constant != rhs.Constant) ? BigInteger.One : BigInteger.Zero;
         }
 
+        public void LogicalOr(CompilationConstantValue rhs)
+        {
+            constant = (constant.IsOne || rhs.Constant.IsOne) ? BigInteger.One : BigInteger.Zero;
+        }
+
+        public void LogicalAnd(CompilationConstantValue rhs)
+        {
+            constant = (constant.IsOne && rhs.Constant.IsOne) ? BigInteger.One : BigInteger.Zero;
+        }
+
+        public void LogicalNot()
+        {
+            constant = constant.IsOne ? BigInteger.One : BigInteger.Zero;
+        }
+        public void Not()
+        {
+            constant = ~Constant;
+        }
+
+        public void And(CompilationConstantValue rhs)
+        {
+            constant = constant & rhs.Constant;
+        }
+
+        public void Xor(CompilationConstantValue rhs)
+        {
+            constant = constant ^ rhs.Constant;
+        }
+
+        public void Or(CompilationConstantValue rhs)
+        {
+            constant = constant | rhs.Constant;
+        }
+
         public void Cast(IType type)
         {
             resultType = type;

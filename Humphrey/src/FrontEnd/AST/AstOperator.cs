@@ -20,38 +20,39 @@ namespace Humphrey.FrontEnd
                         return int.MaxValue;
                     case "as":
                         return 1000;
+                    case "~":
                     case "!":
+                        return 850;
+                    case "||":
+                        return 775;
+                    case "&&":
                         return 750;
-                    case "<":
-                        return 650;
-                    case ">":
-                        return 650;
-                    case "<=":
-                        return 650;
-                    case ">=":
+                    case "|":
+                        return 675;
+                    case "^":
+                        return 665;
+                    case "&":
                         return 650;
                     case "==":
-                        return 600;
                     case "!=":
+                        return 625;
+                    case "<":
+                    case ">":
+                    case "<=":
+                    case ">=":
                         return 600;
                     case "+":
-                        return 500;
                     case "-":
                         return 500;
                     case "%":
-                        return 300;
                     case "*":
-                        return 300;
                     case "/":
                         return 300;
                     case "=":
                         return 150;
                     case ":":
-                        return 100;
                     case ".":
-                        return 100;
                     case "(":
-                        return 100;
                     case "[":
                         return 100;
                     default:
