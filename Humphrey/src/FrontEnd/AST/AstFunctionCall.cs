@@ -56,14 +56,24 @@ namespace Humphrey.FrontEnd
             var ftype = function.Type as CompilationFunctionType;
             if (ftype==null)
             {
-                throw new System.NotImplementedException($"Todo - not a function type... pointer to function type?");
+                var ptrToFunction = function.Type as CompilationPointerType;
+                if (ptrToFunction==null)
+                    throw new System.NotImplementedException($"Todo - not a function type... pointer to function type?");
+                ftype = ptrToFunction.ElementType as CompilationFunctionType;
+                if (ftype==null)
+                    throw new System.NotImplementedException($"Todo - not a function type... pointer to function type?");
             }
+
+            CompilationValue allocSpace = default;
 
             // create an anonymous struct to hold the outputs of the function..
             var structType = ftype.CreateOutputParameterStruct(unit);
-            var allocSpace = builder.Alloca(structType);
-                    // we might want to always set this for alloca...
-            allocSpace.Storage = new CompilationValue(allocSpace.BackendValue, new CompilationPointerType(Extensions.Helpers.CreatePointerType(structType.BackendType), structType));
+            if (structType != null) // not void function
+            {
+                allocSpace = builder.Alloca(structType);
+                // we might want to always set this for alloca...
+                allocSpace.Storage = new CompilationValue(allocSpace.BackendValue, new CompilationPointerType(Extensions.Helpers.CreatePointerType(structType.BackendType), structType));
+            }
             // pass the input expression results to the input arguments  
             var arguments = new CompilationValue[ftype.Parameters.Length];
             if (argumentList.Expressions.Length != ftype.InputCount)
@@ -83,6 +93,10 @@ namespace Humphrey.FrontEnd
             }
             // call the function
             builder.Call(function, arguments);
+
+            if (structType==null)
+                return null;        // undef?
+
             // return the anonymous struct as the ICompilationValue
             return builder.Load(allocSpace);
         }

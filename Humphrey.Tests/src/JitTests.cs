@@ -413,6 +413,16 @@ Main:(a:bit,b:bit)(out:bit)=
         }
 
         [Theory]
+        [InlineData(@"value1:=99 Main:()(out:[8]bit)={ Make66() out=value1 } Make66:()()={ value1=66 }", "Main", 66)]
+        [InlineData(@"value1:[8]bit=99 Main:()(out:[8]bit)={ Make(66) out=value1 } Make:(val:[8]bit)()={ value1=val }", "Main", 66)]
+        public void CheckVoidFunctionUsage(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
+
+
+
+        [Theory]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+b} else {out=b}}", "Main", 0,3,3)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+b} else {out=b}}", "Main", 1,3,6)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a!=0 {out=Main(a-1,b)+b} else {out=b}}", "Main", 2,2,6)]

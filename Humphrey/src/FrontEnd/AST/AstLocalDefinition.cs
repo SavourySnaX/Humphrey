@@ -46,7 +46,7 @@ namespace Humphrey.FrontEnd
                     // should be scoped
                     unit.CreateNamedType(ident.Dump(), ct);
                 }
-                else if (functionType != null && initialiser != null)
+                else if (functionType != null && initialiser != null && codeBlock!=null)
                 {
                     AstFunctionType.BuildFunction(unit, functionType, ident, codeBlock);
                 }

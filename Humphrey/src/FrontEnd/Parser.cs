@@ -23,8 +23,11 @@ namespace Humphrey.FrontEnd
 
         CompilerMessages messages;
 
+        bool saveTokens;
+
         public HumphreyParser(IEnumerable<Result<Tokens>> toParse, CompilerMessages overrideDefaultMessages = null)
         {
+            saveTokens = false;
             messages = overrideDefaultMessages;
             if (messages==null)
                 messages = new CompilerMessages(true, true, false);
@@ -43,6 +46,8 @@ namespace Humphrey.FrontEnd
 
         void NextToken()
         {
+            if (saveTokens)
+                searchResetBuffer.Enqueue(lookahead);
             do
             {
                 if (searchResetQueue.Count == 0)
@@ -59,14 +64,20 @@ namespace Humphrey.FrontEnd
             } while (lookahead.HasValue && IsSkippableToken(lookahead.Value));
         }
 
-        void SaveNextToken()
+        void SaveTokens()
         {
-            searchResetBuffer.Enqueue(lookahead);
-            NextToken();
+            saveTokens = true;
+        }
+
+        void FlushTokens()
+        {
+            saveTokens = false;
+            searchResetBuffer = new Queue<Result<Tokens>>(32);
         }
 
         void RestoreTokens()
         {
+            saveTokens = false;
             searchResetBuffer.Enqueue(lookahead);
             searchResetQueue = searchResetBuffer;
             searchResetBuffer = new Queue<Result<Tokens>>(32);
@@ -280,7 +291,7 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
         public AstItemDelegate[] IdentifierOrAnonymous => new AstItemDelegate[] { Identifier, AnonymousIdentifier };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
-        public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement, ForStatement, IfStatement, CouldBeLocalScopeDefinitionOrAssignment };
+        public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement, ForStatement, IfStatement, CouldBeLocalScopeDefinitionOrAssignmentOrExpression };
 
         public AstItemDelegate[] StructDefinitions => new AstItemDelegate[] { StructElementDefinition };
         public AstItemDelegate[] EnumDefinitions => new AstItemDelegate[] { EnumElementDefinition };
@@ -459,49 +470,38 @@ namespace Humphrey.FrontEnd
 
 
         // Used to distinguish between localscope definition or an assignment without requiring significant lookaheads
-        public IStatement CouldBeLocalScopeDefinitionOrAssignment()
+        public IStatement CouldBeLocalScopeDefinitionOrAssignmentOrExpression()
         {
             if (PeekCloseCurlyBrace())
                 return null;
-                
-            if (!PeekIdentifier())
-            {
-                //Must be an assignment
-                return Assignment();
-            }
 
-            var definition = false;
-            while (true)
-            {
-                if (!lookahead.HasValue)
-                {
-                    RestoreTokens();
-                    return null;
-                }
-                
-                SaveNextToken();
+            SaveTokens();
 
-                if (PeekColonOperator())
-                {
-                    definition = true;
-                    break;
-                }
-                if (PeekEqualsOperator())
-                {
-                    definition = false;
-                    break;
-                }
+            var localDef = LocalScopeDefinition();
+            if (localDef!=null)
+            {
+                FlushTokens();
+                return localDef;
             }
             RestoreTokens();
-
-            if (definition)
+            SaveTokens();
+            var assign = Assignment();
+            if (assign!=null)
             {
-                return LocalScopeDefinition();
+                FlushTokens();
+                return assign;
             }
-
-            return Assignment();
+            RestoreTokens();
+            SaveTokens();
+            var expr = ParseExpression();
+            if (expr!=null)
+            {
+                FlushTokens();
+                return new AstExpressionStatement(expr);
+            }
+            RestoreTokens();
+            return null;
         }
-
 
         // expression_function_call_arguments :  function_call_arguments
         public IExpression ExpressionFunctionCallArguments()

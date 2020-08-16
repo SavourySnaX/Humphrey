@@ -45,7 +45,7 @@ namespace Humphrey.FrontEnd
                 {
                     unit.CreateNamedType(ident.Dump(), ct);
                 }
-                else if (functionType != null && initialiser != null)
+                else if (functionType != null && initialiser != null && codeBlock != null)
                 {
                     AstFunctionType.BuildFunction(unit, functionType, ident, codeBlock);
                 }
@@ -55,7 +55,6 @@ namespace Humphrey.FrontEnd
                 }
                 else
                 {
-                    // todo this needs to be a constant/computable value for LLVM so we ideally need a semantic pass soon
                     var newGlobal = unit.CreateGlobalVariable(ct, ident.Dump(), exprValue);
                 }
             }
