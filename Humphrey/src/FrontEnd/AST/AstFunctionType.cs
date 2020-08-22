@@ -25,7 +25,34 @@ namespace Humphrey.FrontEnd
         {
             var newFunction = unit.CreateFunction(functionType, ident.Dump());
 
+            unit.PushScope("");
+
+            var localsBlock = new CompilationBlock(newFunction.BackendValue.AppendBasicBlock($"inputs_{ident.Dump()}"));
+            var localsBuilder = unit.CreateBuilder(newFunction, localsBlock);
+
+            // create an entry block and a set of locals
+            for (uint a = 0; a < functionType.InputCount; a++)
+            {
+                var paramIdent = functionType.Parameters[a].Identifier;
+                var type = functionType.Parameters[a].Type;
+                var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, null);
+                var cv = new CompilationValue(newFunction.BackendValue.Params[a], type);
+                localsBuilder.Store(cv, local.Storage);
+            }
+            // allocate the output locals - these can be mapped directly
+            for (uint a = functionType.OutParamOffset; a < functionType.Parameters.Length; a++)
+            {
+                var outputType = new CompilationPointerType(Extensions.Helpers.CreatePointerType(functionType.Parameters[a].Type.BackendType), functionType.Parameters[a].Type);
+                var output = new CompilationValueOutputParameter(newFunction.BackendValue.Params[a], outputType, functionType.Parameters[a].Identifier);
+                output.Storage = output;
+                unit.AddValue(functionType.Parameters[a].Identifier, output);
+            }
+
+
             var compiledBlock = codeBlock.CreateCodeBlock(unit, newFunction, $"entry_{ident.Dump()}");
+            
+            // LocalsBuilder needs to jump to compiledBlock
+            localsBuilder.BackendValue.BuildBr(compiledBlock.entry.BackendValue);
 
             if (compiledBlock.exit.BackendValue.Terminator == null)
             {
@@ -41,6 +68,8 @@ namespace Humphrey.FrontEnd
                     unit.Messages.Log(CompilerErrorKind.Error_MissingOutputAssignment, $"The function '{ident.Dump()}' does not assign a result to the output '{o.Identifier}'.", o.Token.Location, o.Token.Remainder);
                 }
             }
+
+            unit.PopScope();
         }
         public bool IsFunctionType => true;
 

@@ -59,6 +59,10 @@ namespace Humphrey.Backend
         }
         public CompilationValue Store(CompilationValue value, CompilationValue storeTo)
         {
+            if (storeTo is CompilationValueOutputParameter compilationValueOutputParameter)
+            {
+                function.MarkUsed(compilationValueOutputParameter.Identifier);
+            }
             return new CompilationValue(builderRef.BuildStore(value.BackendValue, storeTo.BackendValue), value.Type);
         }
 

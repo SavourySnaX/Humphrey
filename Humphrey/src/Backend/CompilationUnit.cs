@@ -11,7 +11,7 @@ namespace Humphrey.Backend
 {
     public class CompilationUnit
     {
-        SymbolTable symbolTable;
+        Scope symbolScopes;
         LLVMContextRef contextRef;
         LLVMModuleRef moduleRef;
 
@@ -33,7 +33,8 @@ namespace Humphrey.Backend
             LLVM.InitializeX86AsmParser();
             LLVM.InitializeX86AsmPrinter();
 
-            symbolTable = new SymbolTable();
+            symbolScopes = new Scope();
+            symbolScopes.PushScope(name);
             contextRef = CreateContext();
             moduleRef = contextRef.CreateModuleWithName(name);
 
@@ -60,11 +61,13 @@ namespace Humphrey.Backend
         {
             if (pendingDefinitions.TryGetValue(identifier, out var definition))
             {
+                symbolScopes.SaveScopes();
                 definition.Compile(this);
                 foreach (var ident in definition.Identifiers)
                 {
                     pendingDefinitions.Remove(ident.Dump());
                 }
+                symbolScopes.RestoreScopes();
                 return true;
             }
             return false;
@@ -100,13 +103,13 @@ namespace Humphrey.Backend
 
         public CompilationType FetchNamedType(string identifier)
         {
-            return symbolTable.FetchType(identifier);
+            return symbolScopes.FetchNamedType(identifier);
         }
 
         public void CreateNamedType(string identifier, CompilationType type)
         {
             var symbTabType = type.CopyAs(identifier);
-            symbolTable.AddType(identifier, symbTabType);
+            symbolScopes.AddType(identifier, symbTabType);
         }
 
         public CompilationType FetchStructType(CompilationType[] elements, string[] names)
@@ -145,43 +148,7 @@ namespace Humphrey.Backend
 
         public CompilationValue FetchValueInternal(string identifier, CompilationBuilder builder)
         {
-            // Check for function paramter
-            var value = symbolTable.FetchFunctionInputParam(identifier, builder.Function);
-            if (value != null)
-                return value;
-
-            // Check for function paramter
-            value = symbolTable.FetchFunctionOutputParam(identifier, builder.Function);
-            if (value != null)
-                return builder.Load(value);
-
-            // Check for global value
-            value = symbolTable.FetchGlobalValue(identifier);
-            if (value != null)
-                return builder.Load(value);
-
-            // Check for local value
-            value = symbolTable.FetchLocalValue(identifier);
-            if (value != null)
-                return builder.Load(value);
-
-            // Check for function - i guess we can construct this on the fly?
-            var function = symbolTable.FetchFunction(identifier);
-            if (function!=null)
-            {
-                value = new CompilationValue(function.BackendValue, function.FunctionType);
-                return value;
-            }
-
-            // Check for named type (an enum is actually a value type) - might be better done at definition actually
-            var nType = symbolTable.FetchType(identifier);
-            if (nType!=null)
-            {
-                value = CreateUndef(nType);
-                return value;
-            }
-
-            return null;
+            return symbolScopes.FetchValue(this, identifier, builder);
         }
 
         public CompilationValue FetchValue(string identifier, CompilationBuilder builder)
@@ -202,24 +169,7 @@ namespace Humphrey.Backend
 
         private CompilationValue FetchLocationInternal(string identifier, CompilationBuilder builder)
         {
-            // Check for global value
-            var value = symbolTable.FetchGlobalValue(identifier);
-            if (value != null)
-                return value.Storage;
-                            
-            // Check for local value
-            value = symbolTable.FetchLocalValue(identifier);
-            if (value != null)
-                return value.Storage;
-
-            // Check for function output param
-            value = symbolTable.FetchFunctionOutputParam(identifier, builder.Function);
-            if (value != null)
-            {
-                builder.Function.MarkUsed(identifier);
-                return value;
-            }
-            return null;
+            return symbolScopes.FetchLocation(identifier, builder);
         }
 
         public CompilationValue FetchLocation(string identifier, CompilationBuilder builder)
@@ -284,32 +234,40 @@ namespace Humphrey.Backend
 
         public CompilationFunction CreateFunction(CompilationFunctionType type, string identifier)
         {
-            if (symbolTable.FetchFunction(identifier)!=null)
+            if (symbolScopes.FetchFunction(identifier)!=null)
                 throw new Exception($"function {identifier} already exists!");
 
             var func = moduleRef.AddFunction(identifier, type.BackendType);
 
             var cfunc = new CompilationFunction(func, type);
 
-            if (!symbolTable.AddFunction(identifier, cfunc))
+            if (!symbolScopes.AddFunction(identifier, cfunc))
                 throw new Exception($"function {identifier} failed to add symbol!");
-
-            for (uint p = 0; p < type.OutParamOffset && p < type.Parameters.Length; p++)
-            {
-                symbolTable.AddFunctionInputParam(type.Parameters[p].Identifier, cfunc, new CompilationValue(cfunc.BackendValue.Params[p], type.Parameters[p].Type));
-            }
-
-            for (uint p = type.OutParamOffset; p < type.Parameters.Length; p++)
-            {
-                symbolTable.AddFunctionOutputParam(type.Parameters[p].Identifier, cfunc, new CompilationValue(cfunc.BackendValue.Params[p], new CompilationPointerType(Extensions.Helpers.CreatePointerType(type.Parameters[p].Type.BackendType), type.Parameters[p].Type)));
-            }
 
             return cfunc;
         }
 
+        public void PushScope(string identifier)
+        {
+            symbolScopes.PushScope(identifier);
+        }
+
+        public void PopScope()
+        {
+            symbolScopes.PopScope();
+        }
+
+        public void AddValue(string identifier, CompilationValue value)
+        {
+            if (!symbolScopes.AddValue(identifier, value))
+            {
+                throw new Exception($"TODO duplicate definition error");
+            }
+        }
+
         public CompilationValue CreateGlobalVariable(CompilationType type, string identifier, CompilationConstantValue initialiser = null)
         {
-            if (symbolTable.FetchGlobalValue(identifier)!=null)
+            if (symbolScopes.FetchValue(identifier)!=null)
                 throw new Exception($"global value {identifier} already exists!");
 
             var global = moduleRef.AddGlobal(type.BackendType, identifier);
@@ -323,7 +281,7 @@ namespace Humphrey.Backend
             var globalValue = new CompilationValue(global, type);
             globalValue.Storage = new CompilationValue(global, new CompilationPointerType(CreatePointerType(type.BackendType), type));
 
-            if (!symbolTable.AddGlobalValue(identifier, globalValue))
+            if (!symbolScopes.AddValue(identifier, globalValue))
                 throw new Exception($"global {identifier} failed to add symbol!");
 
             return globalValue;
@@ -331,7 +289,7 @@ namespace Humphrey.Backend
 
         public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationType type, string identifier, ICompilationValue initialiser)
         {
-            if (symbolTable.FetchLocalValue(identifier)!=null)
+            if (symbolScopes.FetchValue(identifier)!=null)
                 throw new Exception($"local value {identifier} already exists!");
 
             var local = builder.Alloca(type);
@@ -343,7 +301,7 @@ namespace Humphrey.Backend
             }
             local.Storage = new CompilationValue(local.BackendValue, new CompilationPointerType(CreatePointerType(type.BackendType), type));
 
-            if (!symbolTable.AddLocalValue(identifier, local))
+            if (!symbolScopes.AddValue(identifier, local))
                 throw new Exception($"local {identifier} failed to add symbol!");
 
             return local;
@@ -370,7 +328,7 @@ namespace Humphrey.Backend
                 throw new System.Exception($"Failed to create jit");
             }
 
-            return ee.GetPointerToGlobal(symbolTable.FetchFunction(identifier).BackendValue);
+            return ee.GetPointerToGlobal(symbolScopes.FetchFunction(identifier).BackendValue);
         }
 
         public bool EmitToBitCodeFile(string filename)

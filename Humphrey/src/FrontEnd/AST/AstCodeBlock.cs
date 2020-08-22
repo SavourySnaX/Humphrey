@@ -14,6 +14,7 @@ namespace Humphrey.FrontEnd
     
         public (CompilationBlock entry, CompilationBlock exit) CreateCodeBlock(CompilationUnit unit, CompilationFunction function, string blockName)
         {
+            unit.PushScope("");
             var newBB = new CompilationBlock(function.BackendValue.AppendBasicBlock(blockName));
 
             var builder = unit.CreateBuilder(function, newBB);
@@ -23,6 +24,7 @@ namespace Humphrey.FrontEnd
                 s.BuildStatement(unit, function, builder);
             }
 
+            unit.PopScope();
             return (newBB, builder.CurrentBlock);
         }
     

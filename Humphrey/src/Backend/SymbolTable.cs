@@ -6,19 +6,13 @@ namespace Humphrey.Backend
     {
         private readonly Dictionary<string, CompilationType> typeTable;
         private readonly Dictionary<string, CompilationFunction> functionTable;
-        private readonly Dictionary<string, CompilationValue> globalValueTable;
-        private readonly Dictionary<string, CompilationValue> localValueTable;      // Temporary, will become scoped type
-        private readonly Dictionary<(string, CompilationFunction), CompilationValue> inputParamsTable;
-        private readonly Dictionary<(string, CompilationFunction), CompilationValue> outputParamsTable;
+        private readonly Dictionary<string, CompilationValue> valueTable;
 
         public SymbolTable()
         {
             typeTable = new Dictionary<string, CompilationType>();
             functionTable = new Dictionary<string, CompilationFunction>();
-            globalValueTable = new Dictionary<string, CompilationValue>();
-            localValueTable = new Dictionary<string, CompilationValue>();
-            inputParamsTable = new Dictionary<(string, CompilationFunction), CompilationValue>();
-            outputParamsTable = new Dictionary<(string, CompilationFunction), CompilationValue>();
+            valueTable = new Dictionary<string, CompilationValue>();
         }
 
         public CompilationType FetchType(string identifier)
@@ -28,12 +22,14 @@ namespace Humphrey.Backend
             return null;
         }
 
-        public bool AddType(string identifier, CompilationType type)
+        public bool TypeDefined(string identifier)
         {
-            if (typeTable.ContainsKey(identifier))
-                return false;
+            return typeTable.ContainsKey(identifier);
+        }
+
+        public void AddType(string identifier, CompilationType type)
+        {
             typeTable.Add(identifier, type);
-            return true;
         }
 
         public CompilationFunction FetchFunction(string identifier)
@@ -51,63 +47,18 @@ namespace Humphrey.Backend
             return true;
         }
 
-        public CompilationValue FetchFunctionInputParam(string identifier, CompilationFunction function)
+        public CompilationValue FetchValue(string identifier)
         {
-            if (inputParamsTable.TryGetValue((identifier,function),out var result))
+            if (valueTable.TryGetValue(identifier,out var result))
                 return result;
             return null;
         }
 
-        public bool AddFunctionInputParam(string identifier, CompilationFunction function, CompilationValue value)
+        public bool AddValue(string identifier, CompilationValue value)
         {
-            if (inputParamsTable.ContainsKey((identifier,function)))
+            if (valueTable.ContainsKey(identifier))
                 return false;
-            inputParamsTable.Add((identifier, function), value);
-            return true;
-        }
-
-        public CompilationValue FetchFunctionOutputParam(string identifier, CompilationFunction function)
-        {
-            if (outputParamsTable.TryGetValue((identifier,function),out var result))
-                return result;
-            return null;
-        }
-
-        public bool AddFunctionOutputParam(string identifier, CompilationFunction function, CompilationValue value)
-        {
-            if (outputParamsTable.ContainsKey((identifier,function)))
-                return false;
-            outputParamsTable.Add((identifier, function), value);
-            return true;
-        }
-
-        public CompilationValue FetchGlobalValue(string identifier)
-        {
-            if (globalValueTable.TryGetValue(identifier,out var result))
-                return result;
-            return null;
-        }
-
-        public bool AddGlobalValue(string identifier, CompilationValue value)
-        {
-            if (globalValueTable.ContainsKey(identifier))
-                return false;
-            globalValueTable.Add(identifier, value);
-            return true;
-        }
-
-        public CompilationValue FetchLocalValue(string identifier)
-        {
-            if (localValueTable.TryGetValue(identifier,out var result))
-                return result;
-            return null;
-        }
-
-        public bool AddLocalValue(string identifier, CompilationValue value)
-        {
-            if (localValueTable.ContainsKey(identifier))
-                return false;
-            localValueTable.Add(identifier, value);
+            valueTable.Add(identifier, value);
             return true;
         }
 
