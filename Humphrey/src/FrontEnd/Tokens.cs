@@ -93,6 +93,12 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Operator", Example = "==")]
         O_EqualsEquals,
 
+        [Token(Category = "Operator", Example = "++")]
+        O_PlusPlus,
+
+        [Token(Category = "Operator", Example = "--")]
+        O_MinusMinus,
+
         [Token(Category = "Operator", Example = "!=")]
         O_NotEquals,
 
@@ -341,6 +347,8 @@ namespace Humphrey.FrontEnd
         {
             [('.', '.')] = Tokens.O_DotDot,
             [('=', '=')] = Tokens.O_EqualsEquals,
+            [('+', '+')] = Tokens.O_PlusPlus,
+            [('-', '-')] = Tokens.O_MinusMinus,
             [('!', '=')] = Tokens.O_NotEquals,
             [('<', '=')] = Tokens.O_LessEquals,
             [('>', '=')] = Tokens.O_GreaterEquals,

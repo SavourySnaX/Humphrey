@@ -226,6 +226,14 @@ namespace Humphrey.FrontEnd
         public IAst IfKeyword() { return AstItem(Tokens.KW_If, (e) => new AstKeyword(e)); }
         public IAst ElseKeyword() { return AstItem(Tokens.KW_Else, (e) => new AstKeyword(e)); }
 
+        // predec : --
+        public IAst PreDecrementOperator() { return AstItem(Tokens.O_MinusMinus, (e) => new AstOperator(e)); }
+        // preinc : ++
+        public IAst PreIncrementOperator() { return AstItem(Tokens.O_PlusPlus, (e) => new AstOperator(e)); }
+        // postinc : ++
+        public IAst PostIncrementOperator() { return AstItem(Tokens.O_PlusPlus, (e) => new AstOperator(e)); }
+        // postdec : --
+        public IAst PostDecrementOperator() { return AstItem(Tokens.O_MinusMinus, (e) => new AstOperator(e)); }
         // logical_not : !
         public IAst LogicalNotOperator() { return AstItem(Tokens.O_LogicalNot, (e) => new AstOperator(e)); }
         // binary_not : ~
@@ -293,10 +301,10 @@ namespace Humphrey.FrontEnd
         public bool UnderscoreOperator() { return Take(Tokens.S_Underscore); }
         public bool PointerOperator() { return Take(Tokens.O_Multiply); }
 
-        public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, LogicalNotOperator, BinaryNotOperator };
+        public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, LogicalNotOperator, BinaryNotOperator, PreIncrementOperator, PreDecrementOperator };
         public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator, 
                 CompareEqualOperator, CompareNotEqualOperator, CompareLessOperator, CompareLessEqualOperator, CompareGreaterOperator, CompareGreaterEqualOperator,
-                AsOperator, ReferenceOperator, FunctionCallOperator, ArraySubscriptOperator,
+                AsOperator, ReferenceOperator, FunctionCallOperator, ArraySubscriptOperator, PostIncrementOperator, PostDecrementOperator,
                 LogicalAndOperator, LogicalOrOperator, BinaryAndOperator, BinaryOrOperator, BinaryXorOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
         public AstItemDelegate[] BaseTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
@@ -405,9 +413,12 @@ namespace Humphrey.FrontEnd
 
         public void PushOperator((bool binary, IOperator item) op)
         {
-            while (IsTopLowerPrecedance(op.item))
+            if (op.binary)
             {
-                PopOperator();
+                while (IsTopLowerPrecedance(op.item))
+                {
+                    PopOperator();
+                }
             }
             operators.Push(op);
         }
@@ -534,22 +545,36 @@ namespace Humphrey.FrontEnd
             return functionCall;
         }
 
-        // expression_array_subscript : array_subscript
-        public IExpression ExpressionArraySubscript()
+        // expression_continuation : array_subscript
+        //                         | ++
+        //                         | --
+        public IExpression ExpressionContinuation(IOperator oper)
         {
-            IExpression subscript = ArraySubscript();
-            if (subscript == null)
-                return null;
-            operands.Push(subscript);
+            switch (oper.Dump())
+            {
+                case "[":
+                    IExpression subscript = ArraySubscript();
+                    if (subscript == null)
+                        return null;
+                    operands.Push(subscript);
+                    break;
+                case "++":
+                case "--":
+                    operands.Push(null);
+                    break;
+                default:
+                    throw new System.NotImplementedException($"unhandled {oper.Token} in expression continuation");
+            }
+
             while (operators.Peek().item != null)
                 PopOperator();
             var op = OneOf(BinaryOperators) as IOperator;
-            var arrayidx = operands.Peek() as IExpression;
+            var expr = operands.Peek() as IExpression;
             if (op!=null)
             {
-                return BinaryOperatorProcess(arrayidx, op);
+                return BinaryOperatorProcess(expr, op);
             }
-            return arrayidx;
+            return expr;
         }
 
 
@@ -670,7 +695,7 @@ namespace Humphrey.FrontEnd
                 case IOperator.OperatorKind.ExpressionExpressionList:
                     return ExpressionFunctionCallArguments();
                 case IOperator.OperatorKind.ExpressionExpressionContinuation:
-                    return ExpressionArraySubscript();
+                    return ExpressionContinuation(op);
             }
             return null;
         }

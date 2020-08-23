@@ -116,6 +116,16 @@ namespace Humphrey.Backend
             constant = 0 - constant;
         }
 
+        public void Increment()
+        {
+            constant = constant + 1;
+        }
+
+        public void Decrement()
+        {
+            constant = constant - 1;
+        }
+
         public void Add(CompilationConstantValue rhs)
         {
             constant = constant + rhs.Constant;

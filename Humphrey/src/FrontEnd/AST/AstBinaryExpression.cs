@@ -22,6 +22,14 @@ namespace Humphrey.FrontEnd
             {
                 case "[":
                     return new AstArraySubscript(left,right);
+                case "++":
+                    if (right!=null)
+                        throw new Exception($"Right hand side of post increment should be null");
+                    return new AstUnaryPostIncrement(left);
+                case "--":
+                    if (right!=null)
+                        throw new Exception($"Right hand side of post decrement should be null");
+                    return new AstUnaryPostDecrement(left);
                 default:
                     throw new NotImplementedException($"Unimplemented binary operator rhs identifer : {oper.Dump()}");
             }

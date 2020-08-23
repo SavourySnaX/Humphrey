@@ -18,6 +18,10 @@ namespace Humphrey.FrontEnd
                     return new AstUnaryLogicalNot(expression);
                 case "~":
                     return new AstUnaryBinaryNot(expression);
+                case "++":
+                    return new AstUnaryPreIncrement(expression);
+                case "--":
+                    return new AstUnaryPreDecrement(expression);
                 default:
                     throw new NotImplementedException($"Unimplemented unary operator : {oper.Dump()}");
             }

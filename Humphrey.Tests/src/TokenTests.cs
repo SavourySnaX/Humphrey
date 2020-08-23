@@ -28,6 +28,8 @@ namespace Humphrey.Tests.src
         [InlineData(".", Tokens.O_Dot)]
         [InlineData("..", Tokens.O_DotDot)]
         [InlineData("==", Tokens.O_EqualsEquals)]
+        [InlineData("++", Tokens.O_PlusPlus)]
+        [InlineData("--", Tokens.O_MinusMinus)]
         [InlineData("!=", Tokens.O_NotEquals)]
         [InlineData("<=", Tokens.O_LessEquals)]
         [InlineData(">=", Tokens.O_GreaterEquals)]

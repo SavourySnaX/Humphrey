@@ -22,6 +22,8 @@ namespace Humphrey.FrontEnd
                         return 1000;
                     case "~":
                     case "!":
+                    case "++":
+                    case "--":
                         return 850;
                     case "||":
                         return 775;
@@ -74,6 +76,8 @@ namespace Humphrey.FrontEnd
                     case "(":
                         return IOperator.OperatorKind.ExpressionExpressionList;
                     case "[":
+                    case "++":
+                    case "--":
                         return IOperator.OperatorKind.ExpressionExpressionContinuation;
                     default:
                         return IOperator.OperatorKind.ExpressionExpression;

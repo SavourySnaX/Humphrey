@@ -162,6 +162,29 @@ namespace Humphrey.Backend.tests
         {
             Assert.True(InputBitExpectsBitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input}");
         }
+
+        [Theory]
+        [InlineData(@"Main : (a : bit) (outA : bit, outB : bit) = { outB=a outA=++outB}", "Main", 0, 1, 1)]
+        [InlineData(@"Main : (a : bit) (outA : bit, outB : bit) = { outB=a outA=outB++}", "Main", 0, 0, 1)]
+        [InlineData(@"Main : (a : bit) (outA : bit, outB : bit) = { outB=a outA=--outB}", "Main", 1, 0, 0)]
+        [InlineData(@"Main : (a : bit) (outA : bit, outB : bit) = { outB=a outA=outB--}", "Main", 1, 1, 0)]
+        public void CheckPrePostBitIncDec(string input, string entryPointName, byte ival, byte expectedA, byte expectedB)
+        {
+            Assert.True(InputBitExpectsBitBitValue(CompileForTest(input, entryPointName), ival, expectedA, expectedB), $"Test {entryPointName},{input},{ival},{expectedA},{expectedB}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a : [8]bit) (outA : [8]bit, outB : [8]bit) = { outB=a outA=++outB}", "Main", 5, 6, 6)]
+        [InlineData(@"Main : (a : [8]bit) (outA : [8]bit, outB : [8]bit) = { outB=a outA=outB++}", "Main", 23, 23, 24)]
+        [InlineData(@"Main : (a : [8]bit) (outA : [8]bit, outB : [8]bit) = { outB=a outA=--outB}", "Main", 191, 190, 190)]
+        [InlineData(@"Main : (a : [8]bit) (outA : [8]bit, outB : [8]bit) = { outB=a outA=outB--}", "Main", 255, 255, 254)]
+        [InlineData(@"Main : (a : [8]bit) (outA : [8]bit, outB : [8]bit) = { outB=a outA=(++outB)*2}", "Main", 5, 12, 6)]
+        [InlineData(@"Main : (a : [8]bit) (outA : [8]bit, outB : [8]bit) = { outB=a outA=2*(outB++)}", "Main", 23, 46, 24)]
+        public void CheckPrePostBytIncDec(string input, string entryPointName, byte ival, byte expectedA, byte expectedB)
+        {
+            Assert.True(InputByteExpectsByteByteValue(CompileForTest(input, entryPointName), ival, expectedA, expectedB), $"Test {entryPointName},{input},{ival},{expectedA},{expectedB}");
+        }
+
         [Theory]
         [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a+b}", "Main", 0, 0, 0)]
         [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a+b}", "Main", 0, 1, 1)]
@@ -645,6 +668,27 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
             func(input, &returnValue);
             return returnValue == expected;
         }
+
+        delegate void InputBitOutputBitBit(byte inputVal, byte* returnValA, byte* returnValB);
+
+        public static bool InputBitExpectsBitBitValue(IntPtr ee, byte input, byte expectedA, byte expectedB)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputBitOutputBitBit>(ee);
+            byte returnValueA, returnValueB;
+            func(input, &returnValueA, &returnValueB);
+            return returnValueA == expectedA && returnValueB == expectedB;
+        }
+
+        delegate void InputByteOutputByteByte(byte inputVal, byte* returnValA, byte* returnValB);
+
+        public static bool InputByteExpectsByteByteValue(IntPtr ee, byte input, byte expectedA, byte expectedB)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputBitOutputBitBit>(ee);
+            byte returnValueA, returnValueB;
+            func(input, &returnValueA, &returnValueB);
+            return returnValueA == expectedA && returnValueB == expectedB;
+        }
+
 
         delegate void InputBitBitOutputBit(byte inputVal1, byte inputVal2, byte* returnVal);
 
