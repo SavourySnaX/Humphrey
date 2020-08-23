@@ -9,7 +9,7 @@ namespace Humphrey.FrontEnd
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
-            builder.BackendValue.BuildRetVoid();
+            builder.BackendValue.BuildBr(function.ExitBlock.BackendValue);
 
             return true;
         }

@@ -150,6 +150,19 @@ namespace Humphrey.Backend.tests
         }
 
         [Theory]
+        [InlineData(@"Main : (a : bit) (out : bit) = { a=a+1 out=a}", "Main", 0, 1)]
+        public void CheckReadWriteInput(string input, string entryPointName, byte ival, byte expected)
+        {
+            Assert.True(InputBitExpectsBitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input}");
+        }
+        
+        [Theory]
+        [InlineData(@"Main : (a : bit) (out : bit) = { out=a out=out+1}", "Main", 0, 1)]
+        public void CheckReadWriteOutput(string input, string entryPointName, byte ival, byte expected)
+        {
+            Assert.True(InputBitExpectsBitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input}");
+        }
+        [Theory]
         [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a+b}", "Main", 0, 0, 0)]
         [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a+b}", "Main", 0, 1, 1)]
         [InlineData(@"Main : (a : bit, b : bit) (returnValue : bit) = { returnValue=a+b}", "Main", 1, 0, 1)]

@@ -8,6 +8,7 @@ namespace Humphrey.Backend
     {
         LLVMValueRef function;
         CompilationFunctionType type;
+        CompilationBlock exitBlock;
 
         HashSet<string> usedOutputs;
         public CompilationFunction(LLVMValueRef func, CompilationFunctionType funcType)
@@ -55,5 +56,17 @@ namespace Humphrey.Backend
         public LLVMValueRef BackendValue => function;
         public CompilationFunctionType FunctionType => type;
         public uint OutParamOffset => type.OutParamOffset;
+
+        public CompilationBlock ExitBlock 
+        {
+             get
+             {
+                 return exitBlock;
+             }
+             set
+             {
+                 exitBlock=value;
+             }
+        }
     }
 }

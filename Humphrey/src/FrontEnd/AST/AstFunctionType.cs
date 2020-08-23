@@ -30,6 +30,9 @@ namespace Humphrey.FrontEnd
             var localsBlock = new CompilationBlock(newFunction.BackendValue.AppendBasicBlock($"inputs_{ident.Dump()}"));
             var localsBuilder = unit.CreateBuilder(newFunction, localsBlock);
 
+            newFunction.ExitBlock = new CompilationBlock(newFunction.BackendValue.AppendBasicBlock($"exit_{ident.Dump()}"));
+            var exitBlockBuilder = unit.CreateBuilder(newFunction, newFunction.ExitBlock);
+
             // create an entry block and a set of locals
             for (uint a = 0; a < functionType.InputCount; a++)
             {
@@ -39,15 +42,25 @@ namespace Humphrey.FrontEnd
                 var cv = new CompilationValue(newFunction.BackendValue.Params[a], type);
                 localsBuilder.Store(cv, local.Storage);
             }
-            // allocate the output locals - these can be mapped directly
+            // allocate the output locals
             for (uint a = functionType.OutParamOffset; a < functionType.Parameters.Length; a++)
             {
+                // Temporary local storage
                 var outputType = new CompilationPointerType(Extensions.Helpers.CreatePointerType(functionType.Parameters[a].Type.BackendType), functionType.Parameters[a].Type);
-                var output = new CompilationValueOutputParameter(newFunction.BackendValue.Params[a], outputType, functionType.Parameters[a].Identifier);
-                output.Storage = output;
-                unit.AddValue(functionType.Parameters[a].Identifier, output);
+                var output = new CompilationValue(newFunction.BackendValue.Params[a], outputType);
+                var cv = localsBuilder.Load(output);
+                var type = functionType.Parameters[a].Type;
+                var paramIdent = functionType.Parameters[a].Identifier;
+                var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, cv);
+                local.Storage = new CompilationValueOutputParameter(local.Storage.BackendValue, local.Storage.Type, paramIdent);
+
+                // Copy temporary storage to output
+                var returnValue = exitBlockBuilder.Load(local);
+                exitBlockBuilder.Store(returnValue, output);
             }
 
+            // single point of return for all functions
+            exitBlockBuilder.BackendValue.BuildRetVoid();
 
             var compiledBlock = codeBlock.CreateCodeBlock(unit, newFunction, $"entry_{ident.Dump()}");
             
@@ -57,10 +70,10 @@ namespace Humphrey.FrontEnd
             if (compiledBlock.exit.BackendValue.Terminator == null)
             {
                 var builder = unit.CreateBuilder(newFunction, compiledBlock.exit);
-                builder.BackendValue.BuildRetVoid();
+                builder.BackendValue.BuildBr(newFunction.ExitBlock.BackendValue);
             }
 
-            // Now we need to know if all outputs were stored....
+            // Now we need to know if all outputs were stored.... this check is crude, will not deal with conditions/loops etc
             if (!newFunction.AreOutputsAllUsed())
             {
                 foreach (var o in newFunction.FetchMissingOutputs())
