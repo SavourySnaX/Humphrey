@@ -1,5 +1,4 @@
 using Humphrey.Backend;
-
 using static Extensions.Helpers;
 
 namespace Humphrey.FrontEnd
@@ -14,7 +13,7 @@ namespace Humphrey.FrontEnd
     
         public string Dump()
         {
-            return $"{expr.Dump()} ++";
+            return $"{expr.Dump()}++";
         }
 
         public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
@@ -35,10 +34,22 @@ namespace Humphrey.FrontEnd
             else
             {
                 var cv = value as CompilationValue;
-
+                var incremented = cv;
                 var incByType = cv.Type;
-                var incBy = new CompilationValue(incByType.BackendType.CreateConstantValue(1), incByType);
-                var incremented=builder.Add(cv, incBy);
+                if (cv.Type is CompilationIntegerType)
+                {
+                    var incBy = new CompilationValue(incByType.BackendType.CreateConstantValue(1), incByType);
+                    incremented = builder.Add(cv, incBy);
+                }
+                else if (cv.Type is CompilationPointerType cpt)
+                {
+                    // GEP
+                    incremented = builder.InBoundsGEP(cv, cpt, new LLVMSharp.Interop.LLVMValueRef[] { unit.CreateI64Constant(1) });
+                }
+                else
+                {
+                    throw new System.NotImplementedException($"post increment on unsupported type {incByType}");
+                }
                 builder.Store(incremented, cv.Storage);
                 return cv;
             }

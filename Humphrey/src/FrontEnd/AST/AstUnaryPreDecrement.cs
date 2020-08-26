@@ -35,12 +35,24 @@ namespace Humphrey.FrontEnd
             else
             {
                 var cv = value as CompilationValue;
-
-                var incByType = cv.Type;
-                var incBy = new CompilationValue(incByType.BackendType.CreateConstantValue(1), incByType);
-                var incremented=builder.Sub(cv, incBy);
-                builder.Store(incremented, cv.Storage);
-                return incremented;
+                var decremented = cv;
+                var decByType = cv.Type;
+                if (cv.Type is CompilationIntegerType)
+                {
+                    var decBy = new CompilationValue(decByType.BackendType.CreateConstantValue(1), decByType);
+                    decremented = builder.Sub(cv, decBy);
+                }
+                else if (cv.Type is CompilationPointerType cpt)
+                {
+                    // GEP
+                    decremented = builder.InBoundsGEP(cv, cpt, new LLVMSharp.Interop.LLVMValueRef[] { unit.CreateI64Constant(0xFFFFFFFFFFFFFFFF) });
+                }
+                else
+                {
+                    throw new System.NotImplementedException($"pre decrement on unsupported type {decByType}");
+                }
+                builder.Store(decremented, cv.Storage);
+                return decremented;
             }
         }
         private Result<Tokens> _token;

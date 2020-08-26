@@ -14,7 +14,7 @@ namespace Humphrey.FrontEnd
     
         public string Dump()
         {
-            return $"{expr.Dump()} --";
+            return $"{expr.Dump()}--";
         }
 
         public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
@@ -35,11 +35,23 @@ namespace Humphrey.FrontEnd
             else
             {
                 var cv = value as CompilationValue;
-
+                var decremented = cv;
                 var decByType = cv.Type;
-                var decBy = new CompilationValue(decByType.BackendType.CreateConstantValue(1), decByType);
-                var incremented=builder.Sub(cv, decBy);
-                builder.Store(incremented, cv.Storage);
+                if (cv.Type is CompilationIntegerType)
+                {
+                    var decBy = new CompilationValue(decByType.BackendType.CreateConstantValue(1), decByType);
+                    decremented = builder.Sub(cv, decBy);
+                }
+                else if (cv.Type is CompilationPointerType cpt)
+                {
+                    // GEP
+                    decremented = builder.InBoundsGEP(cv, cpt, new LLVMSharp.Interop.LLVMValueRef[] { unit.CreateI64Constant(0xFFFFFFFFFFFFFFFF) });
+                }
+                else
+                {
+                    throw new System.NotImplementedException($"post decrement on unsupported type {decByType}");
+                }
+                builder.Store(decremented, cv.Storage);
                 return cv;
             }
         }

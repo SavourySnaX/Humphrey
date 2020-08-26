@@ -11,7 +11,8 @@ namespace Humphrey.FrontEnd
             ExpressionExpressionContinuation,
         }
 
-        int Precedance { get; }
+        int BinaryPrecedance { get; }
+        int UnaryPrecedance { get; }
         OperatorKind RhsKind { get; }
     }
 }

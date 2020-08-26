@@ -509,6 +509,22 @@ Main:(a:bit,b:bit)(out:bit)=
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
 
+        [Theory]
+        [InlineData(@"Main : (a : *[8]bit) (returnValue : [8]bit) = { returnValue=*a }", "Main", new byte[] { 21, 31 }, 21)]
+        [InlineData(@"Main : (a : *[8]bit) (returnValue : [8]bit) = { a++ returnValue=*a }", "Main", new byte[] { 21, 31 }, 31)]
+        [InlineData(@"Main : (a : *[8]bit) (returnValue : [8]bit) = { returnValue=*a++ }", "Main", new byte[] { 21, 31 }, 21)]
+        [InlineData(@"Main : (a : *[8]bit) (returnValue : [8]bit) = { ++a returnValue=*a }", "Main", new byte[] { 21, 31 }, 31)]
+        [InlineData(@"Main : (a : *[8]bit) (returnValue : [8]bit) = { returnValue=*++a }", "Main", new byte[] { 21, 31 }, 31)]
+        [InlineData(@"Main : (a : *[8]bit) (returnValue : [8]bit) = { ++a a-- returnValue=*a }", "Main", new byte[] { 21, 31 }, 21)]
+        [InlineData(@"Main : (a : *[8]bit) (returnValue : [8]bit) = { ++a returnValue=*a-- }", "Main", new byte[] { 21, 31 }, 31)]
+        [InlineData(@"Main : (a : *[8]bit) (returnValue : [8]bit) = { ++a --a returnValue=*a }", "Main", new byte[] { 21, 31 }, 21)]
+        [InlineData(@"Main : (a : *[8]bit) (returnValue : [8]bit) = { ++a returnValue=*--a }", "Main", new byte[] { 21, 31 }, 21)]
+        public void CheckDereference(string input, string entryPointName, byte[] inputArray, byte expected)
+        {
+            Assert.True(InputBytePointerToArrayExpectsByteValue(CompileForTest(input, entryPointName), inputArray, expected), $"Test {entryPointName},{input},{inputArray},{expected}");
+        }
+
+
         [StructLayout(LayoutKind.Explicit)]
         public struct RGBA_CSharp
         {

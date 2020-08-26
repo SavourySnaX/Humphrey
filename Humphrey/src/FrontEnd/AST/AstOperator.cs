@@ -10,7 +10,7 @@ namespace Humphrey.FrontEnd
             temp = value;
         }
 
-        public int Precedance 
+        public int BinaryPrecedance 
         {
             get
             {
@@ -20,11 +20,6 @@ namespace Humphrey.FrontEnd
                         return int.MaxValue;
                     case "as":
                         return 1000;
-                    case "~":
-                    case "!":
-                    case "++":
-                    case "--":
-                        return 850;
                     case "||":
                         return 775;
                     case "&&":
@@ -56,9 +51,38 @@ namespace Humphrey.FrontEnd
                     case ".":
                     case "(":
                     case "[":
+                    case "++":
+                    case "--":
                         return 100;
                     default:
-                        throw new ParseException($"Unimplemented Precadence for operator : {temp}");
+                        throw new ParseException($"Unimplemented Binary Precadence for operator : {temp}");
+                }
+            }
+        }
+        public int UnaryPrecedance 
+        {
+            get
+            {
+                switch (temp)
+                {
+                    case "":
+                        return int.MaxValue;
+                    case "*":
+                        return 950;
+                    case "~":
+                    case "!":
+                    case "+":
+                    case "-":
+                        return 850;
+                    case ":":
+                    case ".":
+                    case "(":
+                    case "[":
+                    case "++":
+                    case "--":
+                        return 100;
+                    default:
+                        throw new ParseException($"Unimplemented Unary Precadence for operator : {temp}");
                 }
             }
         }

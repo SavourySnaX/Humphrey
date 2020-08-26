@@ -35,10 +35,22 @@ namespace Humphrey.FrontEnd
             else
             {
                 var cv = value as CompilationValue;
-
+                var incremented = cv;
                 var incByType = cv.Type;
-                var incBy = new CompilationValue(incByType.BackendType.CreateConstantValue(1), incByType);
-                var incremented=builder.Add(cv, incBy);
+                if (cv.Type is CompilationIntegerType)
+                {
+                    var incBy = new CompilationValue(incByType.BackendType.CreateConstantValue(1), incByType);
+                    incremented = builder.Add(cv, incBy);
+                }
+                else if (cv.Type is CompilationPointerType cpt)
+                {
+                    // GEP
+                    incremented = builder.InBoundsGEP(cv, cpt, new LLVMSharp.Interop.LLVMValueRef[] { unit.CreateI64Constant(1) });
+                }
+                else
+                {
+                    throw new System.NotImplementedException($"pre increment on unsupported type {incByType}");
+                }
                 builder.Store(incremented, cv.Storage);
                 return incremented;
             }

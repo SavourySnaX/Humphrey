@@ -31,7 +31,7 @@ namespace Humphrey.FrontEnd
             messages = overrideDefaultMessages;
             if (messages==null)
                 messages = new CompilerMessages(true, true, false);
-            operators = new Stack<(bool binary, IOperator item)>(32);
+            operators = new Stack<(bool binary, int precedance, IOperator item)>(32);
             searchResetQueue = new Queue<Result<Tokens>>(32);
             searchResetBuffer = new Queue<Result<Tokens>>(32);
             operands = new Stack<IAst>(32);
@@ -231,9 +231,9 @@ namespace Humphrey.FrontEnd
         // preinc : ++
         public IAst PreIncrementOperator() { return AstItem(Tokens.O_PlusPlus, (e) => new AstOperator(e)); }
         // postinc : ++
-        public IAst PostIncrementOperator() { return AstItem(Tokens.O_PlusPlus, (e) => new AstOperator(e)); }
+        public IAst PostIncrementOperator() { return StopDueToBinaryPostFixCannotFollowUnaryPrefixRule(Peek(Tokens.O_PlusPlus)) ? null : AstItem(Tokens.O_PlusPlus, (e) => new AstOperator(e)); }
         // postdec : --
-        public IAst PostDecrementOperator() { return AstItem(Tokens.O_MinusMinus, (e) => new AstOperator(e)); }
+        public IAst PostDecrementOperator() { return StopDueToBinaryPostFixCannotFollowUnaryPrefixRule(Peek(Tokens.O_MinusMinus)) ? null : AstItem(Tokens.O_MinusMinus, (e) => new AstOperator(e)); }
         // logical_not : !
         public IAst LogicalNotOperator() { return AstItem(Tokens.O_LogicalNot, (e) => new AstOperator(e)); }
         // binary_not : ~
@@ -343,7 +343,7 @@ namespace Humphrey.FrontEnd
             return LoadableIdentifier();
         }
 
-        Stack<(bool binary, IOperator item)> operators;
+        Stack<(bool binary, int precedance, IOperator item)> operators;
         Stack<IAst> operands;
 
         // expression = expression
@@ -358,11 +358,11 @@ namespace Humphrey.FrontEnd
             return PopSentinel();
         }
 
-        bool IsTopLowerPrecedance(IOperator op)
+        bool IsTopLowerPrecedance(IOperator op, int precedance)
         {
             var peek = operators.Peek();
-            int top = peek.item == null ? int.MaxValue : peek.item.Precedance;
-            int currentOp = op.Precedance;
+            int top = peek.precedance;
+            int currentOp = precedance;
             return currentOp >= top;
         }
 
@@ -401,7 +401,7 @@ namespace Humphrey.FrontEnd
 
         public void PushSentinel()
         {
-            operators.Push((false, null));
+            operators.Push((false, int.MaxValue, null));
         }
 
         public IExpression PopSentinel()
@@ -411,14 +411,11 @@ namespace Humphrey.FrontEnd
             return operands.Pop() as IExpression;
         }
 
-        public void PushOperator((bool binary, IOperator item) op)
+        public void PushOperator((bool binary, int precedance, IOperator item) op)
         {
-            if (op.binary)
+            while (IsTopLowerPrecedance(op.item, op.precedance))
             {
-                while (IsTopLowerPrecedance(op.item))
-                {
-                    PopOperator();
-                }
+                PopOperator();
             }
             operators.Push(op);
         }
@@ -675,9 +672,22 @@ namespace Humphrey.FrontEnd
 
             return new AstForStatement(identifierList, rangeList, codeBlock);
         }
+
+        private bool StopDueToBinaryPostFixCannotFollowUnaryPrefixRule(bool isBinaryPostFix)
+        {
+            if (operators.Peek().binary || operators.Peek().item == null)
+                return false;
+            var previousUnary = operators.Peek().item.Dump();
+            if (previousUnary=="++" || previousUnary=="--")
+            {
+                return isBinaryPostFix;
+            }
+            return false;
+        }
+
         public IExpression BinaryOperatorProcess(IExpression terminal, IOperator op)
         {
-            PushOperator((true, op));
+            PushOperator((true, op.BinaryPrecedance, op));
             switch (op.RhsKind)
             {
                 case IOperator.OperatorKind.ExpressionExpression:
@@ -739,7 +749,7 @@ namespace Humphrey.FrontEnd
             var op = OneOf(UnaryOperators) as IOperator;
             if (op == null)
                 return null;
-            PushOperator((false, op));
+            PushOperator((false, op.UnaryPrecedance, op));
             var expr = Expression();
             if (expr != null)
                 return AstUnaryExpression.FetchUnaryExpression(op, expr);
