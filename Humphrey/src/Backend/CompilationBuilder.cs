@@ -180,6 +180,35 @@ namespace Humphrey.Backend
             throw new NotImplementedException($"Unhandled type in extension");
         }
 
+        public CompilationValue Trunc(CompilationValue src, CompilationType toType)
+        {
+            var srcIntType = src.Type as CompilationIntegerType;
+            var toIntType = toType as CompilationIntegerType;
+
+            if (srcIntType != null && toIntType != null)
+            {
+                return new CompilationValue(builderRef.BuildTrunc(src.BackendValue, toType.BackendType), toType);
+            }
+            throw new NotImplementedException($"Unhandled type in truncate");
+        }
+
+        public CompilationValue MatchWidth(CompilationValue src, CompilationType toType)
+        {
+            var srcIntType = src.Type as CompilationIntegerType;
+            var toIntType = toType as CompilationIntegerType;
+
+            if (srcIntType != null && toIntType != null)
+            {
+                if (srcIntType.IntegerWidth == toIntType.IntegerWidth)
+                    return src;
+                else if (srcIntType.IntegerWidth > toIntType.IntegerWidth)
+                    return Ext(src, toType);
+                else
+                    return Trunc(src, toType);
+            }
+            throw new NotImplementedException($"Unhandled type in match width");
+        }
+
         public CompilationValue Cast(CompilationValue src, CompilationType toType)
         {
             if (toType is CompilationFunctionType cft)
@@ -199,6 +228,17 @@ namespace Humphrey.Backend
                 return new CompilationValue(builderRef.BuildICmp(intPredicate, left.BackendValue, right.BackendValue), new CompilationIntegerType(Extensions.Helpers.CreateIntType(1), false));
 
             throw new NotImplementedException($"Unahandled compare kind {compareKind}");
+        }
+
+        public CompilationValue RotateRight(CompilationUnit unit, CompilationValue value, CompilationValue rotateBy)
+        {
+            var backendType = value.BackendType;
+            var funnelShift = unit.FetchIntrinsicFunction("llvm.fshr", new LLVMTypeRef[] { backendType });
+            var backendValues = new LLVMValueRef[3];
+            backendValues[0] = value.BackendValue;
+            backendValues[1] = value.BackendValue;
+            backendValues[2] = rotateBy.BackendValue;
+            return new CompilationValue(builderRef.BuildCall(funnelShift, backendValues), value.Type);
         }
 
         public void Call(CompilationValue func, CompilationValue[] arguments)

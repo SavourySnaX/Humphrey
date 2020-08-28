@@ -76,6 +76,13 @@ namespace Humphrey.FrontEnd
                 var dereferenced = builder.Load(gep);
                 return new CompilationValue(dereferenced.BackendValue, arrayType.ElementType);
             }
+            if (vlhs.Type is CompilationIntegerType integerType)
+            {
+                var bitType = unit.FetchIntegerType(1);
+                var matchWidth = builder.MatchWidth(vrhs, integerType);
+                var rotated = builder.RotateRight(unit, vlhs, matchWidth);
+                return builder.Trunc(rotated, bitType);
+            }
 
             throw new System.NotImplementedException($"Todo implement expression for subscript of array type...");
         }

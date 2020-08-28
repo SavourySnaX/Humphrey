@@ -363,6 +363,11 @@ namespace Humphrey.Backend
             return true;
         }
 
+        public LLVMValueRef FetchIntrinsicFunction(string functionName, LLVMTypeRef[] typeRefs)
+        {
+            return FetchIntrinsic(moduleRef, functionName, typeRefs);
+        }
+
         public bool DumpDisassembly(string targetTriple)
         {
             var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);

@@ -86,5 +86,27 @@ namespace Extensions
         {
             return LLVM.IntType(numBits);
         }
+
+        public static LLVMValueRef FetchIntrinsic(LLVMModuleRef moduleRef, string intrinsicName, LLVMTypeRef[] paramTypes)
+        {
+            if (string.IsNullOrEmpty(intrinsicName))
+                throw new ArgumentException($"Value must be a valid string not null/empty");
+
+            uint ID;
+            fixed (byte* bvalue = Encoding.ASCII.GetBytes(intrinsicName))
+            {
+                ID = LLVM.LookupIntrinsicID((sbyte*)bvalue, (UIntPtr)intrinsicName.Length);
+            }
+            uint numParams = (uint)paramTypes.Length;
+            var opaque = new LLVMOpaqueType*[numParams];
+            for (int a = 0; a < paramTypes.Length; a++)
+                opaque[a] = paramTypes[a];
+
+            fixed (LLVMOpaqueType** types = opaque)
+            {
+                return LLVM.GetIntrinsicDeclaration(moduleRef, ID, types, (UIntPtr)numParams);
+            }
+        }
+
     }
 }
