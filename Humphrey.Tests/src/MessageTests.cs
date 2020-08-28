@@ -28,11 +28,11 @@ namespace Humphrey.Tests.src
         }
         
         [Theory]
-        [InlineData("WorkingFunction:()(out:bit)={out=0}", CompilerErrorKind.Debug)]
-        [InlineData("WorkingFunction:()(out1:bit,out2:bit)={out1,out2=0}", CompilerErrorKind.Debug)]
+        [InlineData("WorkingFunction:()(out:bit)={out=0;}", CompilerErrorKind.Debug)]
+        [InlineData("WorkingFunction:()(out1:bit,out2:bit)={out1,out2=0;}", CompilerErrorKind.Debug)]
         [InlineData("BrokenFunction:()(out:bit)={}", CompilerErrorKind.Error_MissingOutputAssignment)]
-        [InlineData("BrokenFunction:()(out1:bit,out2:bit)={out1=0}", CompilerErrorKind.Error_MissingOutputAssignment)]
-        [InlineData("BrokenFunction:()(out1:bit,out2:bit)={out2=0}", CompilerErrorKind.Error_MissingOutputAssignment)]
+        [InlineData("BrokenFunction:()(out1:bit,out2:bit)={out1=0;}", CompilerErrorKind.Error_MissingOutputAssignment)]
+        [InlineData("BrokenFunction:()(out1:bit,out2:bit)={out2=0;}", CompilerErrorKind.Error_MissingOutputAssignment)]
         [InlineData("BrokenFunction:()(out1:bit,out2:bit)={}", CompilerErrorKind.Error_MissingOutputAssignment)]
         public void CheckCompilationMessages(string input, CompilerErrorKind kind)
         {

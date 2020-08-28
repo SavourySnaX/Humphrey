@@ -231,9 +231,9 @@ namespace Humphrey.FrontEnd
         // preinc : ++
         public IAst PreIncrementOperator() { return AstItem(Tokens.O_PlusPlus, (e) => new AstOperator(e)); }
         // postinc : ++
-        public IAst PostIncrementOperator() { return StopDueToBinaryPostFixCannotFollowUnaryPrefixRule(Peek(Tokens.O_PlusPlus)) ? null : AstItem(Tokens.O_PlusPlus, (e) => new AstOperator(e)); }
+        public IAst PostIncrementOperator() { return AstItem(Tokens.O_PlusPlus, (e) => new AstOperator(e)); }
         // postdec : --
-        public IAst PostDecrementOperator() { return StopDueToBinaryPostFixCannotFollowUnaryPrefixRule(Peek(Tokens.O_MinusMinus)) ? null : AstItem(Tokens.O_MinusMinus, (e) => new AstOperator(e)); }
+        public IAst PostDecrementOperator() { return AstItem(Tokens.O_MinusMinus, (e) => new AstOperator(e)); }
         // logical_not : !
         public IAst LogicalNotOperator() { return AstItem(Tokens.O_LogicalNot, (e) => new AstOperator(e)); }
         // binary_not : ~
@@ -312,7 +312,7 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
         public AstItemDelegate[] IdentifierOrAnonymous => new AstItemDelegate[] { Identifier, AnonymousIdentifier };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
-        public AstItemDelegate[] Statements => new AstItemDelegate[] { CodeBlock, ReturnStatement, ForStatement, IfStatement, CouldBeLocalScopeDefinitionOrAssignmentOrExpression };
+        public AstItemDelegate[] Statements => new AstItemDelegate[] { ReturnStatement, ForStatement, IfStatement, CouldBeLocalScopeDefinitionOrAssignmentOrExpression };
 
         public AstItemDelegate[] StructDefinitions => new AstItemDelegate[] { StructElementDefinition };
         public AstItemDelegate[] EnumDefinitions => new AstItemDelegate[] { EnumElementDefinition };
@@ -499,7 +499,7 @@ namespace Humphrey.FrontEnd
             SaveTokens();
 
             var localDef = LocalScopeDefinition();
-            if (localDef!=null)
+            if (localDef!=null && SemiColonSyntax())
             {
                 FlushTokens();
                 return localDef;
@@ -507,7 +507,7 @@ namespace Humphrey.FrontEnd
             RestoreTokens();
             SaveTokens();
             var assign = Assignment();
-            if (assign!=null)
+            if (assign!=null && SemiColonSyntax())
             {
                 FlushTokens();
                 return assign;
@@ -515,7 +515,7 @@ namespace Humphrey.FrontEnd
             RestoreTokens();
             SaveTokens();
             var expr = ParseExpression();
-            if (expr!=null)
+            if (expr!=null && SemiColonSyntax())
             {
                 FlushTokens();
                 return new AstExpressionStatement(expr);
@@ -636,7 +636,6 @@ namespace Humphrey.FrontEnd
             if (codeBlock == null)
                 return null;
 
-
             if (ElseKeyword() != null)
             {
                 var elseCodeBlock = CodeBlock();
@@ -671,18 +670,6 @@ namespace Humphrey.FrontEnd
                 return null;
 
             return new AstForStatement(identifierList, rangeList, codeBlock);
-        }
-
-        private bool StopDueToBinaryPostFixCannotFollowUnaryPrefixRule(bool isBinaryPostFix)
-        {
-            if (operators.Peek().binary || operators.Peek().item == null)
-                return false;
-            var previousUnary = operators.Peek().item.Dump();
-            if (previousUnary=="++" || previousUnary=="--")
-            {
-                return isBinaryPostFix;
-            }
-            return false;
         }
 
         public IExpression BinaryOperatorProcess(IExpression terminal, IOperator op)
@@ -994,13 +981,23 @@ namespace Humphrey.FrontEnd
             if (ReturnKeyword() == null)
                 return null;
 
+            if (!SemiColonSyntax())
+                return null;
+
             return new AstReturnStatement();
         }
 
         // statement : block
         //           | keyword..
         //           | assignment
-        public IStatement Statement() { return OneOf(Statements) as IStatement; }
+        public IStatement Statement() 
+        {
+            var codeBlock = CodeBlock();
+            if (codeBlock!=null)
+                return codeBlock;
+            var statement=OneOf(Statements) as IStatement;
+            return statement;
+        }
 
         // statement_list : statement
         //                | statement statement_list
