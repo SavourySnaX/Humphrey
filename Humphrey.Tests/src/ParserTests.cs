@@ -418,7 +418,12 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("[5+3]", "+ 5 3")]
         [InlineData("[(5+3)]", "+ 5 3")]
         [InlineData("[getIdx()]", "getIdx ( )")]
+        [InlineData("[0..5]", "0 .. 5")]
+        [InlineData("[..5]", ".. 5")]
+        [InlineData("[0..]", "0 ..")]
+        [InlineData("[5+3..9*2]", "+ 5 3 .. * 9 2")]
         [InlineData("[()]", null)]
+        [InlineData("[..]", null)]
         public void CheckArraySubscript(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();

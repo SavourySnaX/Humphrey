@@ -446,12 +446,35 @@ namespace Humphrey.FrontEnd
         // array_subscript : expression ]
         public IExpression ArraySubscript()
         {
-            var expr = ParseExpression();
-            if (expr == null)
-                return null;
+            IExpression expr = null;
+            if (DotDotOperator()==null)
+            {
+                expr = ParseExpression();
+                if (expr == null)
+                    return null;
+
+                if (DotDotOperator() == null)
+                {
+                    if (!CloseSquareBracket())
+                        return null;
+                    return expr;
+                }
+            }
+            IExpression inclusiveEnd = null;
             if (!CloseSquareBracket())
+            {
+                inclusiveEnd = ParseExpression();
+                if (inclusiveEnd == null)
+                    return null;
+
+                if (!CloseSquareBracket())
+                    return null;
+            }
+
+            if (expr==null && inclusiveEnd==null)
                 return null;
-            return expr;
+                
+            return new AstInclusiveRange(expr, inclusiveEnd);
         }
 
         // ( has already popped at this point

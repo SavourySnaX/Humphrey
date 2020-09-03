@@ -701,6 +701,7 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
         {
             Assert.True(Input8BitExpectsBitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input},{ival},{expected}");
         }
+
         [Theory]
         [InlineData(@"Main : (a : [8]bit, b:[-8]bit) (out : bit) = { out=a[b]; }", "Main", 0b01011001, 0, 1)]
         [InlineData(@"Main : (a : [8]bit, b:[-8]bit) (out : bit) = { out=a[b]; }", "Main", 0b01011001, 1, 0)]
@@ -731,6 +732,256 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
         public void CheckBitExtractVariable(string input, string entryPointName, byte ival1, sbyte ival2, byte expected)
         {
             Assert.True(Input8BitS8BitExpectsBitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[0]=1;}", "Main", 0, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[1]=1;}", "Main", 0, 0b00000010)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[2]=1;}", "Main", 0, 0b00000100)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[3]=1;}", "Main", 0, 0b00001000)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[4]=1;}", "Main", 0, 0b00010000)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[5]=1;}", "Main", 0, 0b00100000)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[6]=1;}", "Main", 0, 0b01000000)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[7]=1;}", "Main", 0, 0b10000000)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[0]=0;}", "Main", 255, 0b11111110)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[1]=0;}", "Main", 255, 0b11111101)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[2]=0;}", "Main", 255, 0b11111011)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[3]=0;}", "Main", 255, 0b11110111)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[4]=0;}", "Main", 255, 0b11101111)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[5]=0;}", "Main", 255, 0b11011111)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[6]=0;}", "Main", 255, 0b10111111)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[7]=0;}", "Main", 255, 0b01111111)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[0]=1;}", "Main", 0b01011001, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[1]=1;}", "Main", 0b01011001, 0b01011011)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[2]=1;}", "Main", 0b01011001, 0b01011101)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[3]=1;}", "Main", 0b01011001, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[4]=1;}", "Main", 0b01011001, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[5]=1;}", "Main", 0b01011001, 0b01111001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[6]=1;}", "Main", 0b01011001, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[7]=1;}", "Main", 0b01011001, 0b11011001)]
+        // Check modulus
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[8]=1;}", "Main", 0b01011001, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[9]=1;}", "Main", 0b01011001, 0b01011011)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[10]=1;}", "Main", 0b01011001, 0b01011101)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[11]=1;}", "Main", 0b01011001, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[12]=1;}", "Main", 0b01011001, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[13]=1;}", "Main", 0b01011001, 0b01111001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[14]=1;}", "Main", 0b01011001, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[15]=1;}", "Main", 0b01011001, 0b11011001)]
+        // Check with negative (-1 to -8 read MSB to LSB respectively)
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[-1]=1;}", "Main", 0b01011001, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[-2]=1;}", "Main", 0b01011001, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[-3]=1;}", "Main", 0b01011001, 0b01111001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[-4]=1;}", "Main", 0b01011001, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[-5]=1;}", "Main", 0b01011001, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[-6]=1;}", "Main", 0b01011001, 0b01011101)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[-7]=1;}", "Main", 0b01011001, 0b01011011)]
+        [InlineData(@"Main : (a:[8]bit)(out:[8]bit)={out=a; out[-8]=1;}", "Main", 0b01011001, 0b01011001)]
+        public void CheckBitInsert(string input, string entryPointName, byte ival, byte expected)
+        {
+            Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input},{ival},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0,0,1, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0,1,1, 0b00000010)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0,2,1, 0b00000100)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0,3,1, 0b00001000)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0,4,1, 0b00010000)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0,5,1, 0b00100000)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0,6,1, 0b01000000)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0,7,1, 0b10000000)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 255,0,0, 0b11111110)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 255,1,0, 0b11111101)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 255,2,0, 0b11111011)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 255,3,0, 0b11110111)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 255,4,0, 0b11101111)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 255,5,0, 0b11011111)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 255,6,0, 0b10111111)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 255,7,0, 0b01111111)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,0,1, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,1,1, 0b01011011)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,2,1, 0b01011101)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,3,1, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,4,1, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,5,1, 0b01111001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,6,1, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,7,1, 0b11011001)]
+        // Check modulusb
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,8,1, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,9,1, 0b01011011)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,10,1, 0b01011101)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,11,1, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,12,1, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,13,1, 0b01111001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,14,1, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,15,1, 0b11011001)]
+        // Check with negative (-1 to -8 read MSB to LSB respectbvely)
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,-1,1, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,-2,1, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,-3,1, 0b01111001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,-4,1, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,-5,1, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,-6,1, 0b01011101)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,-7,1, 0b01011011)]
+        [InlineData(@"Main : (a:[8]bit,b:[-8]bit,c:bit)(out:[8]bit)={out=a; out[b]=c;}", "Main", 0b01011001,-8,1, 0b01011001)]
+        public void CheckBitInsertVariable(string input, string entryPointName, byte ival1, sbyte ival2, byte ival3, byte expected)
+        {
+            Assert.True(Input8BitS8BitBitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, ival3, expected), $"Test {entryPointName},{input},{ival1},{ival2},{ival3},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[0..0]; }", "Main", 0b11011001, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[0..1]; }", "Main", 0b11011001, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[0..2]; }", "Main", 0b11011001, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[0..3]; }", "Main", 0b11011001, 0b00001001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[0..4]; }", "Main", 0b11011001, 0b00011001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[0..5]; }", "Main", 0b11011001, 0b00011001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[0..6]; }", "Main", 0b11011001, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[0..7]; }", "Main", 0b11011001, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[1..0]; }", "Main", 0b11011001, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[1..1]; }", "Main", 0b11011001, 0b00000000)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[1..2]; }", "Main", 0b11011001, 0b00000000)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[1..3]; }", "Main", 0b11011001, 0b00000100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[1..4]; }", "Main", 0b11011001, 0b00001100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[1..5]; }", "Main", 0b11011001, 0b00001100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[1..6]; }", "Main", 0b11011001, 0b00101100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[1..7]; }", "Main", 0b11011001, 0b01101100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[2..0]; }", "Main", 0b11011001, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[2..1]; }", "Main", 0b11011001, 0b00000000)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[2..2]; }", "Main", 0b11011001, 0b00000000)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[2..3]; }", "Main", 0b11011001, 0b00000010)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[2..4]; }", "Main", 0b11011001, 0b00000110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[2..5]; }", "Main", 0b11011001, 0b00000110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[2..6]; }", "Main", 0b11011001, 0b00010110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[2..7]; }", "Main", 0b11011001, 0b00110110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[3..0]; }", "Main", 0b11011001, 0b00001001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[3..1]; }", "Main", 0b11011001, 0b00000100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[3..2]; }", "Main", 0b11011001, 0b00000010)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[3..3]; }", "Main", 0b11011001, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[3..4]; }", "Main", 0b11011001, 0b00000011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[3..5]; }", "Main", 0b11011001, 0b00000011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[3..6]; }", "Main", 0b11011001, 0b00001011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[3..7]; }", "Main", 0b11011001, 0b00011011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[4..0]; }", "Main", 0b11011001, 0b00011001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[4..1]; }", "Main", 0b11011001, 0b00001100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[4..2]; }", "Main", 0b11011001, 0b00000110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[4..3]; }", "Main", 0b11011001, 0b00000011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[4..4]; }", "Main", 0b11011001, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[4..5]; }", "Main", 0b11011001, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[4..6]; }", "Main", 0b11011001, 0b00000101)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[4..7]; }", "Main", 0b11011001, 0b00001101)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[5..0]; }", "Main", 0b11011001, 0b00011001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[5..1]; }", "Main", 0b11011001, 0b00001100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[5..2]; }", "Main", 0b11011001, 0b00000110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[5..3]; }", "Main", 0b11011001, 0b00000011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[5..4]; }", "Main", 0b11011001, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[5..5]; }", "Main", 0b11011001, 0b00000000)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[5..6]; }", "Main", 0b11011001, 0b00000010)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[5..7]; }", "Main", 0b11011001, 0b00000110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[6..0]; }", "Main", 0b11011001, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[6..1]; }", "Main", 0b11011001, 0b00101100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[6..2]; }", "Main", 0b11011001, 0b00010110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[6..3]; }", "Main", 0b11011001, 0b00001011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[6..4]; }", "Main", 0b11011001, 0b00000101)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[6..5]; }", "Main", 0b11011001, 0b00000010)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[6..6]; }", "Main", 0b11011001, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[6..7]; }", "Main", 0b11011001, 0b00000011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[7..0]; }", "Main", 0b11011001, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[7..1]; }", "Main", 0b11011001, 0b01101100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[7..2]; }", "Main", 0b11011001, 0b00110110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[7..3]; }", "Main", 0b11011001, 0b00011011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[7..4]; }", "Main", 0b11011001, 0b00001101)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[7..5]; }", "Main", 0b11011001, 0b00000110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[7..6]; }", "Main", 0b11011001, 0b00000011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[7..7]; }", "Main", 0b11011001, 0b00000001)]
+        public void CheckBitExtractRange(string input, string entryPointName, byte ival, byte expected)
+        {
+            Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input},{ival},{expected}");
+        }
+
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[0..]; }", "Main", 0b11011001, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[1..]; }", "Main", 0b11011001, 0b11101100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[2..]; }", "Main", 0b11011001, 0b01110110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[3..]; }", "Main", 0b11011001, 0b00111011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[4..]; }", "Main", 0b11011001, 0b10011101)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[5..]; }", "Main", 0b11011001, 0b11001110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[6..]; }", "Main", 0b11011001, 0b01100111)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[7..]; }", "Main", 0b11011001, 0b10110011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[8..]; }", "Main", 0b11011001, 0b11011001)]
+        public void CheckRotateRight(string input, string entryPointName, byte ival, byte expected)
+        {
+            Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input},{ival},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[0..]; }", "Main", 0b11011001, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[-1..]; }", "Main", 0b11011001, 0b10110011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[-2..]; }", "Main", 0b11011001, 0b01100111)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[-3..]; }", "Main", 0b11011001, 0b11001110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[-4..]; }", "Main", 0b11011001, 0b10011101)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[-5..]; }", "Main", 0b11011001, 0b00111011)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[-6..]; }", "Main", 0b11011001, 0b01110110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[-7..]; }", "Main", 0b11011001, 0b11101100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[-8..]; }", "Main", 0b11011001, 0b11011001)]
+        public void CheckRotateLeft(string input, string entryPointName, byte ival, byte expected)
+        {
+            Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input},{ival},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 0, 0, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 0, 1, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 0, 2, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 0, 3, 0b00001001)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 0, 4, 0b00011001)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 0, 5, 0b00011001)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 0, 6, 0b01011001)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 0, 7, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 1, 0, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 1, 1, 0b00000000)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 1, 2, 0b00000000)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 1, 3, 0b00000100)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 1, 4, 0b00001100)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 1, 5, 0b00001100)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 1, 6, 0b00101100)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 1, 7, 0b01101100)]
+        [InlineData(@"Main : (a:[8]bit, b:[8]bit, c:[8]bit) (out : [8]bit) = { out=a[b..c]; }", "Main", 0b11011001, 1, 8, 0b11101100)]
+        public void CheckBitExtractRangeVariable(string input, string entryPointName, byte ival1, byte ival2, byte ival3, byte expected)
+        {
+            Assert.True(Input8Bit8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, ival3, expected), $"Test {entryPointName},{input},{ival1},{ival2},{ival3},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,0, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,1, 0b11101100)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,2, 0b01110110)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,3, 0b00111011)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,4, 0b10011101)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,5, 0b11001110)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,6, 0b01100111)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,7, 0b10110011)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,8, 0b11011001)]
+        public void CheckRotateRightVariable(string input, string entryPointName, byte ival1, sbyte ival2, byte expected)
+        {
+            Assert.True(Input8BitS8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001, 0, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,-1, 0b10110011)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,-2, 0b01100111)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,-3, 0b11001110)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,-4, 0b10011101)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,-5, 0b00111011)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,-6, 0b01110110)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,-7, 0b11101100)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a[b..]; }", "Main", 0b11011001,-8, 0b11011001)]
+        public void CheckRotateLeftVariable(string input, string entryPointName, byte ival1, sbyte ival2, byte expected)
+        {
+            Assert.True(Input8BitS8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
 
         public IntPtr CompileForTest(string input, string entryPointName)
@@ -821,6 +1072,16 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
             return returnValue == expected;
         }
 
+        delegate void Input8BitOutput8Bit(byte inputVal, byte* returnVal);
+
+        public static bool Input8BitExpects8BitValue(IntPtr ee, byte input, byte expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<Input8BitOutput8Bit>(ee);
+            byte returnValue;
+            func(input, &returnValue);
+            return returnValue == expected;
+        }
+
         delegate void Input8Bit8BitOutput8Bit(byte inputVal1, byte inputVal2, byte* returnVal);
 
         public static bool Input8Bit8BitExpects8BitValue(IntPtr ee, byte input1, byte input2, byte expected)
@@ -830,6 +1091,17 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
             func(input1, input2, &returnValue);
             return returnValue == expected;
         }
+
+        delegate void Input8Bit8Bit8BitOutput8Bit(byte inputVal1, byte inputVal2, byte inputVal3, byte* returnVal);
+
+        public static bool Input8Bit8Bit8BitExpects8BitValue(IntPtr ee, byte input1, byte input2, byte input3, byte expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<Input8Bit8Bit8BitOutput8Bit>(ee);
+            byte returnValue;
+            func(input1, input2, input3, &returnValue);
+            return returnValue == expected;
+        }
+
         delegate void Input8BitOutputBit(byte inputVal1, byte* returnVal);
 
         public static bool Input8BitExpectsBitValue(IntPtr ee, byte input, byte expected)
@@ -847,6 +1119,26 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
             var func = Marshal.GetDelegateForFunctionPointer<Input8BitS8BitOutputBit>(ee);
             byte returnValue;
             func(input1, input2, &returnValue);
+            return returnValue == expected;
+        }
+
+        delegate void Input8BitS8BitOutput8Bit(byte inputVal1, sbyte inputVal2, byte* returnVal);
+
+        public static bool Input8BitS8BitExpects8BitValue(IntPtr ee, byte input1, sbyte input2, byte expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<Input8BitS8BitOutput8Bit>(ee);
+            byte returnValue;
+            func(input1, input2, &returnValue);
+            return returnValue == expected;
+        }
+
+        delegate void Input8BitS8BitBitOutput8Bit(byte inputVal1, sbyte inputVal2, byte inputVal3, byte* returnVal);
+
+        public static bool Input8BitS8BitBitExpects8BitValue(IntPtr ee, byte input1, sbyte input2, byte input3, byte expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<Input8BitS8BitBitOutput8Bit>(ee);
+            byte returnValue;
+            func(input1, input2, input3, &returnValue);
             return returnValue == expected;
         }
 

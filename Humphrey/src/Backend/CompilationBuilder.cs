@@ -230,6 +230,28 @@ namespace Humphrey.Backend
             throw new NotImplementedException($"Unahandled compare kind {compareKind}");
         }
 
+        public CompilationValue Select(CompilationValue compare, CompilationValue trueValue, CompilationValue falseValue)
+        {
+            return new CompilationValue(builderRef.BuildSelect(compare.BackendValue, trueValue.BackendValue, falseValue.BackendValue), trueValue.Type);
+        }
+
+        // Brings in 0s
+        public CompilationValue ShiftLeft(CompilationValue toShift, CompilationValue shiftAmount)
+        {
+            return new CompilationValue(builderRef.BuildShl(toShift.BackendValue, shiftAmount.BackendValue), toShift.Type);
+        }
+
+        public CompilationValue RotateLeft(CompilationUnit unit, CompilationValue value, CompilationValue rotateBy)
+        {
+            var backendType = value.BackendType;
+            var funnelShift = unit.FetchIntrinsicFunction("llvm.fshl", new LLVMTypeRef[] { backendType });
+            var backendValues = new LLVMValueRef[3];
+            backendValues[0] = value.BackendValue;
+            backendValues[1] = value.BackendValue;
+            backendValues[2] = rotateBy.BackendValue;
+            return new CompilationValue(builderRef.BuildCall(funnelShift, backendValues), value.Type);
+        }
+
         public CompilationValue RotateRight(CompilationUnit unit, CompilationValue value, CompilationValue rotateBy)
         {
             var backendType = value.BackendType;
