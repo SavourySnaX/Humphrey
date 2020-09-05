@@ -6,25 +6,35 @@ namespace Humphrey.FrontEnd
     {
         public static IExpression FetchUnaryExpression(IOperator oper, IExpression expression)
         {
+            IExpression unary = default;
             switch (oper.Dump())
             {
                 case "+":
-                    return new AstUnaryPlus(expression);
+                    unary = new AstUnaryPlus(expression);
+                    break;
                 case "-":
-                    return new AstUnaryMinus(expression);
+                    unary = new AstUnaryMinus(expression);
+                    break;
                 case "*":
-                    return new AstUnaryDereference(expression);
+                    unary = new AstUnaryDereference(expression);
+                    break;
                 case "!":
-                    return new AstUnaryLogicalNot(expression);
+                    unary = new AstUnaryLogicalNot(expression);
+                    break;
                 case "~":
-                    return new AstUnaryBinaryNot(expression);
+                    unary = new AstUnaryBinaryNot(expression);
+                    break;
                 case "++":
-                    return new AstUnaryPreIncrement(expression);
+                    unary = new AstUnaryPreIncrement(expression);
+                    break;
                 case "--":
-                    return new AstUnaryPreDecrement(expression);
+                    unary = new AstUnaryPreDecrement(expression);
+                    break;
                 default:
                     throw new NotImplementedException($"Unimplemented unary operator : {oper.Dump()}");
             }
+            unary.Token = expression.Token;
+            return unary;
         }
         public static CompilationValue EnsureTypeOk(CompilationUnit unit, CompilationBuilder builder, IExpression expr, CompilationType destType)
         {

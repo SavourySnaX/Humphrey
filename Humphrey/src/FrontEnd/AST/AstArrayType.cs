@@ -11,17 +11,17 @@ namespace Humphrey.FrontEnd
             constantExpression = arraySize;
         }
     
-        public CompilationType CreateOrFetchType(CompilationUnit unit)
+        public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
             var exprValue = constantExpression.ProcessConstantExpression(unit);
 
             var isBit = elementType as AstBitType;
             if (isBit==null)
             {
-                return unit.FetchArrayType(exprValue, elementType.CreateOrFetchType(unit));
+                return (unit.FetchArrayType(exprValue, elementType.CreateOrFetchType(unit).compilationType), this);
             }
             else
-                return unit.FetchIntegerType(exprValue);
+                return (unit.FetchIntegerType(exprValue), this);
         }
 
         public bool IsFunctionType => elementType.IsFunctionType;

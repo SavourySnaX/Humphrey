@@ -4,7 +4,7 @@ namespace Humphrey.FrontEnd
 {
     public interface IType : IAst
     {
-        CompilationType CreateOrFetchType(CompilationUnit unit);
+        (CompilationType compilationType,IType originalType) CreateOrFetchType(CompilationUnit unit);
 
         bool IsFunctionType { get; }
     }

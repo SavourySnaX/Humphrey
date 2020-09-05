@@ -98,6 +98,11 @@ namespace Humphrey.FrontEnd
             return (false, "", lookahead);
         }
 
+        Result<Tokens> CurrentToken()
+        {
+            return lookahead;
+        }
+
         bool Peek(Tokens kind)
         {
             if (lookahead.HasValue && lookahead.Value == kind)
@@ -627,7 +632,9 @@ namespace Humphrey.FrontEnd
             if (assignable == null)
                 return null;
 
-            return new AstAssignmentStatement(exprList, assignable);
+            var assign = new AstAssignmentStatement(exprList, assignable);
+            assign.Token = new Result<Tokens>(exprList.Token.Value, exprList.Token.Location, assignable.Token.Remainder);
+            return assign;
         }
 
         public AstRange Range()
@@ -643,7 +650,9 @@ namespace Humphrey.FrontEnd
             if (exclusiveEnd == null)
                 return null;
 
-            return new AstRange(inclusiveBegin, exclusiveEnd);
+            var range = new AstRange(inclusiveBegin, exclusiveEnd);
+            range.Token = new Result<Tokens>(inclusiveBegin.Token.Value, inclusiveBegin.Token.Location, exclusiveEnd.Token.Remainder);
+            return range;
         }
 
         public AstIfStatement IfStatement()
@@ -673,6 +682,8 @@ namespace Humphrey.FrontEnd
 
         public AstForStatement ForStatement()
         {
+            var start = CurrentToken();
+
             if (ForKeyword() == null)
                 return null;
 
@@ -692,7 +703,9 @@ namespace Humphrey.FrontEnd
             if (codeBlock == null)
                 return null;
 
-            return new AstForStatement(identifierList, rangeList, codeBlock);
+            var forStatement = new AstForStatement(identifierList, rangeList, codeBlock);
+            forStatement.Token = new Result<Tokens>(start.Value, start.Location, codeBlock.Token.Remainder);
+            return forStatement;
         }
 
         public IExpression BinaryOperatorProcess(IExpression terminal, IOperator op)
@@ -784,7 +797,9 @@ namespace Humphrey.FrontEnd
             if (typeSpecifier == null)
                 return null;
 
-            return new AstParamDefinition(identifier, typeSpecifier);
+            var paramDefinition = new AstParamDefinition(identifier, typeSpecifier);
+            paramDefinition.Token = new Result<Tokens>(identifier.Token.Value, identifier.Token.Location, typeSpecifier.Token.Remainder);
+            return paramDefinition;
         }
 
         // param_definition_list : param_definition
@@ -801,32 +816,47 @@ namespace Humphrey.FrontEnd
             var exprList = CommaSeperatedItemList<IExpression>(ParseExpression);
             if (exprList == null)
                 return null;
-            return new AstExpressionList(exprList);
+            var list = new AstExpressionList(exprList);
+            var last = exprList[exprList.Length - 1].Token;
+            list.Token = new Result<Tokens>(exprList[0].Token.Value, exprList[0].Token.Location, last.Remainder);
+            return list;
         }
 
         // parameter_list : ( param_definition_list )
         //                | ( )
         public AstParamList ParamList()
         {
+            var start = CurrentToken();
+
             if (!OpenParanthesis())
                 return null;
 
+            var end = CurrentToken();
             if (CloseParenthesis())
-                return new AstParamList(new AstParamDefinition[] { });
+            {
+                var emptyList = new AstParamList(new AstParamDefinition[] { });
+                emptyList.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
+                return emptyList;
+            }
 
             var paramDefinitionList = ParamDefinitionList();
             if (paramDefinitionList == null)
                 return null;
 
+            end = CurrentToken();
             if (!CloseParenthesis())
                 return null;
 
-            return new AstParamList(paramDefinitionList);
+            var paramList = new AstParamList(paramDefinitionList);
+            paramList.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
+            return paramList;
         }
 
         // pointer_type : * bit|identifier|functionType|structType
         public AstPointerType PointerType()
         {
+            var start = CurrentToken();
+
             if (!PointerOperator())
                 return null;
 
@@ -834,12 +864,16 @@ namespace Humphrey.FrontEnd
             if (typeSpecifier == null)
                 return null;
 
-            return new AstPointerType(typeSpecifier as IType);
+            var pointerType = new AstPointerType(typeSpecifier as IType);
+            pointerType.Token = new Result<Tokens>(start.Value, start.Location, typeSpecifier.Token.Remainder);
+            return pointerType;
         }
 
         // array_type : [ConstantExpr] bit|identifier|functionType|structType
         public AstArrayType ArrayType()
         {
+            var start = CurrentToken();
+
             if (!OpenSquareBracket())
                 return null;
 
@@ -854,7 +888,9 @@ namespace Humphrey.FrontEnd
             if (typeSpecifier == null)
                 return null;
 
-            return new AstArrayType(expr, typeSpecifier as IType);
+            var arrayType = new AstArrayType(expr, typeSpecifier as IType);
+            arrayType.Token = new Result<Tokens>(start.Value, start.Location, typeSpecifier.Token.Remainder);
+            return arrayType;
         }
 
         // function_type : parameter_list parameter_list
@@ -868,12 +904,16 @@ namespace Humphrey.FrontEnd
             if (outputs == null)
                 return null;
 
-            return new AstFunctionType(inputs, outputs);
+            var functionType = new AstFunctionType(inputs, outputs);
+            functionType.Token = new Result<Tokens>(inputs.Token.Value, inputs.Token.Location, outputs.Token.Remainder);
+            return functionType;
         }
         
         // enum_type : type { enum_element }
         public AstEnumType EnumType(IType type)
         {
+            var start = type.Token;
+
             if (!OpenCurlyBrace())
                 return null;
 
@@ -881,15 +921,21 @@ namespace Humphrey.FrontEnd
             if (definitionList == null)
                 return null;
 
+            var end = CurrentToken();
+
             if (!CloseCurlyBrace())
                 return null;
 
-            return new AstEnumType(type, definitionList);
+            var enumType = new AstEnumType(type, definitionList);
+            enumType.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
+            return enumType;
         }
 
         // struct_type : { struct_element* }
         public AstStructureType StructType()
         {
+            var start = CurrentToken();
+
             if (!OpenCurlyBrace())
                 return null;
 
@@ -897,10 +943,14 @@ namespace Humphrey.FrontEnd
             if (definitionList==null)
                 return null;
 
+            var end = CurrentToken();
+
             if (!CloseCurlyBrace())
                 return null;
 
-            return new AstStructureType(definitionList);
+            var structType = new AstStructureType(definitionList);
+            structType.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
+            return structType;
         }
 
         // type : bit                       // builtin
@@ -923,13 +973,15 @@ namespace Humphrey.FrontEnd
         //                           
         public AstEnumElement EnumElementDefinition()
         {
-            var (ok, identifierList, typeSpecifier, assignable) = Definition<AstIdentifier>(Identifier, NonFunctionType, Assignable);
+            var (ok, identifierList, typeSpecifier, assignable, token) = Definition<AstIdentifier>(Identifier, NonFunctionType, Assignable);
             if (!ok)
                 return null;
             if (typeSpecifier!=null || assignable==null)
                 throw new System.NotImplementedException($"TODO - This should be an error, enums must be of the format identifier:= assignable");
 
-            return new AstEnumElement(identifierList, assignable);
+            var enumElement = new AstEnumElement(identifierList, assignable);
+            enumElement.Token = token;
+            return enumElement;
         }
 
         // struct_element_definition : identifier : non_function_type
@@ -937,10 +989,12 @@ namespace Humphrey.FrontEnd
         //                           | identifier : non_function_type = assignable
         public AstStructElement StructElementDefinition()
         {
-            var (ok, identifierList, typeSpecifier, assignable) = Definition<IIdentifier>(IdentifierOrAnon, NonFunctionType, Assignable);
+            var (ok, identifierList, typeSpecifier, assignable, token) = Definition<IIdentifier>(IdentifierOrAnon, NonFunctionType, Assignable);
             if (!ok)
                 return null;
-            return new AstStructElement(identifierList, typeSpecifier, assignable);
+            var structElement = new AstStructElement(identifierList, typeSpecifier, assignable);
+            structElement.Token = token;
+            return structElement;
         }
 
         // global_definition : identifier : non_function_type
@@ -948,10 +1002,12 @@ namespace Humphrey.FrontEnd
         //                   | identifier : non_function_type = assignable
         public AstGlobalDefinition GlobalScopeDefinition()
         {
-            var (ok, identifierList, typeSpecifier, assignable) = Definition<AstIdentifier>(Identifier, Type, Assignable);
+            var (ok, identifierList, typeSpecifier, assignable, token) = Definition<AstIdentifier>(Identifier, Type, Assignable);
             if (!ok)
                 return null;
-            return new AstGlobalDefinition(identifierList, typeSpecifier, assignable);
+            var globalDef = new AstGlobalDefinition(identifierList, typeSpecifier, assignable);
+            globalDef.Token = token;
+            return globalDef;
         }
 
         // local_definition  : identifier : non_function_type
@@ -959,28 +1015,37 @@ namespace Humphrey.FrontEnd
         //                   | identifier : non_function_type = assignable
         public AstLocalDefinition LocalScopeDefinition()
         {
-            var (ok, identifierList, typeSpecifier, assignable) = Definition<AstIdentifier>(Identifier, Type, Assignable);
+            var (ok, identifierList, typeSpecifier, assignable, token) = Definition<AstIdentifier>(Identifier, Type, Assignable);
             if (!ok)
                 return null;
-            return new AstLocalDefinition(identifierList, typeSpecifier, assignable);
+            var localDef = new AstLocalDefinition(identifierList, typeSpecifier, assignable);
+            localDef.Token = token;
+            return localDef;
         }
 
         // definition : identifier : type
         //            | identifier := assignable
         //            | identifier : type = assignable
-        public (bool ok, T[] identifierList,IType typeSpecifier, IAssignable assignable) Definition<T>(AstItemDelegate identifierDelegate,AstItemDelegate typeDelegate, AstItemDelegate assignableDelegate) where T : class
+        public (bool ok, T[] identifierList,IType typeSpecifier, IAssignable assignable, Result<Tokens> token) Definition<T>(AstItemDelegate identifierDelegate,AstItemDelegate typeDelegate, AstItemDelegate assignableDelegate) where T : class
         {
+            var start = CurrentToken();
+
             var identifier = CommaSeperatedItemList<T>(identifierDelegate);
             if (identifier == null)
-                return (false, null, null, null);
+                return (false, null, null, null, new Result<Tokens>());
 
             IType typeSpecifier = null;
             IAssignable assignable = null;
 
             if (ColonOperator() == null)
-                return (false, null, null, null);
+                return (false, null, null, null, new Result<Tokens>());
 
             typeSpecifier = typeDelegate() as IType;
+
+            TokenSpan end = new TokenSpan();
+
+            if (typeSpecifier!=null)
+                end = typeSpecifier.Token.Remainder;
 
             if (assignableDelegate != null)
             {
@@ -988,14 +1053,16 @@ namespace Humphrey.FrontEnd
                 {
                     assignable = assignableDelegate() as IAssignable;
                     if (assignable == null)
-                        return (false, null, null, null);
+                        return (false, null, null, null, new Result<Tokens>());
+
+                    end = assignable.Token.Remainder;
                 }
             }
 
             if (typeSpecifier==null && assignable==null)
-                return (false, null, null, null);
+                return (false, null, null, null, new Result<Tokens>());
 
-            return (true, identifier, typeSpecifier, assignable);
+            return (true, identifier, typeSpecifier, assignable, new Result<Tokens>(start.Value,start.Location, end));
         }
 
         // return_statement : return 
@@ -1042,6 +1109,8 @@ namespace Humphrey.FrontEnd
         // code_block : { statement_list* }
         public AstCodeBlock CodeBlock()
         {
+            var start = CurrentToken();
+
             if (!OpenCurlyBrace())
                 return null;
 
@@ -1049,10 +1118,13 @@ namespace Humphrey.FrontEnd
             if (statements == null)
                 return null;
 
+            var end = CurrentToken();
             if (!CloseCurlyBrace())
                 return null;
 
-            return new AstCodeBlock(statements);
+            var codeBlock = new AstCodeBlock(statements);
+            codeBlock.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
+            return codeBlock;
         }
 
     }

@@ -159,7 +159,7 @@ namespace Humphrey.Experiments
             if (!messages.HasErrors)
             {
                 var compiler = new HumphreyCompiler(messages);
-                var cu = compiler.Compile(parse, "testing");
+                var cu = compiler.Compile(parse, options.inputFiles[0]);
 
                 if (!messages.HasErrors)
                 {

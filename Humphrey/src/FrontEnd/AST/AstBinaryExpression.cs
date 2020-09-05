@@ -7,32 +7,44 @@ namespace Humphrey.FrontEnd
     {
         public static IExpression FetchBinaryExpressionRhsIdentifer(IOperator oper, IExpression left, AstIdentifier right)
         {
+            IExpression expression = default;
             switch (oper.Dump())
             {
                 case ".":
-                    return new AstBinaryReference(left,right);
+                    expression = new AstBinaryReference(left,right);
+                    break;
                 default:
                     throw new NotImplementedException($"Unimplemented binary operator rhs identifer : {oper.Dump()}");
             }
+            expression.Token = new Result<Tokens>(left.Token.Value, left.Token.Location, right.Token.Remainder);
+            return expression;
         }
 
         public static IExpression FetchBinaryExpressionRhsExpressionContinuation(IOperator oper, IExpression left, IExpression right)
         {
+            IExpression expression = default;
             switch (oper.Dump())
             {
                 case "[":
-                    return new AstArraySubscript(left,right);
+                    expression = new AstArraySubscript(left, right);
+                    break;
                 case "++":
                     if (right!=null)
                         throw new Exception($"Right hand side of post increment should be null");
-                    return new AstUnaryPostIncrement(left);
+                    expression = new AstUnaryPostIncrement(left);
+                    right = left;
+                    break;
                 case "--":
                     if (right!=null)
                         throw new Exception($"Right hand side of post decrement should be null");
-                    return new AstUnaryPostDecrement(left);
+                    expression = new AstUnaryPostDecrement(left);
+                    right = left;
+                    break;
                 default:
                     throw new NotImplementedException($"Unimplemented binary operator rhs identifer : {oper.Dump()}");
             }
+            expression.Token = new Result<Tokens>(left.Token.Value, left.Token.Location, right.Token.Remainder);
+            return expression;
         }
 
         public static IExpression FetchBinaryExpressionRhsExpressionList(IOperator oper, IExpression left, AstExpressionList right)
@@ -48,54 +60,78 @@ namespace Humphrey.FrontEnd
 
         public static IExpression FetchBinaryExpressionRhsType(IOperator oper, IExpression left, IType right)
         {
+            IExpression expression = default;
             switch (oper.Dump())
             {
                 case "as":
-                    return new AstBinaryAs(left, right);
+                    expression = new AstBinaryAs(left, right);
+                    break;
                 default:
                     throw new NotImplementedException($"Unimplemented binary operator rhs type : {oper.Dump()}");
             }
+            expression.Token = new Result<Tokens>(left.Token.Value, left.Token.Location, right.Token.Remainder);
+            return expression;
         }
 
         public static IExpression FetchBinaryExpression(IOperator oper, IExpression left, IExpression right)
         {
+            IExpression expression = default;
             switch (oper.Dump())
             {
                 case "+":
-                    return new AstBinaryPlus(left, right);
+                    expression = new AstBinaryPlus(left, right);
+                    break;
                 case "-":
-                    return new AstBinaryMinus(left, right);
+                    expression = new AstBinaryMinus(left, right);
+                    break;
                 case "*":
-                    return new AstBinaryMultiply(left, right);
+                    expression = new AstBinaryMultiply(left, right);
+                    break;
                 case "/":
-                    return new AstBinaryDivide(left, right);
+                    expression = new AstBinaryDivide(left, right);
+                    break;
                 case "%":
-                    return new AstBinaryModulus(left, right);
+                    expression = new AstBinaryModulus(left, right);
+                    break;
                 case "==":
-                    return new AstBinaryCompareEqual(left, right);
+                    expression = new AstBinaryCompareEqual(left, right);
+                    break;
                 case "!=":
-                    return new AstBinaryCompareNotEqual(left, right);
+                    expression = new AstBinaryCompareNotEqual(left, right);
+                    break;
                 case "<=":
-                    return new AstBinaryCompareLessEqual(left, right);
+                    expression = new AstBinaryCompareLessEqual(left, right);
+                    break;
                 case ">=":
-                    return new AstBinaryCompareGreaterEqual(left, right);
+                    expression = new AstBinaryCompareGreaterEqual(left, right);
+                    break;
                 case "<":
-                    return new AstBinaryCompareLess(left, right);
+                    expression = new AstBinaryCompareLess(left, right);
+                    break;
                 case ">":
-                    return new AstBinaryCompareGreater(left, right);
+                    expression = new AstBinaryCompareGreater(left, right);
+                    break;
                 case "&":
-                    return new AstBinaryBinaryAnd(left, right);
+                    expression = new AstBinaryBinaryAnd(left, right);
+                    break;
                 case "|":
-                    return new AstBinaryBinaryOr(left, right);
+                    expression = new AstBinaryBinaryOr(left, right);
+                    break;
                 case "^":
-                    return new AstBinaryBinaryXor(left, right);
+                    expression = new AstBinaryBinaryXor(left, right);
+                    break;
                 case "&&":
-                    return new AstBinaryLogicalAnd(left, right);
+                    expression = new AstBinaryLogicalAnd(left, right);
+                    break;
                 case "||":
-                    return new AstBinaryLogicalOr(left, right);
+                    expression = new AstBinaryLogicalOr(left, right);
+                    break;
                 default:
                     throw new NotImplementedException($"Unimplemented binary operator : {oper.Dump()}");
             }
+
+            expression.Token = new Result<Tokens>(left.Token.Value, left.Token.Location, right.Token.Remainder);
+            return expression;
         }
 
         public static (CompilationValue lhs, CompilationValue rhs) FixupBinaryExpressionInputs(CompilationUnit unit, CompilationBuilder builder, CompilationValue left, CompilationValue right)

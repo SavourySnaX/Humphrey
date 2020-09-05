@@ -10,7 +10,7 @@ namespace Humphrey.FrontEnd
             temp = value;
         }
     
-        public CompilationType CreateOrFetchType(CompilationUnit unit)
+        public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
             return unit.FetchNamedType(temp);
         }

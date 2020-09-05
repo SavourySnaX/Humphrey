@@ -12,9 +12,9 @@ namespace Humphrey.FrontEnd
                 messages = new CompilerMessages(true, true, false);
         }
 
-        public CompilationUnit Compile(IGlobalDefinition[] definitions, string moduleName )
+        public CompilationUnit Compile(IGlobalDefinition[] definitions, string sourceFileNameAndPath )
         {
-            var unit = new CompilationUnit(moduleName, definitions, messages);
+            var unit = new CompilationUnit(sourceFileNameAndPath, definitions, messages);
             unit.Compile();
             return unit;
         }

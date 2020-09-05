@@ -13,12 +13,12 @@ namespace Humphrey.FrontEnd
             definitions = defList;
         }
     
-        public CompilationType CreateOrFetchType(CompilationUnit unit)
+        public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
             // An enum, is essentially a constant array of constant values
             //Indexed by name rather than integer
 
-            var enumType = type.CreateOrFetchType(unit);
+            var enumType = type.CreateOrFetchType(unit).compilationType;
             var values = new CompilationConstantValue[definitions.Length];
             var names = new Dictionary<string, uint>();
             uint idx = 0;
@@ -32,7 +32,7 @@ namespace Humphrey.FrontEnd
                 idx++;
             }
 
-            return unit.FetchEnumType(enumType, values, names);
+            return (unit.FetchEnumType(enumType, values, names), this);
         }
     
         public bool IsFunctionType => false;

@@ -74,7 +74,7 @@ namespace Humphrey.Backend
             var (numBits, isSigned) = ComputeKind();
 
             if (destType == null && resultType != null)
-                destType = resultType.CreateOrFetchType(unit);
+                destType = resultType.CreateOrFetchType(unit).compilationType;
 
             if (destType == null)
                 return unit.CreateConstant(this, numBits, isSigned);
@@ -100,7 +100,7 @@ namespace Humphrey.Backend
             }
             else if (destType is CompilationPointerType destPtrType)
             {
-                var type = resultType.CreateOrFetchType(unit);
+                var type = resultType.CreateOrFetchType(unit).compilationType;
                 if (type.Same(destType))
                 {
                     // Create the constant

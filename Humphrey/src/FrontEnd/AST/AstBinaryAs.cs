@@ -31,7 +31,7 @@ namespace Humphrey.FrontEnd
                 return ProcessConstantExpression(unit);
 
             var valueLeft = vlhs as CompilationValue;
-            var typeRight = rhs.CreateOrFetchType(unit);
+            var typeRight = rhs.CreateOrFetchType(unit).compilationType;
 
             if (valueLeft.Type.Same(typeRight))
                 return valueLeft;

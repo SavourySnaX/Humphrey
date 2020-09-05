@@ -10,7 +10,7 @@ namespace Humphrey.FrontEnd
             definitions = defList;
         }
     
-        public CompilationType CreateOrFetchType(CompilationUnit unit)
+        public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
             int numElements = 0;
             foreach (var element in definitions)
@@ -23,11 +23,11 @@ namespace Humphrey.FrontEnd
                 for (int a = 0; a < element.NumElements; a++)
                 {
                     names[idx] = element.Identifiers[a].Dump();
-                    elementTypes[idx++] = element.Type.CreateOrFetchType(unit);
+                    elementTypes[idx++] = element.Type.CreateOrFetchType(unit).compilationType;
                 }
             }
 
-            return unit.FetchStructType(elementTypes, names);
+            return (unit.FetchStructType(elementTypes, names), this);
         }
     
         public bool IsFunctionType => false;

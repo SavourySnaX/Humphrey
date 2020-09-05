@@ -108,5 +108,44 @@ namespace Extensions
             }
         }
 
+        public static LLVMDIBuilderRef CreateDIBuilder(LLVMModuleRef moduleRef)
+        {
+            return LLVM.CreateDIBuilder(moduleRef);
+        }
+
+        public static void AddModuleFlag(this LLVMModuleRef moduleRef, LLVMModuleFlagBehavior flagBehavior, string flagName, LLVMMetadataRef flagValue)
+        {
+            fixed (byte* flagNamePtr = Encoding.ASCII.GetBytes(flagName))
+            {
+                LLVM.AddModuleFlag(moduleRef, flagBehavior, (sbyte*)flagNamePtr, (UIntPtr)flagName.Length, flagValue);
+            }
+        }
+
+        public static LLVMMetadataRef AsMetadata(this LLVMValueRef valueRef)
+        {
+            return LLVM.ValueAsMetadata(valueRef);
+        }
+
+        public static LLVMValueRef MDString(this LLVMContextRef contextRef, string value)
+        {
+            fixed (byte* valuePtr = Encoding.ASCII.GetBytes(value))
+            {
+                return LLVM.MDStringInContext(contextRef, (sbyte*)valuePtr, (uint)value.Length);
+            }
+        }
+
+        public static void AddNamedMetadataWithStringValue(this LLVMModuleRef moduleRef, LLVMContextRef contextRef, string key, string value)
+        {
+            var mdString = MDString(contextRef, value);
+            fixed (byte* keyPtr = Encoding.ASCII.GetBytes(key))
+            {
+                LLVM.AddNamedMetadataOperand(moduleRef, (sbyte*)keyPtr, mdString);
+            }
+        }
+
+        public static uint GetDebugMetaVersion()
+        {
+            return LLVM.DebugMetadataVersion();
+        }
     }
 }

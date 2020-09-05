@@ -7,9 +7,9 @@ namespace Humphrey.FrontEnd
         {
         }
     
-        public CompilationType CreateOrFetchType(CompilationUnit unit)
+        public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
-            return unit.FetchIntegerType(1);
+            return (unit.FetchIntegerType(1), this);
         }
 
         public bool IsFunctionType => false;

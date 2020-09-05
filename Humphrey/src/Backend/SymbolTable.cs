@@ -1,25 +1,26 @@
 using System.Collections.Generic;
+using Humphrey.FrontEnd;
 
 namespace Humphrey.Backend
 {
     public class SymbolTable
     {
-        private readonly Dictionary<string, CompilationType> typeTable;
+        private readonly Dictionary<string, (CompilationType, IType)> typeTable;
         private readonly Dictionary<string, CompilationFunction> functionTable;
         private readonly Dictionary<string, CompilationValue> valueTable;
 
         public SymbolTable()
         {
-            typeTable = new Dictionary<string, CompilationType>();
+            typeTable = new Dictionary<string, (CompilationType, IType)>();
             functionTable = new Dictionary<string, CompilationFunction>();
             valueTable = new Dictionary<string, CompilationValue>();
         }
 
-        public CompilationType FetchType(string identifier)
+        public (CompilationType compilationType, IType originalType) FetchType(string identifier)
         {
             if (typeTable.TryGetValue(identifier,out var result))
                 return result;
-            return null;
+            return (null, null);
         }
 
         public bool TypeDefined(string identifier)
@@ -27,9 +28,9 @@ namespace Humphrey.Backend
             return typeTable.ContainsKey(identifier);
         }
 
-        public void AddType(string identifier, CompilationType type)
+        public void AddType(string identifier, CompilationType type, IType originalType)
         {
-            typeTable.Add(identifier, type);
+            typeTable.Add(identifier, (type, originalType));
         }
 
         public CompilationFunction FetchFunction(string identifier)

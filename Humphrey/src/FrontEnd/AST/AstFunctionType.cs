@@ -11,17 +11,15 @@ namespace Humphrey.FrontEnd
             outputList = outputs;
         }
     
-        public CompilationType CreateOrFetchType(CompilationUnit unit)
+        public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
             var inputs = inputList.FetchParamList(unit);
             var outputs = outputList.FetchParamList(unit);
 
-            return unit.CreateFunctionType(inputs, outputs);
-
-            throw new System.NotImplementedException($"Unimplemented Type create/fetch");
+            return (unit.CreateFunctionType(inputs, outputs), this);
         }
     
-        public static void BuildFunction(CompilationUnit unit, CompilationFunctionType functionType, AstIdentifier ident, AstCodeBlock codeBlock)
+        public void BuildFunction(CompilationUnit unit, CompilationFunctionType functionType, AstIdentifier ident, AstCodeBlock codeBlock)
         {
             var newFunction = unit.CreateFunction(functionType, ident.Dump());
 

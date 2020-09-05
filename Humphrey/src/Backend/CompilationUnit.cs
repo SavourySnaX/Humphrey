@@ -17,9 +17,15 @@ namespace Humphrey.Backend
 
         CompilerMessages messages;
 
+        CompilationDebugBuilder debugBuilder;
+
         Dictionary<string, IGlobalDefinition> pendingDefinitions;
 
-        public CompilationUnit(string name, IGlobalDefinition[] definitions, CompilerMessages overrideDefaultMessages = null)
+        Version VersionNumber => new Version(1, 0);
+        string CompilerVersion => $"Humphrey Compiler - V{VersionNumber}";
+
+
+        public CompilationUnit(string sourceFileNameAndPath, IGlobalDefinition[] definitions, CompilerMessages overrideDefaultMessages = null)
         {
             messages = overrideDefaultMessages;
             if (messages==null)
@@ -33,10 +39,11 @@ namespace Humphrey.Backend
             LLVM.InitializeX86AsmParser();
             LLVM.InitializeX86AsmPrinter();
 
+            var moduleName = System.IO.Path.GetFileNameWithoutExtension(sourceFileNameAndPath);
             symbolScopes = new Scope();
-            symbolScopes.PushScope(name);
+            symbolScopes.PushScope(moduleName);
             contextRef = CreateContext();
-            moduleRef = contextRef.CreateModuleWithName(name);
+            moduleRef = contextRef.CreateModuleWithName(moduleName);
 
             pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
             foreach (var def in definitions)
@@ -46,6 +53,8 @@ namespace Humphrey.Backend
                     pendingDefinitions.Add(ident.Dump(), def);
                 }
             }
+
+            debugBuilder = new CompilationDebugBuilder(this, sourceFileNameAndPath, CompilerVersion, true);
         }
 
         public void Compile()
@@ -101,15 +110,15 @@ namespace Humphrey.Backend
             return new CompilationIntegerType(contextRef.GetIntType(numBits), isSigned);
         }
 
-        public CompilationType FetchNamedType(string identifier)
+        public (CompilationType compilationType, IType originalType) FetchNamedType(string identifier)
         {
             return symbolScopes.FetchNamedType(identifier);
         }
 
-        public void CreateNamedType(string identifier, CompilationType type)
+        public void CreateNamedType(string identifier, CompilationType type, IType originalType)
         {
             var symbTabType = type.CopyAs(identifier);
-            symbolScopes.AddType(identifier, symbTabType);
+            symbolScopes.AddType(identifier, symbTabType, originalType);
         }
 
         public CompilationType FetchStructType(CompilationType[] elements, string[] names)
@@ -399,6 +408,19 @@ namespace Humphrey.Backend
             return true;
         }
 
+        public void AddModuleFlag(LLVMModuleFlagBehavior behavior, string key, uint value)
+        {
+            var valueAsConstant = CreateI32Constant(value);
+
+            moduleRef.AddModuleFlag(behavior, key, valueAsConstant.AsMetadata());
+        }
+
+        public void AddNamedMetadata(string key, string value)
+        {
+            moduleRef.AddNamedMetadataWithStringValue(contextRef, key, value);
+        }
+
+        public LLVMModuleRef Module => moduleRef;
         public CompilerMessages Messages => messages;
     }
 }

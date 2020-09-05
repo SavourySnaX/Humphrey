@@ -13,7 +13,7 @@ namespace Humphrey.FrontEnd
     
         public CompilationParam FetchParam(CompilationUnit unit)
         {
-            return unit.CreateFunctionParameter(type.CreateOrFetchType(unit), ident);
+            return unit.CreateFunctionParameter(type.CreateOrFetchType(unit).compilationType, ident);
         }
 
         public string Dump()

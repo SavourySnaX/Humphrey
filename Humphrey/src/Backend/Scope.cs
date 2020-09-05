@@ -1,5 +1,6 @@
 
 using System.Collections.Generic;
+using Humphrey.FrontEnd;
 
 namespace Humphrey.Backend
 {
@@ -56,9 +57,9 @@ namespace Humphrey.Backend
 
         }
 
-        public bool AddType(string identifier, CompilationType type)
+        public bool AddType(string identifier, CompilationType type, IType originalType)
         {
-            return AddItem(identifier, (s) => s.TypeDefined(identifier), (s) => s.AddType(identifier, type));
+            return AddItem(identifier, (s) => s.TypeDefined(identifier), (s) => s.AddType(identifier, type, originalType));
         }
 
         public bool AddFunction(string identifier, CompilationFunction function)
@@ -73,19 +74,19 @@ namespace Humphrey.Backend
 
 
         // Fetch type based on the current scope
-        public CompilationType FetchNamedType(string identifier)
+        public (CompilationType compilationType, IType originalType) FetchNamedType(string identifier)
         {
             CompilationValue found = null;
             int stackIdx = scopeStack.Count - 1;
             while (found==null && stackIdx>=0)
             {
                 var type=scopeStack[stackIdx].symbols.FetchType(identifier);
-                if (type!=null)
+                if (type.compilationType != null)
                     return type;
                 stackIdx--;
             }
 
-            return null;
+            return (null, null);
         }
 
         private CompilationValue FetchValueInternal(CompilationUnit unit, SymbolTable symbolTable, string identifier, CompilationBuilder builder)
@@ -99,15 +100,15 @@ namespace Humphrey.Backend
 
             // Check for function - i guess we can construct this on the fly?
             var function = symbolTable.FetchFunction(identifier);
-            if (function!=null)
+            if (function != null)
             {
                 value = new CompilationValue(function.BackendValue, function.FunctionType);
                 return value;
             }
 
             // Check for named type (an enum is actually a value type) - might be better done at definition actually
-            var nType = symbolTable.FetchType(identifier);
-            if (nType!=null)
+            var nType = symbolTable.FetchType(identifier).compilationType;
+            if (nType != null)
             {
                 value = unit.CreateUndef(nType);
                 return value;

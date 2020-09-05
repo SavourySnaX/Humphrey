@@ -22,6 +22,7 @@ namespace Humphrey.FrontEnd
             var expr = initialiser as IExpression;
             var exprValue = expr?.ProcessExpression(unit, builder);
             CompilationType ct = null;
+            IType ot = default;
 
             if (type == null)
             {
@@ -36,7 +37,7 @@ namespace Humphrey.FrontEnd
                 }
             }
             else 
-                ct = type.CreateOrFetchType(unit);
+                (ct,ot) = type.CreateOrFetchType(unit);
 
             foreach (var ident in identifiers)
             {
@@ -44,16 +45,17 @@ namespace Humphrey.FrontEnd
                 if (functionType != null && initialiser == null)
                 {
                     // should be scoped
-                    unit.CreateNamedType(ident.Dump(), ct);
+                    unit.CreateNamedType(ident.Dump(), ct, ot);
                 }
                 else if (functionType != null && initialiser != null && codeBlock!=null)
                 {
-                    AstFunctionType.BuildFunction(unit, functionType, ident, codeBlock);
+                    var ft = ot as AstFunctionType;
+                    ft.BuildFunction(unit, functionType, ident, codeBlock);
                 }
                 else if (initialiser == null)
                 {
                     // should be scoped
-                    unit.CreateNamedType(ident.Dump(), ct);
+                    unit.CreateNamedType(ident.Dump(), ct, ot);
                 }
                 else
                 {

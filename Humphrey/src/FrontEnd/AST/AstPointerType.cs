@@ -10,10 +10,10 @@ namespace Humphrey.FrontEnd
             elementType = element;
         }
     
-        public CompilationType CreateOrFetchType(CompilationUnit unit)
+        public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
-            var ct = elementType.CreateOrFetchType(unit);
-            return new CompilationPointerType(CreatePointerType(ct.BackendType), ct);
+            var (ct,ot) = elementType.CreateOrFetchType(unit);
+            return (new CompilationPointerType(CreatePointerType(ct.BackendType), ct), this);
         }
     
         public bool IsFunctionType => false;
