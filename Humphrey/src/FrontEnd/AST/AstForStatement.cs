@@ -36,19 +36,19 @@ namespace Humphrey.FrontEnd
             var iterBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"for_iter_{identifiers[0].Dump()}"));
             var endBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"for_end_{identifiers[0].Dump()}"));
 
-            builder.BackendValue.BuildBr(checkBlock.BackendValue);
+            builder.Branch(checkBlock);
 
             // CheckBlock performs iter end check basically
             {
                 var checkBuilder = unit.CreateBuilder(function, checkBlock);
                 var cond = new AstBinaryCompareLess(identifiers[0], rangeList[0].ExclusiveEnd).ProcessExpression(unit, checkBuilder);
-                checkBuilder.BackendValue.BuildCondBr(Expression.ResolveExpressionToValue(unit, cond, null).BackendValue, compilationBlock.entry.BackendValue, endBlock.BackendValue);
+                checkBuilder.ConditionalBranch(Expression.ResolveExpressionToValue(unit, cond, null), compilationBlock.entry, endBlock);
             }
 
             // insert branch at end of for_block
             {
                 var loopBlockBuilder = unit.CreateBuilder(function, compilationBlock.exit);
-                loopBlockBuilder.BackendValue.BuildBr(iterBlock.BackendValue);
+                loopBlockBuilder.Branch(iterBlock);
             }
 
             // IterBlock performs iter next
@@ -56,7 +56,7 @@ namespace Humphrey.FrontEnd
                 var iterBuilder = unit.CreateBuilder(function, iterBlock);
                 var binaryAdd = new AstBinaryPlus(identifiers[0], new AstNumber("1"));
                 identifiers[0].ProcessExpressionForStore(unit, iterBuilder, binaryAdd);
-                iterBuilder.BackendValue.BuildBr(checkBlock.BackendValue);
+                iterBuilder.Branch(checkBlock);
             }
 
             // ensure our builder correctly points at end block now

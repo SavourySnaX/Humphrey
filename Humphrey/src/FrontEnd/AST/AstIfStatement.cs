@@ -30,24 +30,24 @@ namespace Humphrey.FrontEnd
             // Insert branch at end of trueBlock
             {
                 var endCondBuilder = unit.CreateBuilder(function, trueBlock.exit);
-                endCondBuilder.BackendValue.BuildBr(endBlock.BackendValue);
+                endCondBuilder.Branch(endBlock);
             }
 
             // Jump to correct block
             if (conditionElse == null)
             {
-                builder.BackendValue.BuildCondBr(resolved.BackendValue, trueBlock.entry.BackendValue, endBlock.BackendValue);
+                builder.ConditionalBranch(resolved, trueBlock.entry, endBlock);
             }
             else
             {
                 var falseBlock = conditionElse.CreateCodeBlock(unit, function, "if_else");
 
-                builder.BackendValue.BuildCondBr(resolved.BackendValue, trueBlock.entry.BackendValue, falseBlock.entry.BackendValue);
+                builder.ConditionalBranch(resolved, trueBlock.entry, falseBlock.entry);
             
                 // Insert branch at end of elseBlock
                 {
                     var endCondBuilder = unit.CreateBuilder(function, falseBlock.exit);
-                    endCondBuilder.BackendValue.BuildBr(endBlock.BackendValue);
+                    endCondBuilder.Branch(endBlock);
                 }
             }
 

@@ -274,6 +274,21 @@ namespace Humphrey.Backend
             builderRef.BuildCall(func.BackendValue, backendValues);
         }
 
+        public void Branch(CompilationBlock destinationBlock)
+        {
+            builderRef.BuildBr(destinationBlock.BackendValue);
+        }
+
+        public void ConditionalBranch(CompilationValue cond, CompilationBlock trueBlock, CompilationBlock falseBlock)
+        {
+            builderRef.BuildCondBr(cond.BackendValue, trueBlock.BackendValue, falseBlock.BackendValue);
+        }
+
+        public void ReturnVoid()
+        {
+            builderRef.BuildRetVoid();
+        }
+
         public LLVMBuilderRef BackendValue => builderRef;
         public CompilationFunction Function => function;
         public CompilationBlock CurrentBlock => currentBlock;

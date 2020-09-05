@@ -60,17 +60,17 @@ namespace Humphrey.FrontEnd
             }
 
             // single point of return for all functions
-            exitBlockBuilder.BackendValue.BuildRetVoid();
+            exitBlockBuilder.ReturnVoid();
 
             var compiledBlock = codeBlock.CreateCodeBlock(unit, newFunction, $"entry_{ident.Dump()}");
             
             // LocalsBuilder needs to jump to compiledBlock
-            localsBuilder.BackendValue.BuildBr(compiledBlock.entry.BackendValue);
+            localsBuilder.Branch(compiledBlock.entry);
 
             if (compiledBlock.exit.BackendValue.Terminator == null)
             {
                 var builder = unit.CreateBuilder(newFunction, compiledBlock.exit);
-                builder.BackendValue.BuildBr(newFunction.ExitBlock.BackendValue);
+                builder.Branch(newFunction.ExitBlock);
             }
 
             // Now we need to know if all outputs were stored.... this check is crude, will not deal with conditions/loops etc

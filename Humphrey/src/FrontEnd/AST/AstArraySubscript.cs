@@ -17,20 +17,6 @@ namespace Humphrey.FrontEnd
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
             throw new System.NotImplementedException($"ArraySubscript TODO");
-            /*uint outParamIdx = function.OutParamOffset;
-            foreach (var expr in exprList)
-            {
-                var paramType = function.FunctionType.Parameters[outParamIdx].Type;
-                var value = AstUnaryExpression.EnsureTypeOk(unit, builder, expr, paramType);
-
-                var parameter = function.BackendValue.GetParam(outParamIdx++);
-
-                builder.BackendValue.BuildStore(value.BackendValue, parameter);
-            }
-
-            builder.BackendValue.BuildRetVoid();
-
-            return true;*/
         }
 
         public string Dump()
