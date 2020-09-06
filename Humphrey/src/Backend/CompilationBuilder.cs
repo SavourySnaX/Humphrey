@@ -289,6 +289,11 @@ namespace Humphrey.Backend
             builderRef.BuildRetVoid();
         }
 
+        public void SetDebugLocation(CompilationUnit unit, SourceLocation location)
+        {
+            builderRef.CurrentDebugLocation = unit.CreateDebugLocation(location);
+        }
+
         public LLVMBuilderRef BackendValue => builderRef;
         public CompilationFunction Function => function;
         public CompilationBlock CurrentBlock => currentBlock;

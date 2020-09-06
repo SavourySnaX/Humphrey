@@ -489,6 +489,8 @@ namespace Humphrey.FrontEnd
         {
             AstExpressionList exprList;
 
+            var start = CurrentToken();
+            var end = start;
             if (CloseParenthesis())
             {
                 exprList = new AstExpressionList();
@@ -498,9 +500,11 @@ namespace Humphrey.FrontEnd
                 exprList = ExpressionList();
                 if (exprList == null)
                     return null;
+                end = exprList.Token;
                 if (!CloseParenthesis())
                     return null;
             }
+            exprList.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
             return exprList;
         }
         
@@ -546,7 +550,9 @@ namespace Humphrey.FrontEnd
             if (expr!=null && SemiColonSyntax())
             {
                 FlushTokens();
-                return new AstExpressionStatement(expr);
+                var exprStatement = new AstExpressionStatement(expr);
+                exprStatement.Token = expr.Token;
+                return exprStatement;
             }
             RestoreTokens();
             return null;
@@ -657,6 +663,7 @@ namespace Humphrey.FrontEnd
 
         public AstIfStatement IfStatement()
         {
+            var start = CurrentToken();
             if (IfKeyword() == null)
                 return null;
 
@@ -668,16 +675,24 @@ namespace Humphrey.FrontEnd
             if (codeBlock == null)
                 return null;
 
+            var end = codeBlock.Token;
+
+            AstIfStatement statement = default;
             if (ElseKeyword() != null)
             {
                 var elseCodeBlock = CodeBlock();
                 if (elseCodeBlock == null)
                     return null;
 
-                return new AstIfStatement(expression, codeBlock, elseCodeBlock);
+                end = elseCodeBlock.Token;
+                statement = new AstIfStatement(expression, codeBlock, elseCodeBlock);
             }
-
-            return new AstIfStatement(expression, codeBlock, null);
+            else
+            {
+                statement = new AstIfStatement(expression, codeBlock, null);
+            }
+            statement.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
+            return statement;
         }
 
         public AstForStatement ForStatement()
@@ -758,10 +773,12 @@ namespace Humphrey.FrontEnd
         // underscore_expression : underscore_operator 
         public IExpression UnderscoreExpression()
         {
+            var start = CurrentToken();
             if (!UnderscoreOperator())
                 return null;
 
             var operand = new AstUnderscoreExpression();
+            operand.Token = start;
             operands.Push(operand);
             return operand;
         }
@@ -1068,13 +1085,16 @@ namespace Humphrey.FrontEnd
         // return_statement : return 
         public AstReturnStatement ReturnStatement()
         {
+            var start = CurrentToken();
             if (ReturnKeyword() == null)
                 return null;
 
             if (!SemiColonSyntax())
                 return null;
 
-            return new AstReturnStatement();
+            var returnStatement = new AstReturnStatement();
+            returnStatement.Token = start;
+            return returnStatement;
         }
 
         // statement : block

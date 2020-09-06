@@ -125,6 +125,10 @@ namespace Extensions
         {
             return LLVM.ValueAsMetadata(valueRef);
         }
+        public static LLVMValueRef AsValue(this LLVMMetadataRef metadataRef, LLVMContextRef contextRef)
+        {
+            return LLVM.MetadataAsValue(contextRef, metadataRef);
+        }
 
         public static LLVMValueRef MDString(this LLVMContextRef contextRef, string value)
         {
@@ -141,6 +145,34 @@ namespace Extensions
             {
                 LLVM.AddNamedMetadataOperand(moduleRef, (sbyte*)keyPtr, mdString);
             }
+        }
+
+        public static LLVMMetadataRef GetOrCreateTypeArray(this LLVMDIBuilderRef builderRef, LLVMMetadataRef[] types)
+        {
+            uint numTypes = (uint)types.Length;
+            var opaque = new LLVMOpaqueMetadata*[numTypes];
+            for (int a = 0; a < types.Length; a++)
+                opaque[a] = types[a];
+
+            fixed (LLVMOpaqueMetadata** opaqueTypes = opaque)
+            {
+                return LLVM.DIBuilderGetOrCreateTypeArray(builderRef, opaqueTypes, (UIntPtr)numTypes);
+            }
+        }
+
+        public static void SetSubprogram(this LLVMValueRef function, LLVMMetadataRef debugFunction)
+        {
+            LLVM.SetSubprogram(function, debugFunction);
+        }
+
+        public static LLVMMetadataRef GetSubprogram(this LLVMValueRef function)
+        {
+            return LLVM.GetSubprogram(function);
+        }
+
+        public static LLVMMetadataRef CreateLexicalBlock(this LLVMDIBuilderRef builderRef, LLVMMetadataRef parentScope, LLVMMetadataRef file, uint line, uint column)
+        {
+            return LLVM.DIBuilderCreateLexicalBlock(builderRef, parentScope, file, line, column);
         }
 
         public static uint GetDebugMetaVersion()

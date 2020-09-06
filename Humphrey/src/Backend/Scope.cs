@@ -1,6 +1,7 @@
 
 using System.Collections.Generic;
 using Humphrey.FrontEnd;
+using LLVMSharp.Interop;
 
 namespace Humphrey.Backend
 {
@@ -9,22 +10,31 @@ namespace Humphrey.Backend
         private List<(string name, SymbolTable symbols)> scopeStack;
 
         private Stack<List<(string name, SymbolTable symbols)>> scopeSave;
+        private List<LLVMMetadataRef> debugScopeStack;
+
+        private Stack<List<LLVMMetadataRef>> debugScopeSave;
 
         public Scope()
         {
             scopeStack = new List<(string,SymbolTable)>();
             scopeSave = new Stack<List<(string name, SymbolTable symbols)>>();
+            debugScopeSave = new Stack<List<LLVMMetadataRef>>();
+            debugScopeStack = new List<LLVMMetadataRef>();
         }
 
-        public void PushScope(string scope)
+        public void PushScope(string scope, LLVMMetadataRef debugScope)
         {
             scopeStack.Add((scope, new SymbolTable()));
+            debugScopeStack.Add(debugScope);
         }
 
         public void PopScope()
         {
             scopeStack.RemoveAt(scopeStack.Count - 1);
+            debugScopeStack.RemoveAt(debugScopeStack.Count - 1);
         }
+
+        public LLVMMetadataRef CurrentDebugScope => debugScopeStack[debugScopeStack.Count - 1];
 
         public void SaveScopes()
         {
@@ -32,11 +42,16 @@ namespace Humphrey.Backend
             scopeSave.Push(scopeStack);
             scopeStack = new List<(string name, SymbolTable symbols)>();
             scopeStack.Add(firstItem);
+            var firstDebugItem = debugScopeStack[0];
+            debugScopeSave.Push(debugScopeStack);
+            debugScopeStack = new List<LLVMMetadataRef>();
+            debugScopeStack.Add(firstDebugItem);
         }
 
         public void RestoreScopes()
         {
             scopeStack = scopeSave.Pop();
+            debugScopeStack = debugScopeSave.Pop();
         }
 
         private delegate bool AlreadyPresentDelegate(SymbolTable symbolTable);

@@ -17,6 +17,8 @@ namespace Humphrey.FrontEnd
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
+            builder.SetDebugLocation(unit, new SourceLocation(Token));
+
             // Resolve common things
             var codeBlock = initialiser as AstCodeBlock;
             var expr = initialiser as IExpression;

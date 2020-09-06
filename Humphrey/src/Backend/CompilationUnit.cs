@@ -24,7 +24,6 @@ namespace Humphrey.Backend
         Version VersionNumber => new Version(1, 0);
         string CompilerVersion => $"Humphrey Compiler - V{VersionNumber}";
 
-
         public CompilationUnit(string sourceFileNameAndPath, IGlobalDefinition[] definitions, CompilerMessages overrideDefaultMessages = null)
         {
             messages = overrideDefaultMessages;
@@ -39,11 +38,15 @@ namespace Humphrey.Backend
             LLVM.InitializeX86AsmParser();
             LLVM.InitializeX86AsmPrinter();
 
+
             var moduleName = System.IO.Path.GetFileNameWithoutExtension(sourceFileNameAndPath);
-            symbolScopes = new Scope();
-            symbolScopes.PushScope(moduleName);
             contextRef = CreateContext();
             moduleRef = contextRef.CreateModuleWithName(moduleName);
+            
+            debugBuilder = new CompilationDebugBuilder(this, sourceFileNameAndPath, CompilerVersion, true);
+
+            symbolScopes = new Scope();
+            symbolScopes.PushScope(moduleName, debugBuilder.RootScope);
 
             pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
             foreach (var def in definitions)
@@ -54,7 +57,6 @@ namespace Humphrey.Backend
                 }
             }
 
-            debugBuilder = new CompilationDebugBuilder(this, sourceFileNameAndPath, CompilerVersion, true);
         }
 
         public void Compile()
@@ -65,6 +67,8 @@ namespace Humphrey.Backend
                 enumerator.MoveNext();
                 CompileMissing(enumerator.Current);
             }
+
+            debugBuilder.Finalise();
         }
         public bool CompileMissing(string identifier)
         {
@@ -241,24 +245,31 @@ namespace Humphrey.Backend
             return new CompilationValue(type.BackendType.Undef, type);
         }
 
-        public CompilationFunction CreateFunction(CompilationFunctionType type, string identifier)
+        public CompilationFunction CreateFunction(CompilationFunctionType type, AstFunctionType functionType, AstIdentifier identifier)
         {
-            if (symbolScopes.FetchFunction(identifier)!=null)
-                throw new Exception($"function {identifier} already exists!");
+            string functionName = identifier.Dump();
 
-            var func = moduleRef.AddFunction(identifier, type.BackendType);
+            if (symbolScopes.FetchFunction(functionName)!=null)
+                throw new Exception($"function {functionName} already exists!");
+
+            var func = moduleRef.AddFunction(functionName, type.BackendType);
 
             var cfunc = new CompilationFunction(func, type);
 
-            if (!symbolScopes.AddFunction(identifier, cfunc))
+            if (!symbolScopes.AddFunction(functionName, cfunc))
                 throw new Exception($"function {identifier} failed to add symbol!");
+
+            var debugFunction = debugBuilder.CreateDebugFunction(functionName, new SourceLocation(identifier.Token), type,
+                new SourceLocation(functionType.Token));
+
+            cfunc.BackendValue.SetSubprogram(debugFunction);
 
             return cfunc;
         }
 
-        public void PushScope(string identifier)
+        public void PushScope(string identifier, LLVMMetadataRef debugScope)
         {
-            symbolScopes.PushScope(identifier);
+            symbolScopes.PushScope(identifier, debugScope);
         }
 
         public void PopScope()
@@ -377,6 +388,12 @@ namespace Humphrey.Backend
             return FetchIntrinsic(moduleRef, functionName, typeRefs);
         }
 
+        public LLVMValueRef CreateDebugLocation(SourceLocation location)
+        {
+            var meta = moduleRef.Context.CreateDebugLocation(location.StartLine, location.StartColumn, symbolScopes.CurrentDebugScope, default(LLVMMetadataRef));
+            return meta.AsValue(contextRef);
+        }
+
         public bool DumpDisassembly(string targetTriple)
         {
             var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
@@ -418,6 +435,16 @@ namespace Humphrey.Backend
         public void AddNamedMetadata(string key, string value)
         {
             moduleRef.AddNamedMetadataWithStringValue(contextRef, key, value);
+        }
+
+        public LLVMMetadataRef CreateDebugScope(SourceLocation location)
+        {
+            return debugBuilder.CreateLexicalScope(symbolScopes.CurrentDebugScope, location);
+        }
+
+        public LLVMMetadataRef GetScope(CompilationFunction function)
+        {
+            return function.BackendValue.GetSubprogram();
         }
 
         public LLVMModuleRef Module => moduleRef;

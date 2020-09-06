@@ -49,13 +49,18 @@ namespace Humphrey.FrontEnd
 
         public static IExpression FetchBinaryExpressionRhsExpressionList(IOperator oper, IExpression left, AstExpressionList right)
         {
+            IExpression expression = default;
             switch (oper.Dump())
             {
                 case "(":
-                    return new AstFunctionCall(left,right);
+                    expression = new AstFunctionCall(left,right);
+                    break;
                 default:
                     throw new NotImplementedException($"Unimplemented binary operator rhs identifer : {oper.Dump()}");
             }
+
+            expression.Token = new Result<Tokens>(left.Token.Value, left.Token.Location, right.Token.Remainder);
+            return expression;
         }
 
         public static IExpression FetchBinaryExpressionRhsType(IOperator oper, IExpression left, IType right)

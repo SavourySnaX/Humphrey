@@ -9,6 +9,8 @@ namespace Humphrey.FrontEnd
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
+            builder.SetDebugLocation(unit, new SourceLocation(Token));
+
             builder.Branch(function.ExitBlock);
 
             return true;

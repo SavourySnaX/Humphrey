@@ -21,9 +21,9 @@ namespace Humphrey.FrontEnd
     
         public void BuildFunction(CompilationUnit unit, CompilationFunctionType functionType, AstIdentifier ident, AstCodeBlock codeBlock)
         {
-            var newFunction = unit.CreateFunction(functionType, ident.Dump());
+            var newFunction = unit.CreateFunction(functionType, this, ident);
 
-            unit.PushScope("");
+            unit.PushScope("", unit.GetScope(newFunction));
 
             var localsBlock = new CompilationBlock(newFunction.BackendValue.AppendBasicBlock($"inputs_{ident.Dump()}"));
             var localsBuilder = unit.CreateBuilder(newFunction, localsBlock);

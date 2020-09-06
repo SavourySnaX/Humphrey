@@ -18,6 +18,8 @@ namespace Humphrey.FrontEnd
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
+            builder.SetDebugLocation(unit, new SourceLocation(Token));
+
             if (rangeList.Length != identifiers.Length)
                 throw new System.NotImplementedException($"identifiers.length != rangeList.Length");
 

@@ -18,6 +18,8 @@ namespace Humphrey.FrontEnd
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
+            builder.SetDebugLocation(unit, new SourceLocation(Token));
+
             // Create blocks for if/end and else
             var trueBlock = conditionTrue.CreateCodeBlock(unit, function, "if_if");
             var endBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"if_end"));
