@@ -17,7 +17,7 @@ namespace Humphrey.FrontEnd
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
-            builder.SetDebugLocation(unit, new SourceLocation(Token));
+            builder.SetDebugLocation(new SourceLocation(Token));
 
             // Resolve common things
             var codeBlock = initialiser as AstCodeBlock;
@@ -61,7 +61,7 @@ namespace Humphrey.FrontEnd
                 }
                 else
                 {
-                    var newLocal = unit.CreateLocalVariable(unit, builder, ct, ident.Dump(), exprValue);
+                    var newLocal = unit.CreateLocalVariable(unit, builder, ct, ident.Dump(), exprValue,new SourceLocation(ident.Token));
                 }
             }
             return false;

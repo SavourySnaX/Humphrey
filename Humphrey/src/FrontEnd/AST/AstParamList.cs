@@ -25,6 +25,13 @@ namespace Humphrey.FrontEnd
             return pList;
         }
 
+        public Result<Tokens> FetchParamLocation(uint idx)
+        {
+            if (idx>=paramList.Length)
+                throw new System.Exception($"Out of range");
+            return paramList[idx].Token;
+        }
+
         public string Dump()
         {
             var s = new StringBuilder();

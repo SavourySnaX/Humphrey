@@ -6,6 +6,7 @@ namespace Humphrey.Backend
 {
     public class CompilationBuilder
     {
+        CompilationUnit unit;
         LLVMBuilderRef builderRef;
         CompilationFunction function;
         CompilationBlock currentBlock;
@@ -38,8 +39,9 @@ namespace Humphrey.Backend
             [CompareKind.SLE] = LLVMIntPredicate.LLVMIntSLE,
         };
 
-        public CompilationBuilder(LLVMBuilderRef builder, CompilationFunction func, CompilationBlock block)
+        public CompilationBuilder(CompilationUnit compUnit, LLVMBuilderRef builder, CompilationFunction func, CompilationBlock block)
         {
+            unit = compUnit;
             builderRef = builder;
             function = func;
             currentBlock = block;
@@ -212,8 +214,7 @@ namespace Humphrey.Backend
         public CompilationValue Cast(CompilationValue src, CompilationType toType)
         {
             if (toType is CompilationFunctionType cft)
-                toType = new CompilationPointerType(Extensions.Helpers.CreatePointerType(cft.BackendType), cft);
-                
+                toType = unit.CreatePointerType(cft,cft.Location);                 
             if (src.Type is CompilationPointerType && toType is CompilationIntegerType)
                 return new CompilationValue(builderRef.BuildPtrToInt(src.BackendValue, toType.BackendType), toType);
             if (src.Type is CompilationIntegerType && toType is CompilationPointerType)
@@ -225,7 +226,8 @@ namespace Humphrey.Backend
         public CompilationValue Compare(CompareKind compareKind, CompilationValue left, CompilationValue right)
         {
             if (_intPredicates.TryGetValue(compareKind, out var intPredicate))
-                return new CompilationValue(builderRef.BuildICmp(intPredicate, left.BackendValue, right.BackendValue), new CompilationIntegerType(Extensions.Helpers.CreateIntType(1), false));
+                return new CompilationValue(builderRef.BuildICmp(intPredicate, left.BackendValue, right.BackendValue),
+                    unit.CreateIntegerType(1, false, new SourceLocation()));
 
             throw new NotImplementedException($"Unahandled compare kind {compareKind}");
         }
@@ -241,7 +243,7 @@ namespace Humphrey.Backend
             return new CompilationValue(builderRef.BuildShl(toShift.BackendValue, shiftAmount.BackendValue), toShift.Type);
         }
 
-        public CompilationValue RotateLeft(CompilationUnit unit, CompilationValue value, CompilationValue rotateBy)
+        public CompilationValue RotateLeft(CompilationValue value, CompilationValue rotateBy)
         {
             var backendType = value.BackendType;
             var funnelShift = unit.FetchIntrinsicFunction("llvm.fshl", new LLVMTypeRef[] { backendType });
@@ -252,7 +254,7 @@ namespace Humphrey.Backend
             return new CompilationValue(builderRef.BuildCall(funnelShift, backendValues), value.Type);
         }
 
-        public CompilationValue RotateRight(CompilationUnit unit, CompilationValue value, CompilationValue rotateBy)
+        public CompilationValue RotateRight(CompilationValue value, CompilationValue rotateBy)
         {
             var backendType = value.BackendType;
             var funnelShift = unit.FetchIntrinsicFunction("llvm.fshr", new LLVMTypeRef[] { backendType });
@@ -289,7 +291,7 @@ namespace Humphrey.Backend
             builderRef.BuildRetVoid();
         }
 
-        public void SetDebugLocation(CompilationUnit unit, SourceLocation location)
+        public void SetDebugLocation(SourceLocation location)
         {
             builderRef.CurrentDebugLocation = unit.CreateDebugLocation(location);
         }

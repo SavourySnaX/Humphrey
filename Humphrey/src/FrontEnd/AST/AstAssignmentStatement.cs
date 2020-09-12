@@ -13,7 +13,7 @@ namespace Humphrey.FrontEnd
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
         {
-            builder.SetDebugLocation(unit, new SourceLocation(Token));
+            builder.SetDebugLocation(new SourceLocation(Token));
 
             // Resolve common things
             var expr = assignable as IExpression;

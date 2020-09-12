@@ -130,6 +130,34 @@ namespace Extensions
             return LLVM.MetadataAsValue(contextRef, metadataRef);
         }
 
+        public enum LLVMDwarfATEValues : uint
+        {
+            None = 0x00,
+            DW_ATE_address = 0x01,
+            DW_ATE_boolean = 0x02,
+            DW_ATE_complex_float = 0x03,
+            DW_ATE_float = 0x04,
+            DW_ATE_signed = 0x05,
+            DW_ATE_signed_char = 0x06,
+            DW_ATE_unsigned = 0x07,
+            DW_ATE_unsigned_char = 0x08,
+            DW_ATE_imaginary_float = 0x09,
+            DW_ATE_packed_decimal = 0x0a,
+            DW_ATE_numeric_string = 0x0b,
+            DW_ATE_edited = 0x0c,
+            DW_ATE_signed_fixed = 0x0d,
+            DW_ATE_unsigned_fixed = 0x0e,
+            DW_ATE_decimal_float = 0x0f,
+        };
+
+        public static LLVMMetadataRef CreateBasicType(this LLVMDIBuilderRef builderRef, string name, UInt64 numBits, LLVMDwarfATEValues type)
+        {
+            fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
+            {
+                return LLVM.DIBuilderCreateBasicType(builderRef, (sbyte*)namePtr, (UIntPtr)name.Length, numBits, (uint)type, LLVMDIFlags.LLVMDIFlagPublic);
+            }
+        }
+
         public static LLVMValueRef MDString(this LLVMContextRef contextRef, string value)
         {
             fixed (byte* valuePtr = Encoding.ASCII.GetBytes(value))
@@ -173,6 +201,136 @@ namespace Extensions
         public static LLVMMetadataRef CreateLexicalBlock(this LLVMDIBuilderRef builderRef, LLVMMetadataRef parentScope, LLVMMetadataRef file, uint line, uint column)
         {
             return LLVM.DIBuilderCreateLexicalBlock(builderRef, parentScope, file, line, column);
+        }
+
+        public static LLVMMetadataRef CreateParameterVariable(this LLVMDIBuilderRef builderRef, LLVMMetadataRef parentScope, string name, uint argNumber, LLVMMetadataRef file, uint lineNo, LLVMMetadataRef type)
+        {
+            var preserve = 1;
+            var flags = LLVMDIFlags.LLVMDIFlagPublic;
+
+            fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
+            {
+                return LLVM.DIBuilderCreateParameterVariable(builderRef, parentScope, (sbyte*)namePtr, (UIntPtr)name.Length, argNumber, file, lineNo, type, preserve, flags);
+            }
+        }
+
+        public static LLVMMetadataRef CreateEmptyExpression(this LLVMDIBuilderRef builderRef)
+        {
+            return LLVM.DIBuilderCreateExpression(builderRef, null, (UIntPtr)0);
+        }
+
+        public static LLVMValueRef InsertDeclareAtEnd(this LLVMDIBuilderRef builderRef, LLVMValueRef storage, LLVMMetadataRef varInfo, LLVMMetadataRef expr, LLVMMetadataRef debugLoc, LLVMBasicBlockRef atEnd)
+        {
+            return LLVM.DIBuilderInsertDeclareAtEnd(builderRef, storage, varInfo, expr, debugLoc, atEnd);
+        }
+
+        public static LLVMMetadataRef CreatePointerType(this LLVMDIBuilderRef builderRef, LLVMMetadataRef pointee, UInt64 sizeInBits, uint alignInBits, uint addressSpace, string name)
+        {
+            fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
+            {
+                return LLVM.DIBuilderCreatePointerType(builderRef, pointee, sizeInBits, alignInBits, addressSpace, (sbyte*)namePtr, (UIntPtr)name.Length);
+            }
+        }
+
+        public static LLVMTargetDataRef GetDataLayout(this LLVMModuleRef moduleRef)
+        {
+            return LLVM.GetModuleDataLayout(moduleRef);
+        }
+
+        public static UInt64 GetTypeSizeInBits(this LLVMTargetDataRef targetDataRef, LLVMTypeRef type)
+        {
+            return LLVM.SizeOfTypeInBits(targetDataRef, type);
+        }
+
+        public static uint GetABIAlignmentOfType(this LLVMTargetDataRef targetDataRef, LLVMTypeRef type)
+        {
+            return LLVM.ABIAlignmentOfType(targetDataRef, type);
+        }
+
+        public static UInt64 GetPointerSizeInBits(this LLVMTargetDataRef targetDataRef)
+        {
+            return LLVM.PointerSize(targetDataRef) * 8;
+        }
+
+        public static UInt64 GetABISizeOfType(this LLVMTargetDataRef targetDataRef, LLVMTypeRef typeRef)
+        {
+            return LLVM.ABISizeOfType(targetDataRef, typeRef);
+        }
+
+        public static LLVMMetadataRef CreateStructElement(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, LLVMMetadataRef file, uint line, UInt64 bitSize, uint alignBits, uint offsetBits, LLVMDIFlags flags, LLVMMetadataRef type)       
+        {
+            fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
+            {
+                return LLVM.DIBuilderCreateMemberType(debugBuilder, scope, (sbyte*)namePtr, (UIntPtr)name.Length, file, line, bitSize, alignBits, offsetBits, flags, type);
+            }
+        }
+
+        public static LLVMMetadataRef CreateStruct(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, LLVMMetadataRef file, uint line, UInt64 sizeBits, uint alignBits, LLVMDIFlags flags, LLVMMetadataRef[] elements)
+        {
+            uint runtimeLang = 0;
+            LLVMMetadataRef derivedFrom = null;
+            LLVMMetadataRef vtableHolder = null;
+            string unique = "";
+            fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
+            {
+                fixed (byte* uniquePtr = Encoding.ASCII.GetBytes(unique))
+                {
+                    uint numTypes = (uint)elements.Length;
+                    var opaque = new LLVMOpaqueMetadata*[numTypes];
+                    for (int a = 0; a < elements.Length; a++)
+                        opaque[a] = elements[a];
+
+                    fixed (LLVMOpaqueMetadata** opaqueTypes = opaque)
+                    {
+                        return LLVM.DIBuilderCreateStructType(debugBuilder, scope, (sbyte*)namePtr, (UIntPtr)name.Length, file, line, sizeBits, alignBits, flags, derivedFrom, opaqueTypes, numTypes, runtimeLang, vtableHolder, (sbyte*)uniquePtr, (UIntPtr)unique.Length);
+                    }
+                }
+            }
+        }
+
+        public static LLVMMetadataRef CreateArray(this LLVMDIBuilderRef debugBuilder, UInt64 sizeBits, uint alignBits, LLVMMetadataRef type, LLVMMetadataRef[] subscripts)
+        {
+            uint numSubscripts = (uint)subscripts.Length;
+            var opaque = new LLVMOpaqueMetadata*[numSubscripts];
+            for (int a = 0; a < subscripts.Length; a++)
+                opaque[a] = subscripts[a];
+
+            fixed (LLVMOpaqueMetadata** opaqueSubscripts = opaque)
+            {
+                return LLVM.DIBuilderCreateArrayType(debugBuilder, sizeBits, alignBits, type, opaqueSubscripts, numSubscripts);
+            }
+        }
+
+        public static LLVMMetadataRef GetOrCreateSubrange(this LLVMDIBuilderRef debugBuilder, Int64 lowerBound, Int64 count)
+        {
+            return LLVM.DIBuilderGetOrCreateSubrange(debugBuilder, lowerBound, count);
+        }
+
+        public static LLVMMetadataRef CreateEnumerator(this LLVMDIBuilderRef debugBuilder, string name, Int64 value, bool signed)
+        {
+            var isUnsigned = signed ? 0 : 1;
+            fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
+            {
+                return LLVM.DIBuilderCreateEnumerator(debugBuilder, (sbyte*)namePtr, (UIntPtr)name.Length, value, isUnsigned);
+            }
+        }
+
+        public static LLVMMetadataRef CreateEnum(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, LLVMMetadataRef file, uint line, UInt64 sizeBits, uint alignBits, LLVMMetadataRef[] enumerations)
+        {
+            LLVMMetadataRef classType = null;
+
+            fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
+            {
+                uint numEnumerations = (uint)enumerations.Length;
+                var opaque = new LLVMOpaqueMetadata*[numEnumerations];
+                for (int a = 0; a < enumerations.Length; a++)
+                    opaque[a] = enumerations[a];
+
+                fixed (LLVMOpaqueMetadata** opaqueEnumerations = opaque)
+                {
+                    return LLVM.DIBuilderCreateEnumerationType(debugBuilder, scope, (sbyte*)namePtr, (UIntPtr)name.Length, file, line, sizeBits, alignBits, opaqueEnumerations, numEnumerations, classType);
+                }
+            }
         }
 
         public static uint GetDebugMetaVersion()

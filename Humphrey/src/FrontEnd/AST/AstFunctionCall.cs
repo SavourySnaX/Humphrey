@@ -31,8 +31,6 @@ namespace Humphrey.FrontEnd
 
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            // Thinking how this will work :
-
             // compute expr (should be a functionpointertype)
             var function = expr.ProcessExpression(unit, builder) as CompilationValue;
             if (function==null)
@@ -53,12 +51,12 @@ namespace Humphrey.FrontEnd
             CompilationValue allocSpace = default;
 
             // create an anonymous struct to hold the outputs of the function..
-            var structType = ftype.CreateOutputParameterStruct(unit);
+            var structType = ftype.CreateOutputParameterStruct(unit, ftype.Location);
             if (structType != null) // not void function
             {
                 allocSpace = builder.Alloca(structType);
                 // we might want to always set this for alloca...
-                allocSpace.Storage = new CompilationValue(allocSpace.BackendValue, new CompilationPointerType(Extensions.Helpers.CreatePointerType(structType.BackendType), structType));
+                allocSpace.Storage = new CompilationValue(allocSpace.BackendValue, unit.CreatePointerType(structType, new SourceLocation(argumentList.Token)));
             }
             // pass the input expression results to the input arguments  
             var arguments = new CompilationValue[ftype.Parameters.Length];

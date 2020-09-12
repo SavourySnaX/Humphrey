@@ -42,7 +42,7 @@ namespace Humphrey.FrontEnd
             if (vlhs is null)
                 vlhs = (rlhs as CompilationConstantValue).GetCompilationValue(unit, vrhs.Type);
             if (vrhs is null)
-                vrhs = (rrhs as CompilationConstantValue).GetCompilationValue(unit, unit.FetchIntegerType(64));
+                vrhs = (rrhs as CompilationConstantValue).GetCompilationValue(unit, unit.FetchIntegerType(64, false, new SourceLocation(subscriptIdx.Token)));
 
             return (vlhs, vrhs);
         }
@@ -67,20 +67,20 @@ namespace Humphrey.FrontEnd
             {
                 vbrhs = brhs as CompilationValue;
                 if (vbrhs is null)
-                    vbrhs = (brhs as CompilationConstantValue).GetCompilationValue(unit, unit.FetchIntegerType(64));
+                    vbrhs = (brhs as CompilationConstantValue).GetCompilationValue(unit, unit.FetchIntegerType(64, false, new SourceLocation(range.InclusiveStart.Token)));
             }
             if (erhs != null)
             {
                 verhs = erhs as CompilationValue;
                 if (verhs is null)
-                    verhs = (erhs as CompilationConstantValue).GetCompilationValue(unit, unit.FetchIntegerType(64));
+                    verhs = (erhs as CompilationConstantValue).GetCompilationValue(unit, unit.FetchIntegerType(64, false, new SourceLocation(range.InclusiveEnd.Token)));
             }
             return (vlhs, vbrhs, verhs);
         }
 
         public ICompilationValue ProcessSingleSubscript(CompilationUnit unit, CompilationBuilder builder)
         {
-            var i64Type = unit.FetchIntegerType(64);
+            var i64Type = unit.FetchIntegerType(64, false, new SourceLocation());
             var (vlhs, vrhs) = CommonExpressionProcess(unit, builder);
 
             if (vlhs.Type is CompilationPointerType pointerType)
@@ -91,15 +91,15 @@ namespace Humphrey.FrontEnd
             }
             if (vlhs.Type is CompilationArrayType arrayType)
             {
-                var gep = builder.InBoundsGEP(vlhs.Storage, vlhs.Storage.Type as CompilationPointerType, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, unit.FetchIntegerType(64)).BackendValue });
+                var gep = builder.InBoundsGEP(vlhs.Storage, vlhs.Storage.Type as CompilationPointerType, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, unit.FetchIntegerType(64, false, new SourceLocation(subscriptIdx.Token))).BackendValue });
                 var dereferenced = builder.Load(gep);
                 return new CompilationValue(dereferenced.BackendValue, arrayType.ElementType);
             }
             if (vlhs.Type is CompilationIntegerType integerType)
             {
-                var bitType = unit.FetchIntegerType(1);
+                var bitType = unit.FetchIntegerType(1, false, new SourceLocation(subscriptIdx.Token));
                 var matchWidth = builder.MatchWidth(vrhs, integerType);
-                var rotated = builder.RotateRight(unit, vlhs, matchWidth);
+                var rotated = builder.RotateRight(vlhs, matchWidth);
                 return builder.Trunc(rotated, bitType);
             }
 
@@ -108,7 +108,7 @@ namespace Humphrey.FrontEnd
 
         public ICompilationValue ProcessRangeSubscript(CompilationUnit unit, CompilationBuilder builder)
         {
-            var i64Type = unit.FetchIntegerType(64);
+            var i64Type = unit.FetchIntegerType(64, false, new SourceLocation());
             var (vlhs, rangeBegin, rangeEnd) = CommonExpressionProcessForRange(unit, builder);
 
             if (vlhs.Type is CompilationPointerType pointerType)
@@ -154,7 +154,7 @@ namespace Humphrey.FrontEnd
                 var rangeEndMatched = builder.Select(swapRangeCondition, rangeBeginMatchedBeforeCheck, rangeEndMatchedBeforeCheck);
                 var rangeBeginMatched = builder.Select(swapRangeCondition, rangeEndMatchedBeforeCheck, rangeBeginMatchedBeforeCheck);
 
-                var shifted = builder.RotateRight(unit, vlhs, rangeBeginMatched);
+                var shifted = builder.RotateRight(vlhs, rangeBeginMatched);
                 var numBitsM1 = builder.Sub(rangeEndMatched, rangeBeginMatched);
                 var numBits = builder.Add(numBitsM1, const1);
                 var constM1 = builder.Not(const0);
@@ -179,7 +179,7 @@ namespace Humphrey.FrontEnd
 
         public void ProcessExpressionForStore(CompilationUnit unit, CompilationBuilder builder,IExpression value)
         {
-            var i64Type = unit.FetchIntegerType(64);
+            var i64Type = unit.FetchIntegerType(64, false, new SourceLocation());
             var (vlhs, vrhs) = CommonExpressionProcess(unit, builder);
             if (vlhs.Type is CompilationPointerType pointerType)
             {
@@ -201,10 +201,10 @@ namespace Humphrey.FrontEnd
             {
                 var mask = new CompilationValue(integerType.BackendType.CreateConstantValue(1), integerType);
                 var matchWidth = builder.MatchWidth(vrhs, integerType);
-                var rotatedMask = builder.RotateLeft(unit, mask, matchWidth);
+                var rotatedMask = builder.RotateLeft(mask, matchWidth);
                 var invertedMask = builder.Not(rotatedMask);
                 var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, value, integerType);
-                var rotatedStore = builder.RotateLeft(unit, storeValue, matchWidth);
+                var rotatedStore = builder.RotateLeft(storeValue, matchWidth);
                 var masked = builder.And(vlhs, invertedMask);
                 var inserted = builder.Or(masked, rotatedStore);
                 builder.Store(inserted, vlhs.Storage);

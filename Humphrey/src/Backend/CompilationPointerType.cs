@@ -5,9 +5,10 @@ namespace Humphrey.Backend
     public class CompilationPointerType : CompilationType
     {
         CompilationType element;
-        public CompilationPointerType(LLVMTypeRef type, CompilationType elementType) : base(type)
+        public CompilationPointerType(LLVMTypeRef type, CompilationType elementType, CompilationDebugBuilder debugBuilder, SourceLocation location, string identifier = "") : base(type, debugBuilder, location, identifier)
         {
             element = elementType;
+            CreateDebugType();
         }
 
         public CompilationType ElementType => element;
@@ -21,10 +22,16 @@ namespace Humphrey.Backend
         
         public override CompilationType CopyAs(string identifier)
         {
-            var clone = new CompilationPointerType(BackendType, element);
-            clone.identifier = identifier;
-            return clone;
+            return new CompilationPointerType(BackendType, element, DebugBuilder, Location, identifier);
         }
 
+        void CreateDebugType()
+        {
+            var name = Identifier;
+            if (string.IsNullOrEmpty(name))
+                name = $"__anonymous__ptr__{element.DebugType.Identifier}";
+            var dbg = DebugBuilder.CreatePointerType(name, element.DebugType);
+            CreateDebugType(dbg);
+        }
     }
 }

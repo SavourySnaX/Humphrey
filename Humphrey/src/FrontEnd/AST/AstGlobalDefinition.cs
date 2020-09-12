@@ -57,7 +57,7 @@ namespace Humphrey.FrontEnd
                 }
                 else
                 {
-                    var newGlobal = unit.CreateGlobalVariable(ct, ident.Dump(), exprValue);
+                    var newGlobal = unit.CreateGlobalVariable(ct, ident.Dump(), new SourceLocation(Token), exprValue);
                 }
             }
 

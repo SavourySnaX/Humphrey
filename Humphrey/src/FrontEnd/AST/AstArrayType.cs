@@ -18,10 +18,10 @@ namespace Humphrey.FrontEnd
             var isBit = elementType as AstBitType;
             if (isBit==null)
             {
-                return (unit.FetchArrayType(exprValue, elementType.CreateOrFetchType(unit).compilationType), this);
+                return (unit.FetchArrayType(exprValue, elementType.CreateOrFetchType(unit).compilationType, new SourceLocation(elementType.Token)), this);
             }
             else
-                return (unit.FetchIntegerType(exprValue), this);
+                return (unit.FetchIntegerType(exprValue, new SourceLocation(elementType.Token)), this);
         }
 
         public bool IsFunctionType => elementType.IsFunctionType;

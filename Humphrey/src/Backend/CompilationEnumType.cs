@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Humphrey.FrontEnd;
 using LLVMSharp.Interop;
 
@@ -9,11 +11,15 @@ namespace Humphrey.Backend
         CompilationType elementType;
         CompilationConstantValue[] values;
         Dictionary<string, uint> names;
-        public CompilationEnumType(CompilationType type, CompilationConstantValue[] elements, Dictionary<string,uint> elementNames) : base(type.BackendType)
+        string[] nameList;
+
+        public CompilationEnumType(CompilationType type, CompilationConstantValue[] elements, Dictionary<string, uint> elementNames, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type.BackendType, debugBuilder, location, ident)
         {
             elementType = type;
             values = elements;
             names = elementNames;
+            nameList = elementNames.Keys.ToArray();
+            CreateDebugType();
         }
         public override bool Same(CompilationType obj)
         {
@@ -48,9 +54,7 @@ namespace Humphrey.Backend
 
         public override CompilationType CopyAs(string identifier)
         {
-            var clone = new CompilationEnumType(elementType, values, names);
-            clone.identifier = identifier;
-            return clone;
+            return new CompilationEnumType(elementType, values, names, DebugBuilder, Location, identifier);
         }
 
         public CompilationValue LoadElement(CompilationUnit unit, CompilationBuilder builder, string identifier)
@@ -63,6 +67,22 @@ namespace Humphrey.Backend
             throw new System.NotImplementedException($"Error - enum '' does not contain {identifier}");
         }
 
+        void CreateDebugType()
+        {
+            var name = Identifier;
+            if (string.IsNullOrEmpty(name))
+                name = $"__anonymous__enum__{ElementType.DebugType.Identifier}";
+            var dbg = DebugBuilder.CreateEnumType(name, this);
+            CreateDebugType(dbg);
+        }
+
         public CompilationType ElementType => elementType;
+
+        public string[] Elements => nameList;
+
+        public Int64 GetElementValue(string element)
+        {
+            return (Int64)values[names[element]].Constant;
+        }
     }
 }

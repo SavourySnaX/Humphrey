@@ -11,12 +11,14 @@ namespace Humphrey.Backend
         BigInteger constant;
         bool undefValue;
         IType resultType;
+        SourceLocation location;
 
-        public CompilationConstantValue()
+        public CompilationConstantValue(SourceLocation debugLocation)
         {
             undefValue = true;
             constant = BigInteger.Zero;
             resultType = null;
+            location = debugLocation;
         }
 
         public bool Same(CompilationConstantValue other)
@@ -77,7 +79,7 @@ namespace Humphrey.Backend
                 destType = resultType.CreateOrFetchType(unit).compilationType;
 
             if (destType == null)
-                return unit.CreateConstant(this, numBits, isSigned);
+                return unit.CreateConstant(this, numBits, isSigned, location);
 
             if (destType is CompilationEnumType compilationEnumType)
                 destType = compilationEnumType.ElementType;
@@ -86,13 +88,13 @@ namespace Humphrey.Backend
             {
                 if (numBits < destIntType.IntegerWidth)
                 {
-                    return unit.CreateConstant(this, destIntType.IntegerWidth, destIntType.IsSigned);
+                    return unit.CreateConstant(this, destIntType.IntegerWidth, destIntType.IsSigned, location);
                 }
                 else if (numBits == destIntType.IntegerWidth)
                 {
                     if (isSigned == destIntType.IsSigned)
                     {
-                        return unit.CreateConstant(this, numBits, isSigned);
+                        return unit.CreateConstant(this, numBits, isSigned, location);
                     }
                     throw new System.NotImplementedException($"TODO - signed/unsigned mismatch");
                 }
@@ -104,7 +106,7 @@ namespace Humphrey.Backend
                 if (type.Same(destType))
                 {
                     // Create the constant
-                    var constant = unit.CreateConstant(this, numBits, isSigned);
+                    var constant = unit.CreateConstant(this, numBits, isSigned, location);
                     return new CompilationValue(constant.BackendValue.ConstIntToPtr(type.BackendType), type);
                 }
             }

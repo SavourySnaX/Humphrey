@@ -6,10 +6,11 @@ namespace Humphrey.Backend
     {
         CompilationParam[] parameters;
         private uint outParameterOffset;
-        public CompilationFunctionType(LLVMTypeRef type, CompilationParam[] allParameters, uint outParamOffset) : base(type)
+        public CompilationFunctionType(LLVMTypeRef type, CompilationParam[] allParameters, uint outParamOffset, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type, debugBuilder, location, ident)
         {
             parameters = allParameters;
             outParameterOffset = outParamOffset;
+            CreateDebugType();
         }
 
         public uint OutParamOffset => outParameterOffset;
@@ -33,7 +34,7 @@ namespace Humphrey.Backend
             return outParameterOffset == check.outParameterOffset && Identifier == check.Identifier;
         }
 
-        public CompilationStructureType CreateOutputParameterStruct(CompilationUnit unit)
+        public CompilationStructureType CreateOutputParameterStruct(CompilationUnit unit, SourceLocation location)
         {
             if (HasOutputs)
             {
@@ -44,7 +45,7 @@ namespace Humphrey.Backend
                     types[a - outParameterOffset] = Parameters[a].Type;
                     names[a - outParameterOffset] = Parameters[a].Identifier;
                 }
-                return unit.FetchStructType(types, names) as CompilationStructureType;
+                return unit.FetchStructType(types, names, location);
             }
 
             return null;
@@ -52,9 +53,24 @@ namespace Humphrey.Backend
 
         public override CompilationType CopyAs(string identifier)
         {
-            var clone = new CompilationFunctionType(BackendType, parameters, OutParamOffset);
-            clone.identifier = identifier;
-            return clone;
+            return new CompilationFunctionType(BackendType, parameters, OutParamOffset, DebugBuilder, Location, identifier);
+        }
+
+        void CreateDebugType()
+        {
+            var ptypes = new CompilationDebugType[parameters.Length];
+            int idx = 0;
+            foreach (var t in parameters)
+                ptypes[idx++] = t.DebugType;
+            var name = Identifier;
+            if (string.IsNullOrEmpty(name))
+            {
+                name = "__anonymous__function__";
+                foreach(var param in parameters)
+                    name += $"{param.DebugType.Identifier}_";
+            }
+            var dbg = DebugBuilder.CreateFunctionType(name, ptypes, Location);
+            CreateDebugType(dbg);
         }
 
         public long InputCount => Parameters.Length - (Parameters.Length - outParameterOffset);

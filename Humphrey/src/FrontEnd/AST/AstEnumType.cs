@@ -32,7 +32,7 @@ namespace Humphrey.FrontEnd
                 idx++;
             }
 
-            return (unit.FetchEnumType(enumType, values, names), this);
+            return (unit.FetchEnumType(enumType, values, names, new SourceLocation(Token)), this);
         }
     
         public bool IsFunctionType => false;

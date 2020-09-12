@@ -5,9 +5,10 @@ namespace Humphrey.Backend
     public class CompilationIntegerType : CompilationType
     {
         bool signedType;
-        public CompilationIntegerType(LLVMTypeRef type, bool isSigned) : base(type)
+        public CompilationIntegerType(LLVMTypeRef type, bool isSigned, CompilationDebugBuilder debugBuilder, SourceLocation sourceLocation, string identifier = "") : base(type, debugBuilder, sourceLocation, identifier)
         {
             signedType = isSigned;
+            CreateDebugType();
         }
 
         public uint IntegerWidth => BackendType.IntWidth;
@@ -23,10 +24,18 @@ namespace Humphrey.Backend
         }
         public override CompilationType CopyAs(string identifier)
         {
-            var clone = new CompilationIntegerType(BackendType, signedType);
-            clone.identifier = identifier;
-            return clone;
+            return new CompilationIntegerType(BackendType, signedType, DebugBuilder, Location, identifier);
         }
 
+        void CreateDebugType()
+        {
+            var numBits = IntegerWidth;
+            var signed = IsSigned;
+            var name = Identifier;
+            if (string.IsNullOrEmpty(name))
+                name = $"{(signed ? "__anonymous__s" : "__anonymous__u")}{numBits}";
+            var dbg = DebugBuilder.CreateBasicType(name, numBits, signed ? CompilationDebugBuilder.BasicType.SignedInt : CompilationDebugBuilder.BasicType.UnsignedInt);
+            CreateDebugType(dbg);
+        }
     }
 }

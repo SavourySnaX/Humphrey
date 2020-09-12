@@ -4,19 +4,32 @@ namespace Humphrey.Backend
 {
     public abstract class CompilationType
     {
-        protected string identifier;
+        CompilationDebugBuilder builderRef;
+        string identifier;
         LLVMTypeRef typeRef;
+        CompilationDebugType debugTypeRef;
 
-        public CompilationType(LLVMTypeRef type)
+        SourceLocation sourceLocation;
+
+        public CompilationType(LLVMTypeRef type, CompilationDebugBuilder dbgBuilder, SourceLocation location, string ident)
         {
             typeRef = type;
-            identifier = "";
+            identifier = ident;
+            builderRef = dbgBuilder;
+            sourceLocation = location;
+        }
+
+        protected void CreateDebugType(CompilationDebugType type)
+        {
+            debugTypeRef = type;
         }
 
         public abstract CompilationType CopyAs(string identifier);
 
+        protected CompilationDebugBuilder DebugBuilder => builderRef;
         public LLVMTypeRef BackendType => typeRef;
-
+        public CompilationDebugType DebugType => debugTypeRef;
+        public SourceLocation Location => sourceLocation;
         public abstract bool Same(CompilationType t);
         public string Identifier => identifier;
     }

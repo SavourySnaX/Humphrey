@@ -1,4 +1,5 @@
 using Humphrey.FrontEnd;
+using LLVMSharp.Interop;
 
 namespace Humphrey.Backend
 {
@@ -14,6 +15,7 @@ namespace Humphrey.Backend
         }
 
         public CompilationType Type => type;
+        public CompilationDebugType DebugType => type.DebugType;
 
         public string Identifier => identifier.Dump();
 

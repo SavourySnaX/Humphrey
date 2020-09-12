@@ -14,6 +14,7 @@ namespace Humphrey.Backend
         Scope symbolScopes;
         LLVMContextRef contextRef;
         LLVMModuleRef moduleRef;
+        LLVMTargetDataRef targetDataRef;
 
         CompilerMessages messages;
 
@@ -57,6 +58,17 @@ namespace Humphrey.Backend
                 }
             }
 
+            targetDataRef = moduleRef.GetDataLayout();
+        }
+
+        public UInt64 GetTypeSizeInBits(CompilationType type)
+        {
+            return targetDataRef.GetTypeSizeInBits(type.BackendType);
+        }
+
+        public UInt64 GetPointerSizeInBits()
+        {
+            return targetDataRef.GetPointerSizeInBits();
         }
 
         public void Compile()
@@ -91,13 +103,13 @@ namespace Humphrey.Backend
             return moduleRef.PrintToString();
         }
 
-        public CompilationType FetchArrayType(CompilationConstantValue numElements, CompilationType elementType)
+        public CompilationType FetchArrayType(CompilationConstantValue numElements, CompilationType elementType, SourceLocation location)
         {
             uint num = (uint)numElements.Constant;
-            return new CompilationArrayType(CreateArrayType(elementType.BackendType,num), elementType, num);
+            return new CompilationArrayType(CreateArrayType(elementType.BackendType,num), elementType, num, debugBuilder, location);
         }
 
-        public CompilationType FetchIntegerType(CompilationConstantValue numBits)
+        public CompilationType FetchIntegerType(CompilationConstantValue numBits, SourceLocation location)
         {
             bool isSigned = false;
             if (numBits.Constant<BigInteger.Zero)
@@ -106,12 +118,12 @@ namespace Humphrey.Backend
                 isSigned = true;
             }
             var num = (uint)numBits.Constant;
-            return new CompilationIntegerType(contextRef.GetIntType(num), isSigned);
+            return CreateIntegerType(num, isSigned, location);
         }
 
-        public CompilationType FetchIntegerType(uint numBits, bool isSigned = false)
+        public CompilationType FetchIntegerType(uint numBits, bool isSigned, SourceLocation location)
         {
-            return new CompilationIntegerType(contextRef.GetIntType(numBits), isSigned);
+            return CreateIntegerType(numBits, isSigned, location);
         }
 
         public (CompilationType compilationType, IType originalType) FetchNamedType(string identifier)
@@ -125,22 +137,33 @@ namespace Humphrey.Backend
             symbolScopes.AddType(identifier, symbTabType, originalType);
         }
 
-        public CompilationType FetchStructType(CompilationType[] elements, string[] names)
+        public CompilationStructureType FetchStructType(CompilationType[] elements, string[] names, SourceLocation location)
         {
             var types = new LLVMTypeRef[elements.Length];
             int idx = 0;
             foreach(var element in elements)
                 types[idx++] = element.BackendType;
 
-            return new CompilationStructureType(contextRef.GetStructType(types, true), elements, names);
+            var backendType = contextRef.GetStructType(types, true);
+            return new CompilationStructureType(backendType, elements, names, debugBuilder, location);
         }
 
-        public CompilationType FetchEnumType(CompilationType type, CompilationConstantValue[] values, Dictionary<string,uint> names)
+        public CompilationType FetchEnumType(CompilationType type, CompilationConstantValue[] values, Dictionary<string,uint> names, SourceLocation location)
         {
-            return new CompilationEnumType(type, values ,names);
+            return new CompilationEnumType(type, values, names, debugBuilder, location);
         }
 
-        public CompilationFunctionType CreateFunctionType(CompilationParam[] inputs, CompilationParam[] outputs)
+        public CompilationIntegerType CreateIntegerType(uint numBits, bool isSigned, SourceLocation location)
+        {
+            return new CompilationIntegerType( contextRef.GetIntType(numBits), isSigned, debugBuilder, location);
+        }
+
+        public CompilationPointerType CreatePointerType(CompilationType element, SourceLocation location)
+        {
+            return new CompilationPointerType(Extensions.Helpers.CreatePointerType(element.BackendType), element, debugBuilder, location);
+        }
+
+        public CompilationFunctionType CreateFunctionType(AstFunctionType functionType, CompilationParam[] inputs, CompilationParam[] outputs)
         {
             var allParams = new CompilationParam[inputs.Length + outputs.Length];
             var allBackendParams = new LLVMTypeRef[inputs.Length + outputs.Length];
@@ -153,10 +176,12 @@ namespace Humphrey.Backend
             foreach(var o in outputs)
             {
                 //outputs need to be considered to be by ref
-                allBackendParams[paramIdx] = CreatePointerType(o.Type.BackendType);
+                allBackendParams[paramIdx] = CreatePointerType(o.Type, new SourceLocation()).BackendType;
                 allParams[paramIdx++] = o;
             }
-            return new CompilationFunctionType(Extensions.Helpers.CreateFunctionType(contextRef.VoidType, allBackendParams, false), allParams, (uint)inputs.Length);
+
+            var compilationFunctionType = Extensions.Helpers.CreateFunctionType(contextRef.VoidType, allBackendParams, false);
+            return new CompilationFunctionType(compilationFunctionType, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
         }
 
         public CompilationValue FetchValueInternal(string identifier, CompilationBuilder builder)
@@ -205,7 +230,7 @@ namespace Humphrey.Backend
         {
             var builder = contextRef.CreateBuilder();
             builder.PositionAtEnd(bb.BackendValue);
-            return new CompilationBuilder(builder, function, bb);
+            return new CompilationBuilder(this, builder, function, bb);
         }
 
         public LLVMValueRef CreateI32Constant(UInt32 value)
@@ -220,24 +245,24 @@ namespace Humphrey.Backend
             return i64Type.CreateConstantValue(value);
         }
 
-        public CompilationValue CreateConstant(CompilationConstantValue constantValue, uint numBits, bool isSigned)
+        public CompilationValue CreateConstant(CompilationConstantValue constantValue, uint numBits, bool isSigned, SourceLocation location)
         {
-            var constType = new CompilationIntegerType(contextRef.GetIntType(numBits), isSigned);
+            var constType = new CompilationIntegerType(contextRef.GetIntType(numBits), isSigned, debugBuilder, location);
 
             return new CompilationValue(constType.BackendType.CreateConstantValue(constantValue.Constant.ToString(), 10), constType);
         }
 
-        public CompilationValue CreateConstant(AstNumber decimalNumber)
+        public CompilationValue CreateConstant(AstNumber decimalNumber, SourceLocation location)
         {
             var constantValue = new CompilationConstantValue(decimalNumber);
             var (numBits, isSigned) = constantValue.ComputeKind();
 
-            return CreateConstant(constantValue, numBits, isSigned);
+            return CreateConstant(constantValue, numBits, isSigned, location);
         }
 
-        public CompilationValue CreateConstant(string decimalNumber)
+        public CompilationValue CreateConstant(string decimalNumber, SourceLocation location)
         {
-            return CreateConstant(new AstNumber(decimalNumber));
+            return CreateConstant(new AstNumber(decimalNumber), location);
         }
 
         public CompilationValue CreateUndef(CompilationType type)
@@ -245,7 +270,7 @@ namespace Humphrey.Backend
             return new CompilationValue(type.BackendType.Undef, type);
         }
 
-        public CompilationFunction CreateFunction(CompilationFunctionType type, AstFunctionType functionType, AstIdentifier identifier)
+        public CompilationFunction CreateFunction(CompilationFunctionType type, AstIdentifier identifier)
         {
             string functionName = identifier.Dump();
 
@@ -259,8 +284,7 @@ namespace Humphrey.Backend
             if (!symbolScopes.AddFunction(functionName, cfunc))
                 throw new Exception($"function {identifier} failed to add symbol!");
 
-            var debugFunction = debugBuilder.CreateDebugFunction(functionName, new SourceLocation(identifier.Token), type,
-                new SourceLocation(functionType.Token));
+            var debugFunction = debugBuilder.CreateDebugFunction(functionName, new SourceLocation(identifier.Token), type);
 
             cfunc.BackendValue.SetSubprogram(debugFunction);
 
@@ -285,7 +309,7 @@ namespace Humphrey.Backend
             }
         }
 
-        public CompilationValue CreateGlobalVariable(CompilationType type, string identifier, CompilationConstantValue initialiser = null)
+        public CompilationValue CreateGlobalVariable(CompilationType type, string identifier, SourceLocation location, CompilationConstantValue initialiser = null)
         {
             if (symbolScopes.FetchValue(identifier)!=null)
                 throw new Exception($"global value {identifier} already exists!");
@@ -299,7 +323,7 @@ namespace Humphrey.Backend
             }
 
             var globalValue = new CompilationValue(global, type);
-            globalValue.Storage = new CompilationValue(global, new CompilationPointerType(CreatePointerType(type.BackendType), type));
+            globalValue.Storage = new CompilationValue(global, CreatePointerType(type, location));
 
             if (!symbolScopes.AddValue(identifier, globalValue))
                 throw new Exception($"global {identifier} failed to add symbol!");
@@ -307,7 +331,7 @@ namespace Humphrey.Backend
             return globalValue;
         }
 
-        public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationType type, string identifier, ICompilationValue initialiser)
+        public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationType type, string identifier, ICompilationValue initialiser, SourceLocation location)
         {
             if (symbolScopes.FetchValue(identifier)!=null)
                 throw new Exception($"local value {identifier} already exists!");
@@ -319,7 +343,7 @@ namespace Humphrey.Backend
                 var value = Expression.ResolveExpressionToValue(unit, initialiser, type);
                 builder.Store(value, local);
             }
-            local.Storage = new CompilationValue(local.BackendValue, new CompilationPointerType(CreatePointerType(type.BackendType), type));
+            local.Storage = new CompilationValue(local.BackendValue, CreatePointerType(type, location));
 
             if (!symbolScopes.AddValue(identifier, local))
                 throw new Exception($"local {identifier} failed to add symbol!");
@@ -388,10 +412,20 @@ namespace Humphrey.Backend
             return FetchIntrinsic(moduleRef, functionName, typeRefs);
         }
 
+        public LLVMMetadataRef CreateDebugLocationMeta(SourceLocation location)
+        {
+            return moduleRef.Context.CreateDebugLocation(location.StartLine, location.StartColumn, symbolScopes.CurrentDebugScope, default(LLVMMetadataRef));
+        }
+
         public LLVMValueRef CreateDebugLocation(SourceLocation location)
         {
-            var meta = moduleRef.Context.CreateDebugLocation(location.StartLine, location.StartColumn, symbolScopes.CurrentDebugScope, default(LLVMMetadataRef));
+            var meta = CreateDebugLocationMeta(location);
             return meta.AsValue(contextRef);
+        }
+
+        public LLVMMetadataRef CreateParameterVariable(string name, uint argNo, SourceLocation location, CompilationDebugType debugType)
+        {
+            return debugBuilder.CreateParameterVariable(name, symbolScopes.CurrentDebugScope, location, argNo, debugType.BackendType);
         }
 
         public bool DumpDisassembly(string targetTriple)
@@ -445,6 +479,11 @@ namespace Humphrey.Backend
         public LLVMMetadataRef GetScope(CompilationFunction function)
         {
             return function.BackendValue.GetSubprogram();
+        }
+
+        public void InsertDeclareAtEnd(CompilationValue storage, LLVMMetadataRef varInfo, SourceLocation location, CompilationBlock block)
+        {
+            debugBuilder.InsertDeclareAtEnd(storage, varInfo, location, block);
         }
 
         public LLVMModuleRef Module => moduleRef;

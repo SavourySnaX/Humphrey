@@ -27,7 +27,7 @@ namespace Humphrey.FrontEnd
                 }
             }
 
-            return (unit.FetchStructType(elementTypes, names), this);
+            return (unit.FetchStructType(elementTypes, names, new SourceLocation(Token)), this);
         }
     
         public bool IsFunctionType => false;

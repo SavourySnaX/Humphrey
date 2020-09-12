@@ -16,12 +16,12 @@ namespace Humphrey.FrontEnd
             var inputs = inputList.FetchParamList(unit);
             var outputs = outputList.FetchParamList(unit);
 
-            return (unit.CreateFunctionType(inputs, outputs), this);
+            return (unit.CreateFunctionType(this, inputs, outputs), this);
         }
     
         public void BuildFunction(CompilationUnit unit, CompilationFunctionType functionType, AstIdentifier ident, AstCodeBlock codeBlock)
         {
-            var newFunction = unit.CreateFunction(functionType, this, ident);
+            var newFunction = unit.CreateFunction(functionType, ident);
 
             unit.PushScope("", unit.GetScope(newFunction));
 
@@ -35,26 +35,42 @@ namespace Humphrey.FrontEnd
             for (uint a = 0; a < functionType.InputCount; a++)
             {
                 var paramIdent = functionType.Parameters[a].Identifier;
+
+                // Local copy
                 var type = functionType.Parameters[a].Type;
-                var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, null);
+                var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, null, new SourceLocation(functionType.Parameters[a].Token));
                 var cv = new CompilationValue(newFunction.BackendValue.Params[a], type);
                 localsBuilder.Store(cv, local.Storage);
+
+                // Debug information
+                var paramLocation = new SourceLocation(this.inputList.FetchParamLocation(a));
+                var debugType = functionType.Parameters[a].DebugType;
+                var paramVar = unit.CreateParameterVariable(paramIdent, a, paramLocation, debugType);
+
+                unit.InsertDeclareAtEnd(local.Storage, paramVar, paramLocation, localsBlock);
             }
             // allocate the output locals
             for (uint a = functionType.OutParamOffset; a < functionType.Parameters.Length; a++)
             {
                 // Temporary local storage
-                var outputType = new CompilationPointerType(Extensions.Helpers.CreatePointerType(functionType.Parameters[a].Type.BackendType), functionType.Parameters[a].Type);
+                var outputType = unit.CreatePointerType(functionType.Parameters[a].Type, new SourceLocation(functionType.Parameters[a].Token));
                 var output = new CompilationValue(newFunction.BackendValue.Params[a], outputType);
                 var cv = localsBuilder.Load(output);
                 var type = functionType.Parameters[a].Type;
                 var paramIdent = functionType.Parameters[a].Identifier;
-                var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, cv);
+                var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, cv, new SourceLocation(functionType.Parameters[a].Token));
                 local.Storage = new CompilationValueOutputParameter(local.Storage.BackendValue, local.Storage.Type, paramIdent);
 
                 // Copy temporary storage to output
                 var returnValue = exitBlockBuilder.Load(local);
                 exitBlockBuilder.Store(returnValue, output);
+                
+                // Debug information
+                var paramLocation = new SourceLocation(this.outputList.FetchParamLocation(a - functionType.OutParamOffset));
+                var debugType = functionType.Parameters[a].DebugType;
+                var paramVar = unit.CreateParameterVariable(paramIdent, a, paramLocation, debugType);
+
+                unit.InsertDeclareAtEnd(local.Storage, paramVar, paramLocation, localsBlock);
             }
 
             // single point of return for all functions

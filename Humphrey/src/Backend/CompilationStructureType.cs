@@ -7,11 +7,13 @@ namespace Humphrey.Backend
     {
         CompilationType[] elementTypes;
         string[] elementNames;
-        public CompilationStructureType(LLVMTypeRef type, CompilationType[] elements, string[] names) : base(type)
+        public CompilationStructureType(LLVMTypeRef type, CompilationType[] elements, string[] names, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type, debugBuilder, location, ident)
         {
             elementTypes = elements;
             elementNames = names;
+            CreateDebugType();
         }
+
         public override bool Same(CompilationType obj)
         {
             var check = obj as CompilationStructureType;
@@ -32,9 +34,7 @@ namespace Humphrey.Backend
 
         public override CompilationType CopyAs(string identifier)
         {
-            var clone = new CompilationStructureType(BackendType, elementTypes, elementNames);
-            clone.identifier = identifier;
-            return clone;
+            return new CompilationStructureType(BackendType, elementTypes, elementNames, DebugBuilder, Location, identifier);
         }
 
         public CompilationValue LoadElement(CompilationUnit unit, CompilationBuilder builder, CompilationValue src, string identifier)
@@ -96,11 +96,24 @@ namespace Humphrey.Backend
                 throw new System.Exception($"Need error message and partial recovery -struct does not contain field {identifier}");
             }
 
-            var resultPtrType = Extensions.Helpers.CreatePointerType(elementTypes[idx].BackendType);
-            var cPtrType = new CompilationPointerType(resultPtrType, elementTypes[idx]);
+            var cPtrType = unit.CreatePointerType(elementTypes[idx], elementTypes[idx].Location);
             return builder.InBoundsGEP(src, cPtrType, new LLVMValueRef[] { unit.CreateI32Constant(0), unit.CreateI32Constant(idx) });
         }
 
+        void CreateDebugType()
+        {
+            var name = Identifier;
+            if (string.IsNullOrEmpty(name))
+            {
+                name = "__anonymous_struct_";
+                foreach(var e in elementTypes)
+                    name += $"{e.DebugType.Identifier}_";
+            }
+            var dbg = DebugBuilder.CreateStructureType(name, this);
+            CreateDebugType(dbg);
+        }
+
         public string[] Fields => elementNames;
+        public CompilationType[] Elements => elementTypes;
     }
 }

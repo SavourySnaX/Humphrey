@@ -6,10 +6,11 @@ namespace Humphrey.Backend
     {
         CompilationType element;
         uint elementCount;
-        public CompilationArrayType(LLVMTypeRef type, CompilationType elementType, uint numElements) : base(type)
+        public CompilationArrayType(LLVMTypeRef type, CompilationType elementType, uint numElements, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type, debugBuilder, location, ident)
         {
             element = elementType;
             elementCount = numElements;
+            CreateDebugType();
         }
 
         public override bool Same(CompilationType obj)
@@ -22,12 +23,20 @@ namespace Humphrey.Backend
 
         public override CompilationType CopyAs(string identifier)
         {
-            var clone = new CompilationArrayType(BackendType, element, elementCount);
-            clone.identifier = identifier;
-            return clone;
+            return  new CompilationArrayType(BackendType, element, elementCount, DebugBuilder, Location, identifier);
+        }
+
+        void CreateDebugType()
+        {
+            var name = Identifier;
+            if (string.IsNullOrEmpty(name))
+                name = $"__anonymous__array_{ElementType.DebugType.Identifier}";
+            var dbg = DebugBuilder.CreateArrayType(name, this);
+            CreateDebugType(dbg);
         }
 
         public CompilationType ElementType => element;
+        public uint ElementCount => elementCount;
     }
 }
 

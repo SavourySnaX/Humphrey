@@ -13,7 +13,7 @@ namespace Humphrey.FrontEnd
         public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
             var (ct,ot) = elementType.CreateOrFetchType(unit);
-            return (new CompilationPointerType(CreatePointerType(ct.BackendType), ct), this);
+            return (unit.CreatePointerType(ct, new SourceLocation(Token)), this);
         }
     
         public bool IsFunctionType => false;

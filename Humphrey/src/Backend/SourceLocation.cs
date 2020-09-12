@@ -7,6 +7,13 @@ namespace Humphrey.Backend
     {
         private string filePath;
         private uint startLine, startColumn, endLine, endColumn;
+
+        public SourceLocation(uint parameterless=0)
+        {
+            filePath = "";
+            startLine = startColumn = endLine = endColumn = 0;
+        }
+
         public SourceLocation(Result<Tokens> location)
         {
             filePath = location.Location.Filename;
@@ -15,6 +22,8 @@ namespace Humphrey.Backend
             endLine = location.Remainder.Line;
             endColumn = location.Remainder.Column;
         }
+
+        public bool Valid => !(startLine == endLine && endLine == startColumn && endColumn == startLine && startLine == 0);
 
         public string File => filePath;
         public uint StartLine => startLine;
