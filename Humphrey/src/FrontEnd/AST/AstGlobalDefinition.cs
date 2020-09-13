@@ -1,5 +1,7 @@
 using System.Text;
 using Humphrey.Backend;
+using static Extensions.Helpers;
+
 namespace Humphrey.FrontEnd
 {
     // May need splitting up into AstGlobalDefinition / AstLocalDefinition
@@ -57,7 +59,13 @@ namespace Humphrey.FrontEnd
                 }
                 else
                 {
-                    var newGlobal = unit.CreateGlobalVariable(ct, ident.Dump(), new SourceLocation(Token), exprValue);
+                    var varName = ident.Dump();
+                    var location = new SourceLocation(Token);
+                    var newGlobal = unit.CreateGlobalVariable(ct, varName, location, exprValue);
+
+                    // Debug information
+                    var gve = unit.CreateGlobalVariableExpression(varName, "", location, ct.DebugType);
+                    newGlobal.BackendValue.SetGlobalMetadata(LLVMSharp.Interop.LLVMMetadataKind.LLVMMDStringMetadataKind, gve);
                 }
             }
 

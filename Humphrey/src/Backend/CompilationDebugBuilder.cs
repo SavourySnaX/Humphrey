@@ -137,6 +137,25 @@ namespace Humphrey.Backend
             builderRef.InsertDeclareAtEnd(storage.BackendValue, varInfo, builderRef.CreateEmptyExpression(), debugLog, block.BackendValue);
         }
 
+        public LLVMMetadataRef CreateAutoVariable(string name, LLVMMetadataRef parentScope, SourceLocation location, CompilationDebugType type)
+        {
+            var preserveAlways = true;
+            var alignBits = 0u;
+            var flags = LLVMDIFlags.LLVMDIFlagPublic;
+
+            return builderRef.CreateAutoVariable(parentScope, name, CreateDebugFile(location.File), location.StartLine, type.BackendType, preserveAlways, flags, alignBits);
+        }
+
+        public LLVMMetadataRef CreateGlobalVarable(string name, string linkageName, LLVMMetadataRef scope, SourceLocation location, CompilationDebugType type)
+        {
+            var isVisibleExternally = true;
+            LLVMMetadataRef expr = null;
+            LLVMMetadataRef decl = null;
+            var alignBits = 0u;
+            return builderRef.CreateGlobalVariable(scope, name, linkageName, CreateDebugFile(location.File), location.StartLine, type.BackendType, isVisibleExternally, expr, decl, alignBits);
+        }
+
+
         public LLVMMetadataRef RootScope => debugScope;
 
         public struct StructLayout 

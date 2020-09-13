@@ -500,6 +500,16 @@ namespace Humphrey.Backend
             debugBuilder.InsertDeclareAtEnd(storage, varInfo, location, block);
         }
 
+        public LLVMMetadataRef CreateAutoVariable(string name, SourceLocation location, CompilationDebugType type)
+        {
+            return debugBuilder.CreateAutoVariable(name, symbolScopes.CurrentDebugScope, location, type);
+        }
+
+        public LLVMMetadataRef CreateGlobalVariableExpression(string name, string linkName, SourceLocation location, CompilationDebugType type)
+        {
+            return debugBuilder.CreateGlobalVarable(name, linkName, symbolScopes.CurrentDebugScope, location, type);
+        }
+
         public LLVMModuleRef Module => moduleRef;
         public CompilerMessages Messages => messages;
     }

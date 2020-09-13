@@ -333,6 +333,32 @@ namespace Extensions
             }
         }
 
+        public static LLVMMetadataRef CreateAutoVariable(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, LLVMMetadataRef file, uint line, LLVMMetadataRef type, bool preserveAlways, LLVMDIFlags flags, uint alignBits)
+        {
+            int preserve = preserveAlways ? 1 : 0;
+            fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
+            {
+                return LLVM.DIBuilderCreateAutoVariable(debugBuilder, scope, (sbyte*)namePtr, (UIntPtr)name.Length, file, line, type, preserve, flags, alignBits);
+            }
+        }
+
+        public static LLVMMetadataRef CreateGlobalVariable(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, string linkName, LLVMMetadataRef file, uint line, LLVMMetadataRef type, bool isVisibleExternally, LLVMMetadataRef expr, LLVMMetadataRef decl, uint alignBits)
+        {
+            int visible = isVisibleExternally ? 1 : 0;
+            fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
+            {
+                fixed (byte* linkNamePtr = Encoding.ASCII.GetBytes(linkName))
+                {
+                    return LLVM.DIBuilderCreateGlobalVariableExpression(debugBuilder, scope, (sbyte*)namePtr, (UIntPtr)name.Length, (sbyte*)linkNamePtr, (UIntPtr)linkName.Length, file, line, type, visible, expr, decl, alignBits);
+                }
+            }
+        }
+
+        public static void SetGlobalMetadata(this LLVMValueRef global, LLVMMetadataKind kind, LLVMMetadataRef metadataRef)
+        {
+            LLVM.GlobalSetMetadata(global, (uint)kind, metadataRef);
+        }
+
         public static uint GetDebugMetaVersion()
         {
             return LLVM.DebugMetadataVersion();
