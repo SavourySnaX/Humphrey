@@ -11,6 +11,8 @@ namespace Humphrey.Backend
 {
     public class CompilationUnit
     {
+        string targetTriple;
+
         Scope symbolScopes;
         LLVMContextRef contextRef;
         LLVMModuleRef moduleRef;
@@ -25,8 +27,14 @@ namespace Humphrey.Backend
         Version VersionNumber => new Version(1, 0);
         string CompilerVersion => $"Humphrey Compiler - V{VersionNumber}";
 
-        public CompilationUnit(string sourceFileNameAndPath, IGlobalDefinition[] definitions, CompilerMessages overrideDefaultMessages = null)
+        bool optimisations;
+
+        public CompilationUnit(string sourceFileNameAndPath, IGlobalDefinition[] definitions, string targetTriple, bool disableOptimisations, CompilerMessages overrideDefaultMessages = null)
         {
+            optimisations = !disableOptimisations;
+
+            this.targetTriple = targetTriple;
+
             messages = overrideDefaultMessages;
             if (messages==null)
                 messages = new CompilerMessages(true, true, false);
@@ -44,7 +52,7 @@ namespace Humphrey.Backend
             contextRef = CreateContext();
             moduleRef = contextRef.CreateModuleWithName(moduleName);
             
-            debugBuilder = new CompilationDebugBuilder(this, sourceFileNameAndPath, CompilerVersion, true);
+            debugBuilder = new CompilationDebugBuilder(this, sourceFileNameAndPath, CompilerVersion, targetTriple.Contains("msvc"));
 
             symbolScopes = new Scope();
             symbolScopes.PushScope(moduleName, debugBuilder.RootScope);
@@ -382,7 +390,7 @@ namespace Humphrey.Backend
             return true;
         }
 
-        public bool EmitToFile(string filename, string targetTriple)
+        public bool EmitToFile(string filename)
         {
             var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
 
@@ -390,9 +398,12 @@ namespace Humphrey.Backend
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
 
             var pm = LLVMPassManagerRef.Create();
-            var passes = PassManagerBuilderCreate();
-            passes.PopulateModulePassManager(pm);
-            passes.PopulateFunctionPassManager(pm);
+            if (optimisations)
+            {
+                var passes = PassManagerBuilderCreate();
+                passes.PopulateModulePassManager(pm);
+                passes.PopulateFunctionPassManager(pm);
+            }
 
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
             {
@@ -428,7 +439,7 @@ namespace Humphrey.Backend
             return debugBuilder.CreateParameterVariable(name, symbolScopes.CurrentDebugScope, location, argNo, debugType.BackendType);
         }
 
-        public bool DumpDisassembly(string targetTriple)
+        public bool DumpDisassembly()
         {
             var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
 
@@ -436,9 +447,12 @@ namespace Humphrey.Backend
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
 
             var pm = LLVMPassManagerRef.Create();
-            var passes = PassManagerBuilderCreate();
-            passes.PopulateModulePassManager(pm);
-            passes.PopulateFunctionPassManager(pm);
+            if (optimisations)
+            {
+                var passes = PassManagerBuilderCreate();
+                passes.PopulateModulePassManager(pm);
+                passes.PopulateFunctionPassManager(pm);
+            }
 
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
             {

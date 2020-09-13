@@ -20,7 +20,7 @@ namespace Humphrey.Backend
             UnsignedInt
         }
 
-        public CompilationDebugBuilder(CompilationUnit cu, string fileNameAndPath, string compilerVersion, bool isOptimised)
+        public CompilationDebugBuilder(CompilationUnit cu, string fileNameAndPath, string compilerVersion, bool codeView)
         {
             string flags = "";
             string splitName = "";
@@ -30,13 +30,19 @@ namespace Humphrey.Backend
             int debugInfoForProfiling = 1;
 
             unit = cu;
-            optimised = isOptimised;
+            optimised = false;
             builderRef = CreateDIBuilder(unit.Module);
 
             unit.AddModuleFlag(LLVMModuleFlagBehavior.LLVMModuleFlagBehaviorWarning, "Debug Info Version", GetDebugMetaVersion());
 
-            //TODO will need to select codeview/dwarf output - for now just use dwarf (old version)
-            unit.AddModuleFlag(LLVMModuleFlagBehavior.LLVMModuleFlagBehaviorWarning, "Dwarf Version", 2);
+            if (codeView)
+            {
+                unit.AddModuleFlag(LLVMModuleFlagBehavior.LLVMModuleFlagBehaviorWarning, "CodeView", 1);
+            }
+            else
+            {
+                unit.AddModuleFlag(LLVMModuleFlagBehavior.LLVMModuleFlagBehaviorWarning, "Dwarf Version", 2);
+            }
 
             //Finally we need to tag the llvm.ident
             unit.AddNamedMetadata("llvm.ident", compilerVersion);
@@ -44,7 +50,7 @@ namespace Humphrey.Backend
             debugScope = CreateDebugFile(fileNameAndPath);
             debugCU = builderRef.CreateCompileUnit(LLVMDWARFSourceLanguage.LLVMDWARFSourceLanguageC,
                 debugScope,
-                compilerVersion, isOptimised ? 1 : 0, flags, runtimeVersion, splitName, LLVMDWARFEmissionKind.LLVMDWARFEmissionFull,
+                compilerVersion, optimised ? 1 : 0, flags, runtimeVersion, splitName, LLVMDWARFEmissionKind.LLVMDWARFEmissionFull,
                 dwOld, splitDebugInlining, debugInfoForProfiling);
         }
 

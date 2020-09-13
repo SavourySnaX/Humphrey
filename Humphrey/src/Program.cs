@@ -27,6 +27,7 @@ namespace Humphrey.Experiments
             public bool infoLog;
             public bool warningsAsErrors;
             public bool emitLLVM;
+            public bool optimisations;
         }
 
         static Options options;
@@ -40,6 +41,7 @@ namespace Humphrey.Experiments
             options.warningsAsErrors = false;
             options.target = LLVMTargetRef.DefaultTriple;
             options.emitLLVM = false;
+            options.optimisations = true;
         }
 
         static void ShowOptions()
@@ -58,6 +60,7 @@ namespace Humphrey.Experiments
             Console.WriteLine($"--target=<string>            Set the compilation target triple (Default: \"{options.target}\")");
             Console.WriteLine();
             Console.WriteLine($"--emitLLVM[=<bool>]          Enable/Disable emitting llvm object/asm (Default: {options.emitLLVM})");
+            Console.WriteLine($"--optimisations[=<bool>]     Enable/Disable optimisations (Default: {options.optimisations})");
             Console.WriteLine();
         }
 
@@ -84,7 +87,7 @@ namespace Humphrey.Experiments
         static bool ParseBoolOption(string s, string[] split, out bool result)
         {
             result = false;
-            if (split.Length > 1 && bool.TryParse(s, out var p))
+            if (split.Length > 1 && bool.TryParse(split[1], out var p))
                 result = p;
             else
                 result = true;
@@ -102,6 +105,7 @@ namespace Humphrey.Experiments
             ["--warningsAsErrors"] = (s, split) => ParseBoolOption(s, split, out options.warningsAsErrors),
             ["--target"] = (s, split) => ParseStringOption(s, split, out options.target),
             ["--emitLLVM"] = (s, split) => ParseBoolOption(s, split, out options.emitLLVM),
+            ["--optimisations"] = (s, split) => ParseBoolOption(s, split, out options.optimisations),
         };
 
         static bool ParseOptions(string[] args)
@@ -159,7 +163,7 @@ namespace Humphrey.Experiments
             if (!messages.HasErrors)
             {
                 var compiler = new HumphreyCompiler(messages);
-                var cu = compiler.Compile(parse, options.inputFiles[0]);
+                var cu = compiler.Compile(parse, options.inputFiles[0], options.target, !options.optimisations);
 
                 if (!messages.HasErrors)
                 {
@@ -168,14 +172,14 @@ namespace Humphrey.Experiments
                         if (options.emitLLVM)
                             cu.EmitToBitCodeFile(options.outputFileName);
                         else
-                            cu.EmitToFile(options.outputFileName,options.target);
+                            cu.EmitToFile(options.outputFileName);
                     }
                     else
                     {
                         if (options.emitLLVM)
                             Console.WriteLine(cu.Dump());
                         else
-                            cu.DumpDisassembly(options.target);
+                            cu.DumpDisassembly();
                     }
                 }
             }

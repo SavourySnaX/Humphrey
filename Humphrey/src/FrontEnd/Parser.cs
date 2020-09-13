@@ -1144,6 +1144,8 @@ namespace Humphrey.FrontEnd
 
             var codeBlock = new AstCodeBlock(statements);
             codeBlock.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
+            codeBlock.BlockStart = start;
+            codeBlock.BlockEnd = end;
             return codeBlock;
         }
 

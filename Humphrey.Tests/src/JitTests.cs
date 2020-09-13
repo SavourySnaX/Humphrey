@@ -992,7 +992,7 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
             var parser = new HumphreyParser(tokens, messages);
             var parsed = parser.File();
             var compiler = new HumphreyCompiler(messages);
-            var unit = compiler.Compile(parsed, "test");
+            var unit = compiler.Compile(parsed, "test", "x86_64", false);
 
             if (messages.HasErrors)
             {

@@ -27,9 +27,11 @@ namespace Humphrey.FrontEnd
 
             var localsBlock = new CompilationBlock(newFunction.BackendValue.AppendBasicBlock($"inputs_{ident.Dump()}"));
             var localsBuilder = unit.CreateBuilder(newFunction, localsBlock);
+            localsBuilder.SetDebugLocation(new SourceLocation(codeBlock.BlockStart));
 
             newFunction.ExitBlock = new CompilationBlock(newFunction.BackendValue.AppendBasicBlock($"exit_{ident.Dump()}"));
             var exitBlockBuilder = unit.CreateBuilder(newFunction, newFunction.ExitBlock);
+            exitBlockBuilder.SetDebugLocation(new SourceLocation(codeBlock.BlockEnd));
 
             // create an entry block and a set of locals
             for (uint a = 0; a < functionType.InputCount; a++)
