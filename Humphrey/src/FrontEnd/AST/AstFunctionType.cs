@@ -47,7 +47,8 @@ namespace Humphrey.FrontEnd
                 // Debug information
                 var paramLocation = new SourceLocation(this.inputList.FetchParamLocation(a));
                 var debugType = functionType.Parameters[a].DebugType;
-                var paramVar = unit.CreateParameterVariable(paramIdent, a, paramLocation, debugType);
+                // Args count from 1 (0 is return type)
+                var paramVar = unit.CreateParameterVariable(paramIdent, a + 1, paramLocation, debugType);
 
                 unit.InsertDeclareAtEnd(local.Storage, paramVar, paramLocation, localsBlock);
             }
@@ -70,7 +71,8 @@ namespace Humphrey.FrontEnd
                 // Debug information
                 var paramLocation = new SourceLocation(this.outputList.FetchParamLocation(a - functionType.OutParamOffset));
                 var debugType = functionType.Parameters[a].DebugType;
-                var paramVar = unit.CreateParameterVariable(paramIdent, a, paramLocation, debugType);
+                // Args count from 1 (0 is return type)
+                var paramVar = unit.CreateParameterVariable(paramIdent, a + 1, paramLocation, debugType);
 
                 unit.InsertDeclareAtEnd(local.Storage, paramVar, paramLocation, localsBlock);
             }

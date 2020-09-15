@@ -315,10 +315,8 @@ namespace Extensions
             }
         }
 
-        public static LLVMMetadataRef CreateEnum(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, LLVMMetadataRef file, uint line, UInt64 sizeBits, uint alignBits, LLVMMetadataRef[] enumerations)
+        public static LLVMMetadataRef CreateEnum(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, LLVMMetadataRef file, uint line, UInt64 sizeBits, uint alignBits, LLVMMetadataRef[] enumerations, LLVMMetadataRef classType)
         {
-            LLVMMetadataRef classType = null;
-
             fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
             {
                 uint numEnumerations = (uint)enumerations.Length;

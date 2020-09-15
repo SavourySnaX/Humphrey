@@ -64,7 +64,7 @@ namespace Humphrey.FrontEnd
                     var newGlobal = unit.CreateGlobalVariable(ct, varName, location, exprValue);
 
                     // Debug information
-                    var gve = unit.CreateGlobalVariableExpression(varName, "", location, ct.DebugType);
+                    var gve = unit.CreateGlobalVariableExpression(varName, location, ct.DebugType);
                     newGlobal.BackendValue.SetGlobalMetadata(LLVMSharp.Interop.LLVMMetadataKind.LLVMMDStringMetadataKind, gve);
                 }
             }

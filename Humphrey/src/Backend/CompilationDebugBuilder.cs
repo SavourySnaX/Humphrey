@@ -74,8 +74,9 @@ namespace Humphrey.Backend
         public CompilationDebugType CreateFunctionType(string name, CompilationDebugType[] parameterTypes, SourceLocation location)
         {
             var flags = LLVMDIFlags.LLVMDIFlagPublic;
-            var paramTypes = new LLVMMetadataRef[parameterTypes.Length];
+            var paramTypes = new LLVMMetadataRef[parameterTypes.Length + 1]; // return type is first
             var idx = 0;
+            paramTypes[idx++] = null;   // for now all our functions are void return types
             foreach(var t in parameterTypes)
             {
                 paramTypes[idx++] = t.BackendType;
@@ -146,13 +147,13 @@ namespace Humphrey.Backend
             return builderRef.CreateAutoVariable(parentScope, name, CreateDebugFile(location.File), location.StartLine, type.BackendType, preserveAlways, flags, alignBits);
         }
 
-        public LLVMMetadataRef CreateGlobalVarable(string name, string linkageName, LLVMMetadataRef scope, SourceLocation location, CompilationDebugType type)
+        public LLVMMetadataRef CreateGlobalVarable(string name, LLVMMetadataRef scope, SourceLocation location, CompilationDebugType type)
         {
             var isVisibleExternally = true;
             LLVMMetadataRef expr = null;
             LLVMMetadataRef decl = null;
             var alignBits = 0u;
-            return builderRef.CreateGlobalVariable(scope, name, linkageName, CreateDebugFile(location.File), location.StartLine, type.BackendType, isVisibleExternally, expr, decl, alignBits);
+            return builderRef.CreateGlobalVariable(scope, name, AsciiSafeName(name), CreateDebugFile(location.File), location.StartLine, type.BackendType, isVisibleExternally, expr, decl, alignBits);
         }
 
 
@@ -164,14 +165,17 @@ namespace Humphrey.Backend
             {
                 structSize = 0;
                 elementOffsets = new UInt64[structureType.Elements.Length];
+                elementSizeInStruct = new ulong[structureType.Elements.Length];
                 // Only handles packed structs!
                 var dataLayout = unit.Module.GetDataLayout();
                 var numElements = structureType.Elements.Length;
                 for (int idx = 0; idx < numElements; idx++)
                 {
                     var type = structureType.Elements[idx].BackendType;
+                    var abiSize = dataLayout.GetABISizeOfType(type);
                     elementOffsets[idx] = structSize;
-                    structSize += dataLayout.GetABISizeOfType(type);
+                    elementSizeInStruct[idx] = abiSize;
+                    structSize += abiSize;
                 }
             }
 
@@ -184,12 +188,20 @@ namespace Humphrey.Backend
                 return (uint)(elementOffsets[idx] * 8);
             }
 
+            public UInt64 GetElementSizeInBits(int idx)
+            {
+                if (idx<0 || idx>=elementOffsets.Length)
+                    throw new ArgumentException($"Argument idx {idx} out of range");
+                return elementSizeInStruct[idx] * 8;
+            }
+
             public UInt64 StructSizeInBits()
             {
                 return structSize * 8;
             }
 
             UInt64 structSize;
+            UInt64[] elementSizeInStruct;
             UInt64[] elementOffsets;
         }
 
@@ -208,7 +220,7 @@ namespace Humphrey.Backend
             for (int idx = 0; idx < structType.Elements.Length; idx++)
             {
                 var offsetBits = structLayout.GetElementOffsetInBits(idx);
-                var sizeBits = dataLayout.GetTypeSizeInBits(structType.Elements[idx].BackendType);
+                var sizeBits = structLayout.GetElementSizeInBits(idx);
                 var location = structType.Elements[idx].Location;
                 var dbgType = builderRef.CreateStructElement(debugScope, structType.Fields[idx],CreateDebugFile(location.File), location.StartLine, sizeBits, alignBits, offsetBits, flags, structType.Elements[idx].DebugType.BackendType);
                 structElements[idx] = dbgType;
@@ -249,8 +261,8 @@ namespace Humphrey.Backend
                 throw new NotImplementedException($"Debug information for enumerations requires integer types");
 
             var sizeBits = dataLayout.GetTypeSizeInBits(enumType.ElementType.BackendType);
-            var alignBits = dataLayout.GetABIAlignmentOfType(enumType.ElementType.BackendType);
-            var dbgType = builderRef.CreateEnum(debugScope, name, CreateDebugFile(enumType.Location.File), enumType.Location.StartLine, sizeBits, alignBits, elements);
+            var alignBits = dataLayout.GetABIAlignmentOfType(enumType.ElementType.BackendType)*8;
+            var dbgType = builderRef.CreateEnum(debugScope, name, CreateDebugFile(enumType.Location.File), enumType.Location.StartLine, sizeBits, alignBits, elements, enumType.ElementType.DebugType.BackendType);
             return new CompilationDebugType(name, dbgType);
         }
 

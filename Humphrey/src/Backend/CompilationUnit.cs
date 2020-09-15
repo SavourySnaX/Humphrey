@@ -425,7 +425,8 @@ namespace Humphrey.Backend
 
         public LLVMMetadataRef CreateDebugLocationMeta(SourceLocation location)
         {
-            return moduleRef.Context.CreateDebugLocation(location.StartLine, location.StartColumn, symbolScopes.CurrentDebugScope, default(LLVMMetadataRef));
+            // We don't bother with the column for source locations as we are only doing per statement line location information anyway
+            return moduleRef.Context.CreateDebugLocation(location.StartLine, 0/*location.StartColumn*/, symbolScopes.CurrentDebugScope, default(LLVMMetadataRef));
         }
 
         public LLVMValueRef CreateDebugLocation(SourceLocation location)
@@ -505,9 +506,9 @@ namespace Humphrey.Backend
             return debugBuilder.CreateAutoVariable(name, symbolScopes.CurrentDebugScope, location, type);
         }
 
-        public LLVMMetadataRef CreateGlobalVariableExpression(string name, string linkName, SourceLocation location, CompilationDebugType type)
+        public LLVMMetadataRef CreateGlobalVariableExpression(string name, SourceLocation location, CompilationDebugType type)
         {
-            return debugBuilder.CreateGlobalVarable(name, linkName, symbolScopes.CurrentDebugScope, location, type);
+            return debugBuilder.CreateGlobalVarable(name, symbolScopes.CurrentDebugScope, location, type);
         }
 
         public LLVMModuleRef Module => moduleRef;
