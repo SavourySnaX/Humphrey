@@ -26,6 +26,7 @@ namespace Humphrey.Backend
         }
 
         public abstract CompilationType CopyAs(string identifier);
+        public abstract string DumpType();
 
         protected CompilationDebugBuilder DebugBuilder => builderRef;
         public LLVMTypeRef BackendType => typeRef;

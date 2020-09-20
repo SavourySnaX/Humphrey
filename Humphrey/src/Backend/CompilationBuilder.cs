@@ -308,7 +308,10 @@ namespace Humphrey.Backend
 
         public void SetDebugLocation(SourceLocation location)
         {
-            builderRef.CurrentDebugLocation = unit.CreateDebugLocation(location);
+            if (unit.DebugInfoEnabled)
+            {
+                builderRef.CurrentDebugLocation = unit.CreateDebugLocation(location);
+            }
         }
 
         public LLVMBuilderRef BackendValue => builderRef;

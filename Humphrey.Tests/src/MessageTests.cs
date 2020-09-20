@@ -47,7 +47,7 @@ namespace Humphrey.Tests.src
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens, messages);
             var parsed = parser.File();
-            var unit = new HumphreyCompiler(messages).Compile(parsed, "test", "x86_64", false);
+            var unit = new HumphreyCompiler(messages).Compile(parsed, "test", "x86_64", false, false);
             if (expected == CompilerErrorKind.Debug)
                 Assert.True(messages.Dump().Length == 0, $"No compiler messages should have been generated but got {messages.Dump()}");
             else

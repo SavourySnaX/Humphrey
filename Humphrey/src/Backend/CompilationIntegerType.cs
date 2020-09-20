@@ -29,13 +29,23 @@ namespace Humphrey.Backend
 
         void CreateDebugType()
         {
-            var numBits = IntegerWidth;
-            var signed = IsSigned;
+            if (DebugBuilder.Enabled)
+            {
+                var numBits = IntegerWidth;
+                var signed = IsSigned;
+                var name = DumpType();
+                var dbg = DebugBuilder.CreateBasicType(name, numBits, signed ? CompilationDebugBuilder.BasicType.SignedInt : CompilationDebugBuilder.BasicType.UnsignedInt);
+                CreateDebugType(dbg);
+            }
+        }
+
+        public override string DumpType()
+        {
             var name = Identifier;
             if (string.IsNullOrEmpty(name))
-                name = $"{(signed ? "__anonymous__s" : "__anonymous__u")}{numBits}";
-            var dbg = DebugBuilder.CreateBasicType(name, numBits, signed ? CompilationDebugBuilder.BasicType.SignedInt : CompilationDebugBuilder.BasicType.UnsignedInt);
-            CreateDebugType(dbg);
+                name = $"{(IsSigned ? "__anonymous__s" : "__anonymous__u")}{IntegerWidth}";
+            return name;
         }
+
     }
 }

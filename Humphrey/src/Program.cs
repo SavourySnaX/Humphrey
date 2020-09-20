@@ -28,6 +28,7 @@ namespace Humphrey.Experiments
             public bool warningsAsErrors;
             public bool emitLLVM;
             public bool optimisations;
+            public bool debugInfo;
         }
 
         static Options options;
@@ -42,6 +43,7 @@ namespace Humphrey.Experiments
             options.target = LLVMTargetRef.DefaultTriple;
             options.emitLLVM = false;
             options.optimisations = true;
+            options.debugInfo = false;
         }
 
         static void ShowOptions()
@@ -61,6 +63,7 @@ namespace Humphrey.Experiments
             Console.WriteLine();
             Console.WriteLine($"--emitLLVM[=<bool>]          Enable/Disable emitting llvm object/asm (Default: {options.emitLLVM})");
             Console.WriteLine($"--optimisations[=<bool>]     Enable/Disable optimisations (Default: {options.optimisations})");
+            Console.WriteLine($"--debugInfo[=<bool>]         Enable/Disable debug information (Default: {options.debugInfo})");
             Console.WriteLine();
         }
 
@@ -106,6 +109,7 @@ namespace Humphrey.Experiments
             ["--target"] = (s, split) => ParseStringOption(s, split, out options.target),
             ["--emitLLVM"] = (s, split) => ParseBoolOption(s, split, out options.emitLLVM),
             ["--optimisations"] = (s, split) => ParseBoolOption(s, split, out options.optimisations),
+            ["--debugInfo"] = (s, split) => ParseBoolOption(s, split, out options.debugInfo),
         };
 
         static bool ParseOptions(string[] args)
@@ -163,7 +167,7 @@ namespace Humphrey.Experiments
             if (!messages.HasErrors)
             {
                 var compiler = new HumphreyCompiler(messages);
-                var cu = compiler.Compile(parse, options.inputFiles[0], options.target, !options.optimisations);
+                var cu = compiler.Compile(parse, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo);
 
                 if (!messages.HasErrors)
                 {

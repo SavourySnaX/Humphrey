@@ -69,11 +69,19 @@ namespace Humphrey.Backend
 
         void CreateDebugType()
         {
-            var name = Identifier;
-            if (string.IsNullOrEmpty(name))
-                name = $"__anonymous__enum__{ElementType.DebugType.Identifier}";
-            var dbg = DebugBuilder.CreateEnumType(name, this);
-            CreateDebugType(dbg);
+            if (DebugBuilder.Enabled)
+            {
+                var name = DumpType();
+                var dbg = DebugBuilder.CreateEnumType(name, this);
+                CreateDebugType(dbg);
+            }
+        }
+
+        public override string DumpType()
+        {
+            if (string.IsNullOrEmpty(Identifier))
+                return $"__anonymous__enum_{ElementType.DumpType()}";
+            return Identifier;
         }
 
         public CompilationType ElementType => elementType;

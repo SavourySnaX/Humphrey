@@ -12,9 +12,9 @@ namespace Humphrey.FrontEnd
                 messages = new CompilerMessages(true, true, false);
         }
 
-        public CompilationUnit Compile(IGlobalDefinition[] definitions, string sourceFileNameAndPath , string targetTriple, bool disableOptimisations)
+        public CompilationUnit Compile(IGlobalDefinition[] definitions, string sourceFileNameAndPath , string targetTriple, bool disableOptimisations, bool debugInfo)
         {
-            var unit = new CompilationUnit(sourceFileNameAndPath, definitions, targetTriple, disableOptimisations, messages);
+            var unit = new CompilationUnit(sourceFileNameAndPath, definitions, targetTriple, disableOptimisations, debugInfo, messages);
             unit.Compile();
             return unit;
         }

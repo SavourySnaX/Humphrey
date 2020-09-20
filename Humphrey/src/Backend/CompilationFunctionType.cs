@@ -58,19 +58,28 @@ namespace Humphrey.Backend
 
         void CreateDebugType()
         {
-            var ptypes = new CompilationDebugType[parameters.Length];
-            int idx = 0;
-            foreach (var t in parameters)
-                ptypes[idx++] = t.DebugType;
+            if (DebugBuilder.Enabled)
+            {
+                var ptypes = new CompilationDebugType[parameters.Length];
+                int idx = 0;
+                foreach (var t in parameters)
+                    ptypes[idx++] = t.DebugType;
+                var name = DumpType();
+                var dbg = DebugBuilder.CreateFunctionType(name, ptypes, Location);
+                CreateDebugType(dbg);
+            }
+        }
+
+        public override string DumpType()
+        {
             var name = Identifier;
             if (string.IsNullOrEmpty(name))
             {
                 name = "__anonymous__function__";
-                foreach(var param in parameters)
-                    name += $"{param.DebugType.Identifier}_";
+                foreach (var param in parameters)
+                    name += $"{param.Identifier}_";
             }
-            var dbg = DebugBuilder.CreateFunctionType(name, ptypes, Location);
-            CreateDebugType(dbg);
+            return name;
         }
 
         public long InputCount => Parameters.Length - (Parameters.Length - outParameterOffset);

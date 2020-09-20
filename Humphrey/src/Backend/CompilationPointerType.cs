@@ -27,11 +27,20 @@ namespace Humphrey.Backend
 
         void CreateDebugType()
         {
+            if (DebugBuilder.Enabled)
+            {
+                var name = DumpType();
+                var dbg = DebugBuilder.CreatePointerType(name, element.DebugType);
+                CreateDebugType(dbg);
+            }
+        }
+
+        public override string DumpType()
+        {
             var name = Identifier;
             if (string.IsNullOrEmpty(name))
-                name = $"__anonymous__ptr__{element.DebugType.Identifier}";
-            var dbg = DebugBuilder.CreatePointerType(name, element.DebugType);
-            CreateDebugType(dbg);
+                name = $"__anonymous__ptr__{element.DumpType()}";
+            return name;
         }
     }
 }

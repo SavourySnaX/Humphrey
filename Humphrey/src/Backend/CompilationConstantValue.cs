@@ -102,7 +102,7 @@ namespace Humphrey.Backend
                     }
                     throw new System.NotImplementedException($"TODO - signed/unsigned mismatch");
                 }
-                unit.Messages.Log(CompilerErrorKind.Error_IntegerWidthMismatch, $"Constant '{FrontendLocation.Location.ToStringValue(FrontendLocation.Remainder)}' is larger than {destIntType.DebugType.Identifier}!", FrontendLocation.Location, FrontendLocation.Remainder);
+                unit.Messages.Log(CompilerErrorKind.Error_IntegerWidthMismatch, $"Constant '{FrontendLocation.Location.ToStringValue(FrontendLocation.Remainder)}' is larger than {destIntType.DumpType()}!", FrontendLocation.Location, FrontendLocation.Remainder);
                 return unit.CreateUndef(destType);  // Allow compilation to continue
             }
             else if (destType is CompilationPointerType destPtrType)

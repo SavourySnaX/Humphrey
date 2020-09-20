@@ -29,7 +29,7 @@ namespace Humphrey.Backend
 
         bool optimisations;
 
-        public CompilationUnit(string sourceFileNameAndPath, IGlobalDefinition[] definitions, string targetTriple, bool disableOptimisations, CompilerMessages overrideDefaultMessages = null)
+        public CompilationUnit(string sourceFileNameAndPath, IGlobalDefinition[] definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
         {
             optimisations = !disableOptimisations;
 
@@ -52,7 +52,7 @@ namespace Humphrey.Backend
             contextRef = CreateContext();
             moduleRef = contextRef.CreateModuleWithName(moduleName);
             
-            debugBuilder = new CompilationDebugBuilder(this, sourceFileNameAndPath, CompilerVersion, targetTriple.Contains("msvc"));
+            debugBuilder = new CompilationDebugBuilder(debugInfo, this, sourceFileNameAndPath, CompilerVersion, targetTriple.Contains("msvc"));
 
             symbolScopes = new Scope();
             symbolScopes.PushScope(moduleName, debugBuilder.RootScope);
@@ -439,7 +439,11 @@ namespace Humphrey.Backend
 
         public LLVMMetadataRef CreateParameterVariable(string name, uint argNo, SourceLocation location, CompilationDebugType debugType)
         {
-            return debugBuilder.CreateParameterVariable(name, symbolScopes.CurrentDebugScope, location, argNo, debugType.BackendType);
+            if (debugBuilder.Enabled)
+            {
+                return debugBuilder.CreateParameterVariable(name, symbolScopes.CurrentDebugScope, location, argNo, debugType.BackendType);
+            }
+            return default;
         }
 
         public bool DumpDisassembly()
@@ -515,5 +519,7 @@ namespace Humphrey.Backend
 
         public LLVMModuleRef Module => moduleRef;
         public CompilerMessages Messages => messages;
+
+        public bool DebugInfoEnabled => debugBuilder.Enabled;
     }
 }

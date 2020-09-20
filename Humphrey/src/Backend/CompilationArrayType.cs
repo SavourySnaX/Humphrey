@@ -28,11 +28,19 @@ namespace Humphrey.Backend
 
         void CreateDebugType()
         {
-            var name = Identifier;
-            if (string.IsNullOrEmpty(name))
-                name = $"__anonymous__array_{ElementType.DebugType.Identifier}";
-            var dbg = DebugBuilder.CreateArrayType(name, this);
-            CreateDebugType(dbg);
+            if (DebugBuilder.Enabled)
+            {
+                var name = DumpType();
+                var dbg = DebugBuilder.CreateArrayType(name, this);
+                CreateDebugType(dbg);
+            }
+        }
+
+        public override string DumpType()
+        {
+            if (string.IsNullOrEmpty(Identifier))
+                return $"__anonymous__array_{ElementType.DumpType()}";
+            return Identifier;
         }
 
         public CompilationType ElementType => element;

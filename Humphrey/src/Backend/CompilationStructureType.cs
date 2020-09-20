@@ -102,15 +102,24 @@ namespace Humphrey.Backend
 
         void CreateDebugType()
         {
+            if (DebugBuilder.Enabled)
+            {
+                var name = DumpType();
+                var dbg = DebugBuilder.CreateStructureType(name, this);
+                CreateDebugType(dbg);
+            }
+        }
+
+        public override string DumpType()
+        {
             var name = Identifier;
             if (string.IsNullOrEmpty(name))
             {
                 name = "__anonymous_struct_";
-                foreach(var e in elementTypes)
-                    name += $"{e.DebugType.Identifier}_";
+                foreach (var e in elementTypes)
+                    name += $"{e.DumpType()}_";
             }
-            var dbg = DebugBuilder.CreateStructureType(name, this);
-            CreateDebugType(dbg);
+            return name;
         }
 
         public string[] Fields => elementNames;
