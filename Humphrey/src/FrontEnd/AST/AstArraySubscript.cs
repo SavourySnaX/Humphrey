@@ -47,7 +47,7 @@ namespace Humphrey.FrontEnd
             return (vlhs, vrhs);
         }
 
-        public (CompilationValue left, CompilationValue rangeBegin, CompilationValue rangeEnd) CommonExpressionProcessForRange(CompilationUnit unit, CompilationBuilder builder)
+        public (CompilationValue left, CompilationValue rangeBegin, CompilationValue rangeEnd, uint constantWidth) CommonExpressionProcessForRange(CompilationUnit unit, CompilationBuilder builder)
         {
             var rlhs = expr.ProcessExpression(unit, builder);
             var range = subscriptIdx as AstInclusiveRange;
@@ -75,7 +75,21 @@ namespace Humphrey.FrontEnd
                 if (verhs is null)
                     verhs = (erhs as CompilationConstantValue).GetCompilationValue(unit, unit.FetchIntegerType(64, false, new SourceLocation(range.InclusiveEnd.Token)));
             }
-            return (vlhs, vbrhs, verhs);
+
+            if ( vlhs.Type is CompilationIntegerType integerType && (brhs is CompilationConstantValue || brhs == null ) && (erhs is CompilationConstantValue || erhs == null) )
+            {
+                // compute constant width of result (so truncation can be applied if needed)
+                System.Int64 start = 0;
+                if (brhs is CompilationConstantValue cstart)
+                    start = (System.Int64)cstart.Constant;
+                System.Int64 end = start + integerType.IntegerWidth;
+                if (erhs is CompilationConstantValue cend)
+                    end = (System.Int64)cend.Constant;
+
+                var constantWidth = (uint)(System.Math.Abs(end - start) + 1);
+                return (vlhs, vbrhs, verhs, constantWidth);
+            }
+            return (vlhs, vbrhs, verhs, 0);
         }
 
         public ICompilationValue ProcessSingleSubscript(CompilationUnit unit, CompilationBuilder builder)
@@ -109,7 +123,7 @@ namespace Humphrey.FrontEnd
         public ICompilationValue ProcessRangeSubscript(CompilationUnit unit, CompilationBuilder builder)
         {
             var i64Type = unit.FetchIntegerType(64, false, new SourceLocation());
-            var (vlhs, rangeBegin, rangeEnd) = CommonExpressionProcessForRange(unit, builder);
+            var (vlhs, rangeBegin, rangeEnd, constantWidth) = CommonExpressionProcessForRange(unit, builder);
 
             if (vlhs.Type is CompilationPointerType pointerType)
             {
@@ -163,7 +177,10 @@ namespace Humphrey.FrontEnd
                 var compareWidth = new CompilationValue(integerType.BackendType.CreateConstantValue(integerType.IntegerWidth), integerType, Token);
                 var cond = builder.Compare(CompareKind.ULT, numBits, compareWidth);
                 var realMask = builder.Select(cond, mask, constM1);
-                return builder.And(shifted, realMask);
+                var final = builder.And(shifted, realMask);
+                if (constantWidth!=0 && constantWidth<integerType.IntegerWidth)
+                    return builder.Trunc(final, unit.CreateIntegerType(constantWidth, integerType.IsSigned, new SourceLocation(Token)));
+                return final;
             }
 
             throw new System.NotImplementedException($"Todo implement expression for subscript of array type...");
