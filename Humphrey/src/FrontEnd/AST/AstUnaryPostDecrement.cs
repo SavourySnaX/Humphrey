@@ -39,7 +39,7 @@ namespace Humphrey.FrontEnd
                 var decByType = cv.Type;
                 if (cv.Type is CompilationIntegerType)
                 {
-                    var decBy = new CompilationValue(decByType.BackendType.CreateConstantValue(1), decByType);
+                    var decBy = new CompilationValue(decByType.BackendType.CreateConstantValue(1), decByType, Token);
                     decremented = builder.Sub(cv, decBy);
                 }
                 else if (cv.Type is CompilationPointerType cpt)

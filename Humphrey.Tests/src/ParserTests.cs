@@ -434,9 +434,10 @@ namespace Humphrey.FrontEnd.tests
 
         IAst CheckArraySubscriptHelper(HumphreyParser parser)
         {
-            if (parser.OpenSquareBracket())
+            var oper = parser.ArraySubscriptOperator() as IOperator;
+            if (oper != null)
             {
-                return parser.ArraySubscript();
+                return parser.ArraySubscript(oper);
             }
             return null;
         }

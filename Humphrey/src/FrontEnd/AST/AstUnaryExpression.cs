@@ -67,7 +67,7 @@ namespace Humphrey.FrontEnd
             if (srcEnum != null)
             {
                 srcIntType = srcEnum.ElementType as CompilationIntegerType;
-                src = new CompilationValue(src.BackendValue, srcIntType);
+                src = new CompilationValue(src.BackendValue, srcIntType, src.FrontendLocation);
             }
             if (destEnum != null)
                 destIntType = destEnum.ElementType as CompilationIntegerType;
@@ -89,7 +89,8 @@ namespace Humphrey.FrontEnd
                     return builder.Ext(src, destType);
                 }
 
-                throw new NotImplementedException($"TODO - Integer Bit width does not match");
+                unit.Messages.Log(CompilerErrorKind.Error_IntegerWidthMismatch, $"Result of expression '{expr.Token.Location.ToStringValue(expr.Token.Remainder)}' of type '{srcIntType.DebugType.Identifier}' is larger than {destIntType.DebugType.Identifier}!", expr.Token.Location, expr.Token.Remainder);
+                return unit.CreateUndef(destType);  // Allow compilation to continue
             }
             throw new NotImplementedException($"TODO - Non integer types in promotion?");
         }

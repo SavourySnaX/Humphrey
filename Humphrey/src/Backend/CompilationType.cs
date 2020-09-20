@@ -1,3 +1,4 @@
+using Humphrey.FrontEnd;
 using LLVMSharp.Interop;
 
 namespace Humphrey.Backend
@@ -30,6 +31,7 @@ namespace Humphrey.Backend
         public LLVMTypeRef BackendType => typeRef;
         public CompilationDebugType DebugType => debugTypeRef;
         public SourceLocation Location => sourceLocation;
+        public Result<Tokens> FrontendLocation => sourceLocation.FrontendLocation;
         public abstract bool Same(CompilationType t);
         public string Identifier => identifier;
     }

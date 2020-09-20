@@ -87,13 +87,13 @@ namespace Humphrey.FrontEnd
             {
                 var gep = builder.InBoundsGEP(vlhs, pointerType, new LLVMSharp.Interop.LLVMValueRef[] { builder.Ext(vrhs, i64Type).BackendValue });
                 var dereferenced = builder.Load(gep);
-                return new CompilationValue(dereferenced.BackendValue, pointerType.ElementType);
+                return new CompilationValue(dereferenced.BackendValue, pointerType.ElementType, Token);
             }
             if (vlhs.Type is CompilationArrayType arrayType)
             {
                 var gep = builder.InBoundsGEP(vlhs.Storage, vlhs.Storage.Type as CompilationPointerType, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, unit.FetchIntegerType(64, false, new SourceLocation(subscriptIdx.Token))).BackendValue });
                 var dereferenced = builder.Load(gep);
-                return new CompilationValue(dereferenced.BackendValue, arrayType.ElementType);
+                return new CompilationValue(dereferenced.BackendValue, arrayType.ElementType, Token);
             }
             if (vlhs.Type is CompilationIntegerType integerType)
             {
@@ -127,8 +127,8 @@ namespace Humphrey.FrontEnd
             }
             if (vlhs.Type is CompilationIntegerType integerType)
             {
-                var const0 = new CompilationValue(integerType.BackendType.CreateConstantValue(0), integerType);
-                var const1 = new CompilationValue(integerType.BackendType.CreateConstantValue(1), integerType);
+                var const0 = new CompilationValue(integerType.BackendType.CreateConstantValue(0), integerType, Token);
+                var const1 = new CompilationValue(integerType.BackendType.CreateConstantValue(1), integerType, Token);
                 CompilationValue rangeBeginMatchedBeforeCheck;
                 CompilationValue rangeEndMatchedBeforeCheck;
                 if (rangeBegin == null)
@@ -141,7 +141,7 @@ namespace Humphrey.FrontEnd
                 }
                 if (rangeEnd == null)
                 {
-                    var t = new CompilationValue(integerType.BackendType.CreateConstantValue(integerType.IntegerWidth), integerType);
+                    var t = new CompilationValue(integerType.BackendType.CreateConstantValue(integerType.IntegerWidth), integerType, Token);
                     var m = builder.MatchWidth(t, integerType);
                     rangeEndMatchedBeforeCheck = builder.Add(rangeBeginMatchedBeforeCheck, m);
                 }
@@ -160,7 +160,7 @@ namespace Humphrey.FrontEnd
                 var constM1 = builder.Not(const0);
                 var maskMarker = builder.ShiftLeft(const1, numBits);
                 var mask = builder.Sub(maskMarker, const1);
-                var compareWidth = new CompilationValue(integerType.BackendType.CreateConstantValue(integerType.IntegerWidth), integerType);
+                var compareWidth = new CompilationValue(integerType.BackendType.CreateConstantValue(integerType.IntegerWidth), integerType, Token);
                 var cond = builder.Compare(CompareKind.ULT, numBits, compareWidth);
                 var realMask = builder.Select(cond, mask, constM1);
                 return builder.And(shifted, realMask);
@@ -199,7 +199,7 @@ namespace Humphrey.FrontEnd
             }
             if (vlhs.Type is CompilationIntegerType integerType)
             {
-                var mask = new CompilationValue(integerType.BackendType.CreateConstantValue(1), integerType);
+                var mask = new CompilationValue(integerType.BackendType.CreateConstantValue(1), integerType, Token);
                 var matchWidth = builder.MatchWidth(vrhs, integerType);
                 var rotatedMask = builder.RotateLeft(mask, matchWidth);
                 var invertedMask = builder.Not(rotatedMask);

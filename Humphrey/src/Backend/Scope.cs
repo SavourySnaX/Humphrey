@@ -117,7 +117,7 @@ namespace Humphrey.Backend
             var function = symbolTable.FetchFunction(identifier);
             if (function != null)
             {
-                value = new CompilationValue(function.BackendValue, function.FunctionType);
+                value = new CompilationValue(function.BackendValue, function.FunctionType, function.FunctionType.FrontendLocation);
                 return value;
             }
 

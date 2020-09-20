@@ -41,14 +41,14 @@ namespace Humphrey.FrontEnd
                 // Local copy
                 var type = functionType.Parameters[a].Type;
                 var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, null, new SourceLocation(functionType.Parameters[a].Token));
-                var cv = new CompilationValue(newFunction.BackendValue.Params[a], type);
+                var cv = new CompilationValue(newFunction.BackendValue.Params[a], type, functionType.Parameters[a].Token);
                 localsBuilder.Store(cv, local.Storage);
 
                 // Debug information
                 var paramLocation = new SourceLocation(this.inputList.FetchParamLocation(a));
                 var debugType = functionType.Parameters[a].DebugType;
                 // Args count from 1 (0 is return type)
-                var paramVar = unit.CreateParameterVariable(paramIdent, a + 1, paramLocation, debugType);
+                var paramVar = unit.CreateParameterVariable(paramIdent.Dump(), a + 1, paramLocation, debugType);
 
                 unit.InsertDeclareAtEnd(local.Storage, paramVar, paramLocation, localsBlock);
             }
@@ -57,12 +57,12 @@ namespace Humphrey.FrontEnd
             {
                 // Temporary local storage
                 var outputType = unit.CreatePointerType(functionType.Parameters[a].Type, new SourceLocation(functionType.Parameters[a].Token));
-                var output = new CompilationValue(newFunction.BackendValue.Params[a], outputType);
+                var output = new CompilationValue(newFunction.BackendValue.Params[a], outputType, functionType.Parameters[a].Token);
                 var cv = localsBuilder.Load(output);
                 var type = functionType.Parameters[a].Type;
                 var paramIdent = functionType.Parameters[a].Identifier;
                 var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, cv, new SourceLocation(functionType.Parameters[a].Token));
-                local.Storage = new CompilationValueOutputParameter(local.Storage.BackendValue, local.Storage.Type, paramIdent);
+                local.Storage = new CompilationValueOutputParameter(local.Storage.BackendValue, local.Storage.Type, paramIdent.Dump(), functionType.Parameters[a].Token);
 
                 // Copy temporary storage to output
                 var returnValue = exitBlockBuilder.Load(local);
@@ -72,7 +72,7 @@ namespace Humphrey.FrontEnd
                 var paramLocation = new SourceLocation(this.outputList.FetchParamLocation(a - functionType.OutParamOffset));
                 var debugType = functionType.Parameters[a].DebugType;
                 // Args count from 1 (0 is return type)
-                var paramVar = unit.CreateParameterVariable(paramIdent, a + 1, paramLocation, debugType);
+                var paramVar = unit.CreateParameterVariable(paramIdent.Dump(), a + 1, paramLocation, debugType);
 
                 unit.InsertDeclareAtEnd(local.Storage, paramVar, paramLocation, localsBlock);
             }

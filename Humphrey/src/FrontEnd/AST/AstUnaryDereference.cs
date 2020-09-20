@@ -33,7 +33,7 @@ namespace Humphrey.FrontEnd
                 if (compilationPointerType == null)
                     throw new System.Exception($"Cannot derefence a non pointer type");
                 var dereferenced = builder.Load(compilationValue);
-                return new CompilationValue(dereferenced.BackendValue, compilationPointerType.ElementType);
+                return new CompilationValue(dereferenced.BackendValue, compilationPointerType.ElementType, Token);
             }
         }
 

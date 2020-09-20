@@ -61,7 +61,7 @@ namespace Humphrey.FrontEnd
                 {
                     var varName = ident.Dump();
                     var location = new SourceLocation(Token);
-                    var newGlobal = unit.CreateGlobalVariable(ct, varName, location, exprValue);
+                    var newGlobal = unit.CreateGlobalVariable(ct, ident, location, exprValue);
 
                     // Debug information
                     var gve = unit.CreateGlobalVariableExpression(varName, location, ct.DebugType);

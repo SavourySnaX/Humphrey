@@ -56,7 +56,7 @@ namespace Humphrey.FrontEnd
             {
                 allocSpace = builder.Alloca(structType);
                 // we might want to always set this for alloca...
-                allocSpace.Storage = new CompilationValue(allocSpace.BackendValue, unit.CreatePointerType(structType, new SourceLocation(argumentList.Token)));
+                allocSpace.Storage = new CompilationValue(allocSpace.BackendValue, unit.CreatePointerType(structType, new SourceLocation(argumentList.Token)), argumentList.Token);
             }
             // pass the input expression results to the input arguments  
             var arguments = new CompilationValue[ftype.Parameters.Length];
@@ -72,7 +72,7 @@ namespace Humphrey.FrontEnd
             uint outArgIdx = ftype.OutParamOffset;
             for (uint a = ftype.OutParamOffset; a < ftype.Parameters.Length; a++)
             {
-                var value = structType.AddressElement(unit, builder, allocSpace.Storage, ftype.Parameters[a].Identifier);
+                var value = structType.AddressElement(unit, builder, allocSpace.Storage, ftype.Parameters[a].Identifier.Dump());
                 arguments[a] = value;
             }
             // call the function

@@ -202,6 +202,8 @@ namespace Humphrey.FrontEnd
 
         public string ToStringValue(TokenSpan remain)
         {
+            if (remain.AtEnd)
+                return encompass.Substring(position);
             return encompass.Substring(position, remain.position - position);
         }
 
@@ -269,6 +271,8 @@ namespace Humphrey.FrontEnd
         public uint Line => line;
         public uint Column => column;
         public string Filename => filename;
+
+        public int Position => position;
     }
 
     public struct Result<T>
@@ -297,6 +301,13 @@ namespace Humphrey.FrontEnd
         public string ToStringValue()
         {
             return location.ToStringValue(remaining);
+        }
+
+        public Result<T> Combine(Result<T> toCombine)
+        {
+            if (location.Position < toCombine.location.Position)
+                return new Result<T>(value, location, toCombine.remaining);
+            return new Result<T>(toCombine.value, toCombine.location, remaining);
         }
 
         public bool HasValue => hasValue;

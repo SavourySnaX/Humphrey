@@ -57,7 +57,7 @@ namespace Humphrey.FrontEnd
             }
 
             var store = type.AddressElement(unit, builder, pointerToValue, rhs.Dump());
-            var loaded = new CompilationValue(builder.Load(store).BackendValue, (store.Type as CompilationPointerType).ElementType);
+            var loaded = new CompilationValue(builder.Load(store).BackendValue, (store.Type as CompilationPointerType).ElementType, Token);
             loaded.Storage = store;
 
             return loaded;

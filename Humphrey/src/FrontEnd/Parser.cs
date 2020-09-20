@@ -98,7 +98,7 @@ namespace Humphrey.FrontEnd
             return (false, "", lookahead);
         }
 
-        Result<Tokens> CurrentToken()
+        public Result<Tokens> CurrentToken()
         {
             return lookahead;
         }
@@ -449,8 +449,10 @@ namespace Humphrey.FrontEnd
 
         // [ has already popped at this point
         // array_subscript : expression ]
-        public IExpression ArraySubscript()
+        public IExpression ArraySubscript(IOperator oper)
         {
+            var start = oper.Token;
+            var end = start;
             IExpression expr = null;
             if (DotDotOperator()==null)
             {
@@ -460,8 +462,10 @@ namespace Humphrey.FrontEnd
 
                 if (DotDotOperator() == null)
                 {
+                    end = CurrentToken();
                     if (!CloseSquareBracket())
                         return null;
+                    expr.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
                     return expr;
                 }
             }
@@ -472,14 +476,17 @@ namespace Humphrey.FrontEnd
                 if (inclusiveEnd == null)
                     return null;
 
+                end = CurrentToken();
                 if (!CloseSquareBracket())
                     return null;
             }
 
             if (expr==null && inclusiveEnd==null)
                 return null;
-                
-            return new AstInclusiveRange(expr, inclusiveEnd);
+
+            var range = new AstInclusiveRange(expr, inclusiveEnd);
+            range.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
+            return range;
         }
 
         // ( has already popped at this point
@@ -584,7 +591,7 @@ namespace Humphrey.FrontEnd
             switch (oper.Dump())
             {
                 case "[":
-                    IExpression subscript = ArraySubscript();
+                    IExpression subscript = ArraySubscript(oper);
                     if (subscript == null)
                         return null;
                     operands.Push(subscript);

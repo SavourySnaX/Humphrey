@@ -13,12 +13,15 @@ namespace Humphrey.Backend
         IType resultType;
         SourceLocation location;
 
-        public CompilationConstantValue(SourceLocation debugLocation)
+        Result<Tokens> frontendLocation;
+
+        public CompilationConstantValue(Result<Tokens> frontendLoc)
         {
             undefValue = true;
             constant = BigInteger.Zero;
             resultType = null;
-            location = debugLocation;
+            location = new SourceLocation(frontendLoc);
+            frontendLocation = frontendLoc;
         }
 
         public bool Same(CompilationConstantValue other)
@@ -34,6 +37,7 @@ namespace Humphrey.Backend
         {
             constant = BigInteger.Parse(val.Dump());
             undefValue = false;
+            frontendLocation = val.Token;
         }
 
         public (uint numBits, bool isSigned) ComputeKind()
@@ -98,7 +102,8 @@ namespace Humphrey.Backend
                     }
                     throw new System.NotImplementedException($"TODO - signed/unsigned mismatch");
                 }
-                throw new System.NotImplementedException($"TODO - Integer Bit width does not match");
+                unit.Messages.Log(CompilerErrorKind.Error_IntegerWidthMismatch, $"Constant '{FrontendLocation.Location.ToStringValue(FrontendLocation.Remainder)}' is larger than {destIntType.DebugType.Identifier}!", FrontendLocation.Location, FrontendLocation.Remainder);
+                return unit.CreateUndef(destType);  // Allow compilation to continue
             }
             else if (destType is CompilationPointerType destPtrType)
             {
@@ -107,7 +112,7 @@ namespace Humphrey.Backend
                 {
                     // Create the constant
                     var constant = unit.CreateConstant(this, numBits, isSigned, location);
-                    return new CompilationValue(constant.BackendValue.ConstIntToPtr(type.BackendType), type);
+                    return new CompilationValue(constant.BackendValue.ConstIntToPtr(type.BackendType), type, FrontendLocation);
                 }
             }
             throw new System.NotImplementedException($"TODO - Non integer types in promotion?");
@@ -213,6 +218,8 @@ namespace Humphrey.Backend
         }
 
         public BigInteger Constant => constant;
+
+        public Result<Tokens> FrontendLocation => frontendLocation;
     }
 }
 

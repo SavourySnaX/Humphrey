@@ -34,6 +34,7 @@ namespace Humphrey.Tests.src
         [InlineData("BrokenFunction:()(out1:bit,out2:bit)={out1=0;}", CompilerErrorKind.Error_MissingOutputAssignment)]
         [InlineData("BrokenFunction:()(out1:bit,out2:bit)={out2=0;}", CompilerErrorKind.Error_MissingOutputAssignment)]
         [InlineData("BrokenFunction:()(out1:bit,out2:bit)={}", CompilerErrorKind.Error_MissingOutputAssignment)]
+        [InlineData("MismatchSize:()(out:[4]bit)={out=99;}", CompilerErrorKind.Error_IntegerWidthMismatch)]
         public void CheckCompilationMessages(string input, CompilerErrorKind kind)
         {
             CompilationTest(input, kind);

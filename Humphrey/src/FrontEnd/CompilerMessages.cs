@@ -10,6 +10,7 @@ namespace Humphrey.FrontEnd
         // Parser block
         // Compilation block
         Error_MissingOutputAssignment   =   Error|0x801,
+        Error_IntegerWidthMismatch      =   Error|0x802,
         // LLVM block
         Error_FailedVerification        =   Error|0xC01,
 

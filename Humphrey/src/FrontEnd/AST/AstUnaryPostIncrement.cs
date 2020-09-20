@@ -38,7 +38,7 @@ namespace Humphrey.FrontEnd
                 var incByType = cv.Type;
                 if (cv.Type is CompilationIntegerType)
                 {
-                    var incBy = new CompilationValue(incByType.BackendType.CreateConstantValue(1), incByType);
+                    var incBy = new CompilationValue(incByType.BackendType.CreateConstantValue(1), incByType, Token);
                     incremented = builder.Add(cv, incBy);
                 }
                 else if (cv.Type is CompilationPointerType cpt)

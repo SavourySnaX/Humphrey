@@ -17,7 +17,7 @@ namespace Humphrey.Backend
         public CompilationType Type => type;
         public CompilationDebugType DebugType => type.DebugType;
 
-        public string Identifier => identifier.Dump();
+        public AstIdentifier Identifier => identifier;
 
         public Result<Tokens> Token => identifier.Token;
     }

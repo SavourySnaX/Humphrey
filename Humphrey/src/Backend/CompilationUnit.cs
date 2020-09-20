@@ -257,7 +257,7 @@ namespace Humphrey.Backend
         {
             var constType = new CompilationIntegerType(contextRef.GetIntType(numBits), isSigned, debugBuilder, location);
 
-            return new CompilationValue(constType.BackendType.CreateConstantValue(constantValue.Constant.ToString(), 10), constType);
+            return new CompilationValue(constType.BackendType.CreateConstantValue(constantValue.Constant.ToString(), 10), constType, constantValue.FrontendLocation);
         }
 
         public CompilationValue CreateConstant(AstNumber decimalNumber, SourceLocation location)
@@ -275,7 +275,7 @@ namespace Humphrey.Backend
 
         public CompilationValue CreateUndef(CompilationType type)
         {
-            return new CompilationValue(type.BackendType.Undef, type);
+            return new CompilationValue(type.BackendType.Undef, type, type.FrontendLocation);
         }
 
         public CompilationFunction CreateFunction(CompilationFunctionType type, AstIdentifier identifier)
@@ -317,12 +317,13 @@ namespace Humphrey.Backend
             }
         }
 
-        public CompilationValue CreateGlobalVariable(CompilationType type, string identifier, SourceLocation location, CompilationConstantValue initialiser = null)
+        public CompilationValue CreateGlobalVariable(CompilationType type, AstIdentifier identifier, SourceLocation location, CompilationConstantValue initialiser = null)
         {
-            if (symbolScopes.FetchValue(identifier)!=null)
+            var ident = identifier.Dump();
+            if (symbolScopes.FetchValue(ident)!=null)
                 throw new Exception($"global value {identifier} already exists!");
 
-            var global = moduleRef.AddGlobal(type.BackendType, identifier);
+            var global = moduleRef.AddGlobal(type.BackendType, ident);
 
             if (initialiser != null)
             {
@@ -330,18 +331,19 @@ namespace Humphrey.Backend
                 global.Initializer = constantValue.BackendValue;
             }
 
-            var globalValue = new CompilationValue(global, type);
-            globalValue.Storage = new CompilationValue(global, CreatePointerType(type, location));
+            var globalValue = new CompilationValue(global, type, identifier.Token);
+            globalValue.Storage = new CompilationValue(global, CreatePointerType(type, location), identifier.Token);
 
-            if (!symbolScopes.AddValue(identifier, globalValue))
+            if (!symbolScopes.AddValue(ident, globalValue))
                 throw new Exception($"global {identifier} failed to add symbol!");
 
             return globalValue;
         }
 
-        public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationType type, string identifier, ICompilationValue initialiser, SourceLocation location)
+        public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationType type, AstIdentifier identifier, ICompilationValue initialiser, SourceLocation location)
         {
-            if (symbolScopes.FetchValue(identifier)!=null)
+            var ident = identifier.Dump();
+            if (symbolScopes.FetchValue(ident)!=null)
                 throw new Exception($"local value {identifier} already exists!");
 
             var local = builder.Alloca(type);
@@ -351,9 +353,9 @@ namespace Humphrey.Backend
                 var value = Expression.ResolveExpressionToValue(unit, initialiser, type);
                 builder.Store(value, local);
             }
-            local.Storage = new CompilationValue(local.BackendValue, CreatePointerType(type, location));
+            local.Storage = new CompilationValue(local.BackendValue, CreatePointerType(type, location), identifier.Token);
 
-            if (!symbolScopes.AddValue(identifier, local))
+            if (!symbolScopes.AddValue(ident, local))
                 throw new Exception($"local {identifier} failed to add symbol!");
 
             return local;

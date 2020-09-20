@@ -43,7 +43,7 @@ namespace Humphrey.Backend
                 for (uint a = outParameterOffset; a < Parameters.Length; a++)
                 {
                     types[a - outParameterOffset] = Parameters[a].Type;
-                    names[a - outParameterOffset] = Parameters[a].Identifier;
+                    names[a - outParameterOffset] = Parameters[a].Identifier.Dump();
                 }
                 return unit.FetchStructType(types, names, location);
             }

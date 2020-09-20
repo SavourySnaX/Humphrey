@@ -1,3 +1,4 @@
+using Humphrey.FrontEnd;
 using LLVMSharp.Interop;
 
 namespace Humphrey.Backend
@@ -7,12 +8,14 @@ namespace Humphrey.Backend
         LLVMValueRef valueRef;
         CompilationValue storage;
         CompilationType typeRef;
+        Result<Tokens> frontendLocation;
 
-        public CompilationValue(LLVMValueRef val, CompilationType type)
+        public CompilationValue(LLVMValueRef val, CompilationType type, Result<Tokens> frontendLoc)
         {
             valueRef = val;
             typeRef = type;
             storage = null;
+            frontendLocation = frontendLoc;
         }
 
         public LLVMValueRef BackendValue => valueRef;
@@ -24,5 +27,7 @@ namespace Humphrey.Backend
             set { storage = value; }
         }
         public CompilationType Type => typeRef;
+
+        public Result<Tokens> FrontendLocation => frontendLocation;
     }
 }

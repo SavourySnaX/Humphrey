@@ -33,7 +33,7 @@ namespace Humphrey.Backend
             var param = type.Parameters;
             for (uint a = type.OutParamOffset; a < param.Length; a++)
             {
-                if (!usedOutputs.Contains(param[a].Identifier))
+                if (!usedOutputs.Contains(param[a].Identifier.Dump()))
                     return false;
             }
 
@@ -47,7 +47,7 @@ namespace Humphrey.Backend
                 var param = type.Parameters;
                 for (uint a = type.OutParamOffset; a < param.Length; a++)
                 {
-                    if (!usedOutputs.Contains(param[a].Identifier))
+                    if (!usedOutputs.Contains(param[a].Identifier.Dump()))
                         yield return param[a];
                 }
             }
