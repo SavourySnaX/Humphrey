@@ -485,6 +485,23 @@ Main:(a:bit,b:bit)(out:bit)=
         }
 
         [Theory]
+        [InlineData(@"value1:[32]bit=99 value2:[64]bit=99 Main:()(out:bit)={ out=value1==(value2 as [32]bit);}", "Main", 1)]
+        public void CheckIntTruncatingCast(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"value1:[-64]bit=-99 value2:[32]bit=-99 Main:()(out:bit)={ out=value1==(value2 as [-64]bit);}", "Main", 1)]
+        [InlineData(@"value1:[-64]bit=-99 value2:[-32]bit=-99 Main:()(out:bit)={ out=value1==(value2 as [-64]bit);}", "Main", 1)]
+        [InlineData(@"value1:[64]bit=-99 value2:[32]bit=-99 Main:()(out:bit)={ out=value1==(value2 as [64]bit);}", "Main", 0)]
+        [InlineData(@"value1:[64]bit=-99 value2:[-32]bit=-99 Main:()(out:bit)={ out=value1==(value2 as [64]bit);}", "Main", 0)]
+        public void CheckIntExtendingCast(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
+
+        [Theory]
         [InlineData(@"value1:=99 value2:=99 as *[8]bit Main:()(out:bit)={ out=value1==(value2 as [64]bit);}", "Main", 1)]
         [InlineData(@"value1:=99 value2:=99 as *[8]bit Main:()(out:bit)={ out=(value2 as [64]bit)==value1;}", "Main", 1)]
         public void CheckIntExtension(string input, string entryPointName, byte expected)

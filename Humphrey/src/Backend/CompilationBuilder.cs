@@ -214,6 +214,19 @@ namespace Humphrey.Backend
 
         public CompilationValue Cast(CompilationValue src, CompilationType toType)
         {
+
+            if (src.Type is CompilationIntegerType sit && toType is CompilationIntegerType tt)
+            {
+                if (sit.IntegerWidth > tt.IntegerWidth)
+                    return new CompilationValue(builderRef.BuildTrunc(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
+                else
+                {
+                    if (tt.IsSigned)
+                        return new CompilationValue(builderRef.BuildSExt(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
+                    else
+                        return new CompilationValue(builderRef.BuildZExt(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
+                }
+            }
             if (toType is CompilationFunctionType cft)
                 toType = unit.CreatePointerType(cft,cft.Location);                 
             if (src.Type is CompilationPointerType && toType is CompilationIntegerType)
