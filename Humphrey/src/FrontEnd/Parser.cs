@@ -623,8 +623,6 @@ namespace Humphrey.FrontEnd
             if (ident == null)
                 return null;
             operands.Push(ident);
-            while (operators.Peek().item != null)
-                PopOperator();
             var op = OneOf(BinaryOperators) as IOperator;
             var terminal = operands.Peek() as IExpression;
             if (op!=null)

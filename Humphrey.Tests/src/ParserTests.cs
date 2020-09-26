@@ -101,11 +101,11 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("++a/2", "/ ++ a 2")]
         [InlineData("--a", "-- a")]
         [InlineData("3*--a", "* 3 -- a")]
-        [InlineData("a++", "a++")]
-        [InlineData("*a++", "* a++")]
-        [InlineData("a+++b", "+ a++ b")]
-        [InlineData("a--", "a--")]
-        [InlineData("5+a--", "+ 5 a--")]
+        [InlineData("a++", "(a)++")]
+        [InlineData("*a++", "* (a)++")]
+        [InlineData("a+++b", "+ (a)++ b")]
+        [InlineData("a--", "(a)--")]
+        [InlineData("5+a--", "+ 5 (a)--")]
         [InlineData("~a", "~ a")]
         [InlineData("a&b", "& a b")]
         [InlineData("a|b", "| a b")]
@@ -117,12 +117,26 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("++a;--a", "++ a")]
         [InlineData("--a;++a", "-- a")]
         [InlineData("--a;--a", "-- a")]
-        [InlineData("(++a)++", "++ a++")]
+        [InlineData("(++a)++", "(++ a)++")]
+        [InlineData("this.that++", "(. this that)++")]
         [InlineData("(b).5",null)]
         [InlineData("()",null)]
         [InlineData("[]",null)]
         [InlineData("(]",null)]
         public void CheckExpression(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.ParseExpression(), expected);
+        }
+
+        [Theory]
+        [InlineData("*wat.the++","* (. wat the)++")]
+        [InlineData("*(wat.the)++","* (. wat the)++")]
+        [InlineData("*wat.the", "* . wat the")]
+        [InlineData("wat.the.h", ". . wat the h")]
+        public void CheckExpressionExtra(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();
             var tokens = tokenise.Tokenize(input);

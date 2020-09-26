@@ -14,7 +14,7 @@ namespace Humphrey.FrontEnd
     
         public string Dump()
         {
-            return $"{expr.Dump()}--";
+            return $"({expr.Dump()})--";
         }
 
         public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)

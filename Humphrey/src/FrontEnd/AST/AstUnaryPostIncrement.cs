@@ -13,7 +13,7 @@ namespace Humphrey.FrontEnd
     
         public string Dump()
         {
-            return $"{expr.Dump()}++";
+            return $"({expr.Dump()})++";
         }
 
         public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
@@ -54,6 +54,7 @@ namespace Humphrey.FrontEnd
                 return cv;
             }
         }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 
