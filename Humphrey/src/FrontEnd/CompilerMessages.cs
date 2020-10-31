@@ -11,6 +11,7 @@ namespace Humphrey.FrontEnd
         Error_ExpectedGlobalDefinition = Error | ParseError | 0x01,
         Error_ExpectedEnumMemberDefinition = Error | ParseError | 0x02,
         Error_ExpectedStructMemberDefinition = Error | ParseError | 0x03,
+        Error_ExpectedAssignable = Error | ParseError | 0x04,
         // Compilation block
         Error_MissingOutputAssignment = Error | CompileError | 0x01,
         Error_IntegerWidthMismatch = Error | CompileError | 0x02,

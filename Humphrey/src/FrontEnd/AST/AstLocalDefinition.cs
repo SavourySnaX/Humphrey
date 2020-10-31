@@ -41,6 +41,13 @@ namespace Humphrey.FrontEnd
             else 
                 (ct,ot) = type.CreateOrFetchType(unit);
 
+            if (ct==null)
+            {
+                if (unit.Messages.HasErrors)
+                    return false;    // recover from previous error
+                throw new System.Exception($"Recovery attempt without prior error");
+            }
+
             foreach (var ident in identifiers)
             {
                 var functionType = ct as CompilationFunctionType;

@@ -159,7 +159,6 @@ namespace Humphrey.Backend
             return new CompilationValue(builderRef.BuildInsertValue(dst.BackendValue, toStore.BackendValue, index), toStore.Type, dst.FrontendLocation.Combine(toStore.FrontendLocation));
         }
 
-
         public CompilationValue InBoundsGEP(CompilationValue ptr, CompilationPointerType resolvedType, LLVMValueRef[] indices)
         {
             var ptrType = ptr.Type as CompilationPointerType;

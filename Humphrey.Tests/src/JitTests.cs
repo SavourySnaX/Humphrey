@@ -545,6 +545,17 @@ Main:(a:bit,b:bit)(out:bit)=
         }
 
         [Theory]
+        [InlineData(@"Main : (a : [32]bit) (returnValue : [8]bit) = { ptr:=&a; bytePtr:=ptr as *[8]bit; returnValue=bytePtr[0]; }", "Main", 0xAABBCCDD, 0xDD)]
+        [InlineData(@"Main : (a : [32]bit) (returnValue : [8]bit) = { ptr:=&a; bytePtr:=ptr as *[8]bit; returnValue=bytePtr[1]; }", "Main", 0xAABBCCDD, 0xCC)]
+        [InlineData(@"Main : (a : [32]bit) (returnValue : [8]bit) = { ptr:=&a; bytePtr:=ptr as *[8]bit; returnValue=bytePtr[2]; }", "Main", 0xAABBCCDD, 0xBB)]
+        [InlineData(@"Main : (a : [32]bit) (returnValue : [8]bit) = { ptr:=&a; bytePtr:=ptr as *[8]bit; returnValue=bytePtr[3]; }", "Main", 0xAABBCCDD, 0xAA)]
+        public void CheckAddressOf(string input, string entryPointName, uint input32, byte expected)
+        {
+            Assert.True(Input32BitExpectsByteValue(CompileForTest(input, entryPointName), input32, expected), $"Test {entryPointName},{input},{input32},{expected}");
+        }
+
+
+        [Theory]
         [InlineData(@"Main : (a : *[8]bit, b:[8]bit) () = { *a=b; }", "Main", new byte[] { 21, 31 }, 12, new byte[] { 12, 31 })]
         [InlineData(@"Main : (a : *[8]bit, b:[8]bit) () = { *a=b; }", "Main", new byte[] { 21, 31 }, 99, new byte[] { 99, 31 })]
         [InlineData(@"Main : (a : *[8]bit, b:[8]bit) () = { a++; *a=b; }", "Main", new byte[] { 21, 31 }, 12, new byte[] { 21, 12 })]
@@ -1125,6 +1136,16 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
         public static bool Input8BitExpectsBitValue(IntPtr ee, byte input, byte expected)
         {
             var func = Marshal.GetDelegateForFunctionPointer<Input8BitOutputBit>(ee);
+            byte returnValue;
+            func(input, &returnValue);
+            return returnValue == expected;
+        }
+
+        delegate void Input32BitOutputByte(uint inputVal1, byte* returnVal);
+
+        public static bool Input32BitExpectsByteValue(IntPtr ee, uint input, byte expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<Input32BitOutputByte>(ee);
             byte returnValue;
             func(input, &returnValue);
             return returnValue == expected;

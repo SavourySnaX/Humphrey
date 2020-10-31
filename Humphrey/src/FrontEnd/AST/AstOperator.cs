@@ -68,6 +68,7 @@ namespace Humphrey.FrontEnd
                     case "":
                         return int.MaxValue;
                     case "*":
+                    case "&":
                         return 950;
                     case "~":
                     case "!":

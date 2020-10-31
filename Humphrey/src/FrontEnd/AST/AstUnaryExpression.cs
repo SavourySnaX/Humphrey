@@ -18,6 +18,9 @@ namespace Humphrey.FrontEnd
                 case "*":
                     unary = new AstUnaryDereference(expression);
                     break;
+                case "&":
+                    unary = new AstUnaryAddressOf(expression);
+                    break;
                 case "!":
                     unary = new AstUnaryLogicalNot(expression);
                     break;

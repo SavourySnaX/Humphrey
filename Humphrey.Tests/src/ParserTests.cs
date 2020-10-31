@@ -119,6 +119,7 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("--a;--a", "-- a")]
         [InlineData("(++a)++", "(++ a)++")]
         [InlineData("this.that++", "(. this that)++")]
+        [InlineData("&b","& b")]
         [InlineData("(b).5",null)]
         [InlineData("()",null)]
         [InlineData("[]",null)]

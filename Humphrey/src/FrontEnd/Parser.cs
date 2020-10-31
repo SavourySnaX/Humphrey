@@ -183,7 +183,7 @@ namespace Humphrey.FrontEnd
         public delegate bool TerminalConditionDelegate(Result<Tokens> currentToken);
 
         // | (1 of)
-        protected IAst OneOf(AstItemDelegate[] kinds)
+        protected IAst OneOf(AstItemDelegate[] kinds, CompilerErrorKind errorKind = CompilerErrorKind.Debug)
         {
             foreach (var k in kinds)
             {
@@ -191,8 +191,38 @@ namespace Humphrey.FrontEnd
                 if (t != null)
                     return t;
             }
-
+            if (errorKind != CompilerErrorKind.Debug)
+            {
+                var expected = ErrorFormatNoKindsMatched(kinds);
+                var failedDueTo = CurrentToken();
+                messages.Log(errorKind, $"Expected one of {expected}, but got {failedDueTo.Value}!", failedDueTo.Location, failedDueTo.Remainder);
+            }
             return null;
+        }
+
+        private string ErrorFormatNoKindsMatched(AstItemDelegate[] kinds)
+        {
+            var s = new StringBuilder();
+            s.Append("[");
+            bool first = true;
+            foreach (var kind in kinds)
+            {
+                if (first)
+                    first = false;
+                else
+                    s.Append(",");
+                var error = kind.GetMethodInfo().GetCustomAttribute<ExpectedParseErrorAttribute>();
+                if (error != null)
+                {
+                    s.Append(error.Message);
+                }
+                else
+                {
+                    throw new System.NotImplementedException($"Missing ExpectedParseErrorAttribute on {kind.GetMethodInfo().Name}");
+                }
+            }
+            s.Append("]");
+            return s.ToString();
         }
 
         // 0 or more ( | )
@@ -209,28 +239,9 @@ namespace Humphrey.FrontEnd
                     list.Add(t);
                 else
                 {
-                    var s = new StringBuilder();
+                    var expected = ErrorFormatNoKindsMatched(kinds);
                     var failedDueTo = CurrentToken();
-                    s.Append("[");
-                    bool first = true;
-                    foreach (var kind in kinds)
-                    {
-                        var error = kind.GetMethodInfo().GetCustomAttribute<ExpectedParseErrorAttribute>();
-                        if (error != null)
-                        {
-                            s.Append(error.Message);
-                        }
-                        else
-                        {
-                            throw new System.NotImplementedException($"Missing ExpectedParseErrorAttribute on {kind.GetMethodInfo().Name}");
-                        }
-                        if (first)
-                            first = false;
-                        else
-                            s.Append(",");
-                    }
-                    s.Append("]");
-                    messages.Log(notValidConditionError, $"Expected one of {s}, but got {failedDueTo.Value}!", failedDueTo.Location, failedDueTo.Remainder);
+                    messages.Log(notValidConditionError, $"Expected one of {expected}, but got {failedDueTo.Value}!", failedDueTo.Location, failedDueTo.Remainder);
                     break;
                 }
             }
@@ -310,21 +321,23 @@ namespace Humphrey.FrontEnd
         public IAst DivideOperator() { return AstItem(Tokens.O_Divide, (e) => new AstOperator(e)); }
         // modulus_operator : %
         public IAst ModulusOperator() { return AstItem(Tokens.O_Modulus, (e) => new AstOperator(e)); }
-        // logical_and_operator : %
+        // logical_and_operator : &&
         public IAst LogicalAndOperator() { return AstItem(Tokens.O_LogicalAnd, (e) => new AstOperator(e)); }
-        // logical_or_operator : %
+        // logical_or_operator : ||
         public IAst LogicalOrOperator() { return AstItem(Tokens.O_LogicalOr, (e) => new AstOperator(e)); }
-        // binary_and_operator : %
+        // binary_and_operator : &
         public IAst BinaryAndOperator() { return AstItem(Tokens.O_BinaryAnd, (e) => new AstOperator(e)); }
-        // binary_or_operator : %
+        // binary_or_operator : |
         public IAst BinaryOrOperator() { return AstItem(Tokens.O_BinaryOr, (e) => new AstOperator(e)); }
-        // binary_xor_operator : %
+        // binary_xor_operator : ^
         public IAst BinaryXorOperator() { return AstItem(Tokens.O_BinaryXor, (e) => new AstOperator(e)); }
-        // as_operator : %
+        // address_of_operator : &
+        public IAst AddressOfOperator() { return AstItem(Tokens.O_BinaryAnd, (e) => new AstOperator(e)); }
+        // as_operator : as
         public IAst AsOperator() { return AstItem(Tokens.O_As, (e) => new AstOperator(e)); }
         // reference_operator : .
         public IAst ReferenceOperator() { return AstItem(Tokens.O_Dot, (e) => new AstOperator(e)); }
-        // range_operator : .
+        // range_operator : ..
         public IAst DotDotOperator() { return AstItem(Tokens.O_DotDot, (e) => new AstOperator(e)); }
         // function_call_operator : (
         public IAst FunctionCallOperator() { return AstItem(Tokens.S_OpenParanthesis, (e) => new AstOperator(e)); }
@@ -351,7 +364,7 @@ namespace Humphrey.FrontEnd
         public bool UnderscoreOperator() { return Take(Tokens.S_Underscore); }
         public bool PointerOperator() { return Take(Tokens.O_Multiply); }
 
-        public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, LogicalNotOperator, BinaryNotOperator, PreIncrementOperator, PreDecrementOperator };
+        public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, LogicalNotOperator, BinaryNotOperator, PreIncrementOperator, PreDecrementOperator, AddressOfOperator };
         public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator, 
                 CompareEqualOperator, CompareNotEqualOperator, CompareLessOperator, CompareLessEqualOperator, CompareGreaterOperator, CompareGreaterEqualOperator,
                 AsOperator, ReferenceOperator, FunctionCallOperator, ArraySubscriptOperator, PostIncrementOperator, PostDecrementOperator,
@@ -398,6 +411,7 @@ namespace Humphrey.FrontEnd
 
         // expression = expression
         //            | 
+        [ExpectedParseError("Expression")]
         public IExpression ParseExpression()
         {
             PushSentinel();
@@ -1034,7 +1048,7 @@ namespace Humphrey.FrontEnd
 
         // assignable : { statements }      // function body
         //            | expression
-        public IAssignable Assignable() { return OneOf(Assignables) as IAssignable; }
+        public IAssignable Assignable() { return OneOf(Assignables, CompilerErrorKind.Error_ExpectedAssignable) as IAssignable; }
 
         // enum_element_definition : identifier := assignable
         //                           
@@ -1191,6 +1205,7 @@ namespace Humphrey.FrontEnd
         }
 
         // code_block : { statement_list* }
+        [ExpectedParseError("CodeBlock")]
         public AstCodeBlock CodeBlock()
         {
             var start = CurrentToken();
