@@ -6,21 +6,29 @@ namespace Humphrey.FrontEnd
     public enum CompilerErrorKind : ushort
     {
         // Tokeniser block
-        Error_InvalidToken              =   Error|0x001,
+        Error_InvalidToken                      =   Error | TokeniseError | 0x01,
         // Parser block
+        Error_ExpectedGlobalDefinition          =   Error | ParseError | 0x01,
+        Error_ExpectedEnumMemberDefinition      =   Error | ParseError | 0x02,
+        Error_ExpectedStructMemberDefinition    =   Error | ParseError | 0x03,
         // Compilation block
-        Error_MissingOutputAssignment   =   Error|0x801,
-        Error_IntegerWidthMismatch      =   Error|0x802,
+        Error_MissingOutputAssignment   = Error | CompileError | 0x01,
+        Error_IntegerWidthMismatch      = Error | CompileError | 0x02,
         // LLVM block
-        Error_FailedVerification        =   Error|0xC01,
+        Error_FailedVerification = Error | LLVMError | 0x01,
 
-        Debug=0x0000,
+        Debug = 0x0000,
         Info = 0x4000,
-        Warning=0x8000,
-        Error=0xC000,
+        Warning = 0x8000,
+        Error = 0xC000,
 
-        KindMask=0xC000
+        TokeniseError = 0x000,
+        ParseError = 0x400,
+        CompileError = 0x800,
+        LLVMError = 0xC00,
 
+        KindMask = 0xC000,
+        ErrorKindMask = 0x0C00,
     }
 
     public class CompilerMessages

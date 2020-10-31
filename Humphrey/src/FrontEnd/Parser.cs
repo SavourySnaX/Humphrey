@@ -1,7 +1,23 @@
 ﻿using System.Collections.Generic;
+using System.Reflection;
+using System.Text;
 
 namespace Humphrey.FrontEnd
 {
+    [System.AttributeUsage(System.AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
+    sealed class ExpectedParseErrorAttribute : System.Attribute
+    {
+        readonly string message;
+        
+        // This is a positional argument
+        public ExpectedParseErrorAttribute(string expected)
+        {
+            this.message = expected;
+        }
+
+        public string Message => message;
+    }
+
     [System.Serializable]
     public class ParseException : System.Exception
     {
@@ -164,6 +180,8 @@ namespace Humphrey.FrontEnd
         public delegate IAst AstItemDelegate();
         public delegate IAst AstInitDelegate(string item);
 
+        public delegate bool TerminalConditionDelegate(Result<Tokens> currentToken);
+
         // | (1 of)
         protected IAst OneOf(AstItemDelegate[] kinds)
         {
@@ -178,16 +196,43 @@ namespace Humphrey.FrontEnd
         }
 
         // 0 or more ( | )
-        protected T[] ManyOf<T>(AstItemDelegate[] kinds) where T : class
+        protected T[] ManyOf<T>(AstItemDelegate[] kinds, TerminalConditionDelegate validTerminalCondition, CompilerErrorKind notValidConditionError) where T : class
         {
             var list = new List<T>();
             while (true)
             {
+                if (validTerminalCondition(CurrentToken()))
+                    break;
+
                 var t = OneOf(kinds) as T;
                 if (t != null)
                     list.Add(t);
                 else
+                {
+                    var s = new StringBuilder();
+                    var failedDueTo = CurrentToken();
+                    s.Append("[");
+                    bool first = true;
+                    foreach (var kind in kinds)
+                    {
+                        var error = kind.GetMethodInfo().GetCustomAttribute<ExpectedParseErrorAttribute>();
+                        if (error != null)
+                        {
+                            s.Append(error.Message);
+                        }
+                        else
+                        {
+                            throw new System.NotImplementedException($"Missing ExpectedParseErrorAttribute on {kind.GetMethodInfo().Name}");
+                        }
+                        if (first)
+                            first = false;
+                        else
+                            s.Append(",");
+                    }
+                    s.Append("]");
+                    messages.Log(notValidConditionError, $"Expected one of {s}, but got {failedDueTo.Value}!", failedDueTo.Location, failedDueTo.Remainder);
                     break;
+                }
             }
 
             return list.ToArray();
@@ -803,7 +848,7 @@ namespace Humphrey.FrontEnd
         }
 
         // Root
-        public IGlobalDefinition[] File() { return ManyOf<IGlobalDefinition>(GlobalDefinition); }
+        public IGlobalDefinition[] File() { return ManyOf<IGlobalDefinition>(GlobalDefinition, EndOfFileTerminal, CompilerErrorKind.Error_ExpectedGlobalDefinition); }
 
         // param_definition : identifier : type
         public AstParamDefinition ParamDefinition()
@@ -939,7 +984,7 @@ namespace Humphrey.FrontEnd
             if (!OpenCurlyBrace())
                 return null;
 
-            var definitionList = ManyOf<AstEnumElement>(EnumDefinitions);
+            var definitionList = ManyOf<AstEnumElement>(EnumDefinitions, CloseCurlyBraceTerminal, CompilerErrorKind.Error_ExpectedEnumMemberDefinition);
             if (definitionList == null)
                 return null;
 
@@ -961,7 +1006,7 @@ namespace Humphrey.FrontEnd
             if (!OpenCurlyBrace())
                 return null;
 
-            var definitionList = ManyOf<AstStructElement>(StructDefinitions);
+            var definitionList = ManyOf<AstStructElement>(StructDefinitions, CloseCurlyBraceTerminal, CompilerErrorKind.Error_ExpectedStructMemberDefinition);
             if (definitionList==null)
                 return null;
 
@@ -993,6 +1038,7 @@ namespace Humphrey.FrontEnd
 
         // enum_element_definition : identifier := assignable
         //                           
+        [ExpectedParseError("EnumMemberDefinition")]
         public AstEnumElement EnumElementDefinition()
         {
             var (ok, identifierList, typeSpecifier, assignable, token) = Definition<AstIdentifier>(Identifier, NonFunctionType, Assignable);
@@ -1009,6 +1055,7 @@ namespace Humphrey.FrontEnd
         // struct_element_definition : identifier : non_function_type
         //                           | identifier := assignable
         //                           | identifier : non_function_type = assignable
+        [ExpectedParseError("StructMemberDefinition")]
         public AstStructElement StructElementDefinition()
         {
             var (ok, identifierList, typeSpecifier, assignable, token) = Definition<IIdentifier>(IdentifierOrAnon, NonFunctionType, Assignable);
@@ -1019,9 +1066,20 @@ namespace Humphrey.FrontEnd
             return structElement;
         }
 
+        private bool CloseCurlyBraceTerminal(Result<Tokens> currentToken)
+        {
+            return currentToken.HasValue && currentToken.Value == Tokens.S_CloseCurlyBrace;
+        }
+
+        private bool EndOfFileTerminal(Result<Tokens> currentToken)
+        {
+            return !currentToken.HasValue;
+        }
+
         // global_definition : identifier : non_function_type
         //                   | identifier := assignable
         //                   | identifier : non_function_type = assignable
+        [ExpectedParseError("GlobalDefinition")]
         public AstGlobalDefinition GlobalScopeDefinition()
         {
             var (ok, identifierList, typeSpecifier, assignable, token) = Definition<AstIdentifier>(Identifier, Type, Assignable);
@@ -1051,11 +1109,12 @@ namespace Humphrey.FrontEnd
         public (bool ok, T[] identifierList,IType typeSpecifier, IAssignable assignable, Result<Tokens> token) Definition<T>(AstItemDelegate identifierDelegate,AstItemDelegate typeDelegate, AstItemDelegate assignableDelegate) where T : class
         {
             var start = CurrentToken();
-
+            
             var identifier = CommaSeperatedItemList<T>(identifierDelegate);
             if (identifier == null)
+            {
                 return (false, null, null, null, new Result<Tokens>());
-
+            }
             IType typeSpecifier = null;
             IAssignable assignable = null;
 

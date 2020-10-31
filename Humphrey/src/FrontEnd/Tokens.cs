@@ -229,7 +229,7 @@ namespace Humphrey.FrontEnd
 
             // scan backwards to beginning of line from current location
             int scan=position;
-            while (scan > 0)
+            while (scan >= 0)
             {
                 var c = encompass[scan];
                 if (c == '\r' || c == '\n' || Char.GetUnicodeCategory(c) == System.Globalization.UnicodeCategory.LineSeparator)
@@ -239,6 +239,9 @@ namespace Humphrey.FrontEnd
                 }
                 scan--;
             }
+            if (scan < 0)
+                scan = 0;
+
             int end=position;
             while (end < encompass.Length)
             {
@@ -250,7 +253,6 @@ namespace Humphrey.FrontEnd
                 }
                 end++;
             }
-
             if (end >= encompass.Length)
                 end--;
 
