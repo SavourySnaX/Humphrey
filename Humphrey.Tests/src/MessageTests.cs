@@ -47,6 +47,7 @@ namespace Humphrey.Tests.src
         [InlineData("Func:()()={brokenValue,cat:bit=1; cat=bob;}", CompilerErrorKind.Error_UndefinedValue)]
         [InlineData("ptr:*bit=1 as *bit", CompilerErrorKind.Debug)]
         [InlineData("ptr:*bit=1", CompilerErrorKind.Error_TypeMismatch)]
+        [InlineData("ptr:*bit=1 as *[8]bit", CompilerErrorKind.Error_TypeMismatch)]
         public void CheckCompilationMessages(string input, CompilerErrorKind kind)
         {
             CompilationTest(input, kind);

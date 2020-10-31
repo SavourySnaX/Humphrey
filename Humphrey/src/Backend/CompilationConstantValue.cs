@@ -115,6 +115,12 @@ namespace Humphrey.Backend
                 }
                 else
                     type = resultType.CreateOrFetchType(unit).compilationType;
+
+                if (!type.Same(destType))
+                {
+                    unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Attempting to assign a value of type '{type.DumpType()}' to type '{destType.DumpType()}.'", frontendLocation.Location, frontendLocation.Remainder);
+                    type = destType;    // Attempt recovery from error
+                }
                 if (type.Same(destType))
                 {
                     // Create the constant
