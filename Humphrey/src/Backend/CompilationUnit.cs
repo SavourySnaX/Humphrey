@@ -54,7 +54,7 @@ namespace Humphrey.Backend
             
             debugBuilder = new CompilationDebugBuilder(debugInfo, this, sourceFileNameAndPath, CompilerVersion, targetTriple.Contains("msvc"));
 
-            symbolScopes = new Scope();
+            symbolScopes = new Scope(this);
             symbolScopes.PushScope(moduleName, debugBuilder.RootScope);
 
             pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
@@ -134,9 +134,21 @@ namespace Humphrey.Backend
             return CreateIntegerType(numBits, isSigned, location);
         }
 
-        public (CompilationType compilationType, IType originalType) FetchNamedType(string identifier)
+        public (CompilationType compilationType, IType originalType) FetchNamedType(IIdentifier identifier)
         {
-            return symbolScopes.FetchNamedType(identifier);
+            var res = symbolScopes.FetchNamedType(identifier);
+            if (res.originalType == null)
+            {
+                if (CompileMissing(identifier.Name))
+                {
+                    res = symbolScopes.FetchNamedType(identifier);
+                }
+            }
+            if (res.originalType==null)
+            {
+                Messages.Log(CompilerErrorKind.Error_UndefinedType, $"Type '{identifier.Name}' is not found in the current scope.", identifier.Token.Location, identifier.Token.Remainder);
+            }
+            return res;
         }
 
         public void CreateNamedType(string identifier, CompilationType type, IType originalType)
@@ -149,8 +161,10 @@ namespace Humphrey.Backend
         {
             var types = new LLVMTypeRef[elements.Length];
             int idx = 0;
-            foreach(var element in elements)
-                types[idx++] = element.BackendType;
+            foreach (var element in elements)
+            {
+                types[idx++] = element == null ? null : element.BackendType;
+            }
 
             var backendType = contextRef.GetStructType(types, true);
             return new CompilationStructureType(backendType, elements, names, debugBuilder, location);
@@ -192,23 +206,25 @@ namespace Humphrey.Backend
             return new CompilationFunctionType(compilationFunctionType, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
         }
 
-        public CompilationValue FetchValueInternal(string identifier, CompilationBuilder builder)
+        public CompilationValue FetchValueInternal(IIdentifier identifier, CompilationBuilder builder)
         {
             return symbolScopes.FetchValue(this, identifier, builder);
         }
 
-        public CompilationValue FetchValue(string identifier, CompilationBuilder builder)
+        public CompilationValue FetchValue(IIdentifier identifier, CompilationBuilder builder)
         {
             var resolved = FetchValueInternal(identifier, builder);
             if (resolved==null)
             {
-                if (CompileMissing(identifier))
+                if (CompileMissing(identifier.Name))
                 {
                     resolved = FetchValueInternal(identifier, builder);
                 }
             }
             if (resolved == null)
-                throw new Exception($"Failed to find identifier {identifier}");
+            {
+                Messages.Log(CompilerErrorKind.Error_UndefinedValue, $"Undefined value '{identifier.Name}'", identifier.Token.Location, identifier.Token.Remainder);
+            }
 
             return resolved;
         }

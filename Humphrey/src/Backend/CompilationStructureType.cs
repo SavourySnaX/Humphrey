@@ -95,6 +95,11 @@ namespace Humphrey.Backend
                 // Compilation error, struct xxx does not contain field yyy
                 throw new System.Exception($"Need error message and partial recovery -struct does not contain field {identifier}");
             }
+            if (elementTypes[idx]==null)
+            {
+                // Undefined type - error handled at source
+                throw new CompilationAbortException($"Attempt to dereference an undefined type from structure '{identifier}'");
+            }
 
             var cPtrType = unit.CreatePointerType(elementTypes[idx], elementTypes[idx].Location);
             return builder.InBoundsGEP(src, cPtrType, new LLVMValueRef[] { unit.CreateI32Constant(0), unit.CreateI32Constant(idx) });

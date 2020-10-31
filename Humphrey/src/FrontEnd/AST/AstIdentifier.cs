@@ -4,22 +4,22 @@ namespace Humphrey.FrontEnd
 {
     public class AstIdentifier : IExpression, IType, IIdentifier
     {
-        string temp;
+        string name;
         public AstIdentifier(string value)
         {
-            temp = value;
+            name = value;
         }
     
         public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
-            return unit.FetchNamedType(temp);
+            return unit.FetchNamedType(this);
         }
     
         public bool IsFunctionType => false;
     
         public string Dump()
         {
-            return temp;
+            return name;
         }
         public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
@@ -30,6 +30,7 @@ namespace Humphrey.FrontEnd
         {
             throw new System.NotImplementedException($"Todo implement expression processing for non loadable identifier");
         }
+        public string Name => name;
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

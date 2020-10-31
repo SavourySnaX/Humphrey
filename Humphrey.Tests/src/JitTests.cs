@@ -462,6 +462,7 @@ Main:(a:bit,b:bit)(out:bit)=
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=Add(a,b);} Add:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=a+b;}", "Main", 1,3,4)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=a+b+c+d;} c,d:[8]bit=6", "Main", 1,3,16)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=a+b+c.V1+c.V2;} c:[8]bit{V1:=5 V2:=10}", "Main", 1,3,19)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={out=a+b+c.V1+c.V2;} c:byte{V1:=5 V2:=10} byte:[8]bit", "Main", 1,3,19)]
         public void CheckUseBeforeDef(string input, string entryPointName, byte ival1, byte ival2, byte expected)
         {
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");

@@ -261,7 +261,10 @@ namespace Humphrey.FrontEnd
             s.AppendLine();
             for (int a = scan; a < position; a++)
             {
-                s.Append(" ");
+                if (Char.IsWhiteSpace(encompass[a]))
+                    s.Append(encompass[a]);
+                else
+                    s.Append(" ");
             }
             for (int a = 0; a < length; a++)
                 s.Append("^");

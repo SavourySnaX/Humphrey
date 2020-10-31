@@ -15,7 +15,14 @@ namespace Humphrey.FrontEnd
         public CompilationUnit Compile(IGlobalDefinition[] definitions, string sourceFileNameAndPath , string targetTriple, bool disableOptimisations, bool debugInfo)
         {
             var unit = new CompilationUnit(sourceFileNameAndPath, definitions, targetTriple, disableOptimisations, debugInfo, messages);
-            unit.Compile();
+            try
+            {
+                unit.Compile();
+            }
+            catch (CompilationAbortException cae)
+            {
+                messages.Log(CompilerErrorKind.Error_CompilationAborted, $"Compilation Aborted '{cae.Message}'");
+            }
             return unit;
         }
     }

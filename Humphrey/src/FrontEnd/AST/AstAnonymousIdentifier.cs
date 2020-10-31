@@ -10,9 +10,10 @@ namespace Humphrey.FrontEnd
     
         public string Dump()
         {
-            return "_";
+            return Name;
         }
 
+        public string Name => "_";
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

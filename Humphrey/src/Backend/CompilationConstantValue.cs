@@ -107,7 +107,14 @@ namespace Humphrey.Backend
             }
             else if (destType is CompilationPointerType destPtrType)
             {
-                var type = resultType.CreateOrFetchType(unit).compilationType;
+                CompilationType type;
+                if (resultType == null)
+                {
+                    unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Attempting to assign {constant} to a pointer type {destType.Identifier}, you must supply a destination pointer type via as.", frontendLocation.Location, frontendLocation.Remainder);
+                    type = destType;    // Attempt recovery from error
+                }
+                else
+                    type = resultType.CreateOrFetchType(unit).compilationType;
                 if (type.Same(destType))
                 {
                     // Create the constant

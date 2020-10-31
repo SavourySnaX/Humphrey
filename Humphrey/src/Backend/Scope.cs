@@ -14,8 +14,11 @@ namespace Humphrey.Backend
 
         private Stack<List<LLVMMetadataRef>> debugScopeSave;
 
-        public Scope()
+        private readonly CompilationUnit unit;
+
+        public Scope(CompilationUnit unit)
         {
+            this.unit = unit;
             scopeStack = new List<(string,SymbolTable)>();
             scopeSave = new Stack<List<(string name, SymbolTable symbols)>>();
             debugScopeSave = new Stack<List<LLVMMetadataRef>>();
@@ -89,13 +92,13 @@ namespace Humphrey.Backend
 
 
         // Fetch type based on the current scope
-        public (CompilationType compilationType, IType originalType) FetchNamedType(string identifier)
+        public (CompilationType compilationType, IType originalType) FetchNamedType(IIdentifier identifier)
         {
             CompilationValue found = null;
             int stackIdx = scopeStack.Count - 1;
             while (found==null && stackIdx>=0)
             {
-                var type=scopeStack[stackIdx].symbols.FetchType(identifier);
+                var type=scopeStack[stackIdx].symbols.FetchType(identifier.Name);
                 if (type.compilationType != null)
                     return type;
                 stackIdx--;
@@ -134,13 +137,13 @@ namespace Humphrey.Backend
         }
 
         // Fetch value based on the current scope
-        public CompilationValue FetchValue(CompilationUnit unit, string identifier, CompilationBuilder builder)
+        public CompilationValue FetchValue(CompilationUnit unit, IIdentifier identifier, CompilationBuilder builder)
         {
             CompilationValue found = null;
             int stackIdx = scopeStack.Count - 1;
             while (found==null && stackIdx>=0)
             {
-                var value = FetchValueInternal(unit, scopeStack[stackIdx].symbols, identifier, builder);
+                var value = FetchValueInternal(unit, scopeStack[stackIdx].symbols, identifier.Name, builder);
                 if (value != null)
                     return value;
                 stackIdx--;

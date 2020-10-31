@@ -39,6 +39,12 @@ namespace Humphrey.FrontEnd
         public static CompilationValue EnsureTypeOk(CompilationUnit unit, CompilationBuilder builder, IExpression expr, CompilationType destType)
         {
             var result = expr.ProcessExpression(unit, builder);
+            if (result == null)
+            {
+                if (unit.Messages.HasErrors)
+                    return unit.CreateUndef(destType);  // Allow recovery from a missing value error
+                throw new System.Exception($"Recovery attempt without prior error");
+            }
             CompilationValue src = Expression.ResolveExpressionToValue(unit, result, destType);
 
             while (true)

@@ -37,10 +37,16 @@ namespace Humphrey.Tests.src
         [InlineData("MismatchSize:()(out:[4]bit)={out=99;}", CompilerErrorKind.Error_IntegerWidthMismatch)]
         [InlineData("byte:[8]bit", CompilerErrorKind.Debug)]
         [InlineData("byte:bit[8]", CompilerErrorKind.Error_ExpectedGlobalDefinition)]
-        [InlineData("brokenStruct:{byte:bit}", CompilerErrorKind.Debug)]
+        [InlineData("okStruct:{byte:bit}", CompilerErrorKind.Debug)]
         [InlineData("brokenStruct:{byte:bit[}", CompilerErrorKind.Error_ExpectedStructMemberDefinition)]
-        [InlineData("brokenEnum:bit{True:=1}", CompilerErrorKind.Debug)]
+        [InlineData("okEnum:bit{True:=1}", CompilerErrorKind.Debug)]
         [InlineData("brokenEnum:bit{True=1}", CompilerErrorKind.Error_ExpectedEnumMemberDefinition)]
+        [InlineData("myType:bit bob:myType", CompilerErrorKind.Debug)]
+        [InlineData("brokenType:bit bob:myType", CompilerErrorKind.Error_UndefinedType)]
+        [InlineData("Func:()()={bob,cat:bit=1; cat=bob;}", CompilerErrorKind.Debug)]
+        [InlineData("Func:()()={brokenValue,cat:bit=1; cat=bob;}", CompilerErrorKind.Error_UndefinedValue)]
+        [InlineData("ptr:*bit=1 as *bit", CompilerErrorKind.Debug)]
+        [InlineData("ptr:*bit=1", CompilerErrorKind.Error_TypeMismatch)]
         public void CheckCompilationMessages(string input, CompilerErrorKind kind)
         {
             CompilationTest(input, kind);
