@@ -84,14 +84,14 @@ namespace Humphrey.Backend
             return default;
         }
 
-        public CompilationDebugType CreateFunctionType(string name, CompilationDebugType[] parameterTypes, SourceLocation location)
+        public CompilationDebugType CreateFunctionType(string name, CompilationDebugType returnType, CompilationDebugType[] parameterTypes, SourceLocation location)
         {
             if (enabled)
             {
                 var flags = LLVMDIFlags.LLVMDIFlagPublic;
                 var paramTypes = new LLVMMetadataRef[parameterTypes.Length + 1]; // return type is first
                 var idx = 0;
-                paramTypes[idx++] = null;   // for now all our functions are void return types
+                paramTypes[idx++] = returnType == null ? null : returnType.BackendType;   // for now all our functions are void return types
                 foreach (var t in parameterTypes)
                 {
                     paramTypes[idx++] = t.BackendType;

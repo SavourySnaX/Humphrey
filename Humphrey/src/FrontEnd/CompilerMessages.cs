@@ -7,11 +7,16 @@ namespace Humphrey.FrontEnd
     {
         // Tokeniser block
         Error_InvalidToken = Error | TokeniseError | 0x01,
+        
         // Parser block
         Error_ExpectedGlobalDefinition = Error | ParseError | 0x01,
         Error_ExpectedEnumMemberDefinition = Error | ParseError | 0x02,
         Error_ExpectedStructMemberDefinition = Error | ParseError | 0x03,
         Error_ExpectedAssignable = Error | ParseError | 0x04,
+        Error_EmptyMetaDataNode = Error | ParseError | 0x05,
+        Error_ExpectedIdentifierList = Error | ParseError | 0x06,
+        Error_ExpectedToken = Error | ParseError | 0x07,
+
         // Compilation block
         Error_MissingOutputAssignment = Error | CompileError | 0x01,
         Error_IntegerWidthMismatch = Error | CompileError | 0x02,
@@ -19,9 +24,11 @@ namespace Humphrey.FrontEnd
         Error_UndefinedValue = Error | CompileError | 0x04,
         Error_TypeMismatch = Error | CompileError | 0x05,
         Error_CompilationAborted = Error | CompileError | 0xFF,
+        
         // LLVM block
         Error_FailedVerification = Error | LLVMError | 0x01,
 
+        //
         Debug = 0x0000,
         Info = 0x4000,
         Warning = 0x8000,

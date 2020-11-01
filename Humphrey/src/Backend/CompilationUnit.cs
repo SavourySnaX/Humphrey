@@ -192,7 +192,7 @@ namespace Humphrey.Backend
             var paramIdx = 0;
             foreach(var i in inputs)
             {
-                allBackendParams[paramIdx] = i.Type.BackendType;
+                allBackendParams[paramIdx] = i.Type==null ? null : i.Type.BackendType;
                 allParams[paramIdx++] = i;
             }
             foreach(var o in outputs)
@@ -203,7 +203,40 @@ namespace Humphrey.Backend
             }
 
             var compilationFunctionType = Extensions.Helpers.CreateFunctionType(contextRef.VoidType, allBackendParams, false);
-            return new CompilationFunctionType(compilationFunctionType, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
+            return new CompilationFunctionType(compilationFunctionType, CompilationFunctionType.CallingConvention.HumphreyInternal, null, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
+        }
+
+        public CompilationFunctionType CreateExternalCFunctionType(AstFunctionType functionType, CompilationParam[] inputs, CompilationParam[] outputs)
+        {
+            var allParams = new CompilationParam[inputs.Length];
+            var allBackendParams = new LLVMTypeRef[inputs.Length];
+            var paramIdx = 0;
+            foreach(var i in inputs)
+            {
+                allBackendParams[paramIdx] = i.Type==null ? null : i.Type.BackendType;
+                allParams[paramIdx++] = i;
+            }
+
+            CompilationParam realReturn = default;
+            LLVMTypeRef returnType = default;
+            if (outputs.Length == 0)
+            {
+                returnType = contextRef.VoidType;
+                realReturn = null;
+            }
+            else if (outputs.Length == 1)
+            {
+                returnType = outputs[0].Type == null ? null : outputs[0].Type.BackendType;
+                realReturn = outputs[0];
+            }
+            else
+            {
+                //messages.Log(CompilerErrorKind.Error_ABIMismatch, $"C Calling Convention does not support multiple return values");
+                throw new CompilationAbortException($"TODO - add error about multiple returns for C calling convention");
+            }
+
+            var compilationFunctionType = Extensions.Helpers.CreateFunctionType(returnType, allBackendParams, false);
+            return new CompilationFunctionType(compilationFunctionType, CompilationFunctionType.CallingConvention.CDecl, realReturn, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
         }
 
         public CompilationValue FetchValueInternal(IIdentifier identifier, CompilationBuilder builder)
@@ -314,6 +347,24 @@ namespace Humphrey.Backend
 
             return cfunc;
         }
+        public CompilationFunction CreateExternalCFunction(CompilationFunctionType type, AstIdentifier identifier)
+        {
+            string functionName = identifier.Name;
+
+            if (symbolScopes.FetchFunction(functionName)!=null)
+                throw new Exception($"function {functionName} already exists!");
+
+            var func = moduleRef.AddFunction(functionName, type.BackendType);
+            func.Linkage = LLVMLinkage.LLVMExternalLinkage;
+
+            var cfunc = new CompilationFunction(func, type);
+
+            if (!symbolScopes.AddFunction(functionName, cfunc))
+                throw new Exception($"function {identifier} failed to add symbol!");
+
+            return cfunc;
+        }
+
 
         public void PushScope(string identifier, LLVMMetadataRef debugScope)
         {

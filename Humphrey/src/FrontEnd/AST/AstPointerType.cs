@@ -13,6 +13,8 @@ namespace Humphrey.FrontEnd
         public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
             var (ct,ot) = elementType.CreateOrFetchType(unit);
+            if (ct==null)
+                throw new CompilationAbortException($"Attempt to create a pointer to an unknown type {elementType.Dump()}");
             return (unit.CreatePointerType(ct, new SourceLocation(Token)), this);
         }
     
@@ -26,7 +28,8 @@ namespace Humphrey.FrontEnd
         public IType ElementType => elementType;
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
-
+        private AstMetaData metaData;
+        public AstMetaData MetaData { get => metaData; set => metaData = value; }
     }
 }
 

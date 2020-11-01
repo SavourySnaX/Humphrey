@@ -241,7 +241,10 @@ namespace Humphrey.FrontEnd
                 {
                     var expected = ErrorFormatNoKindsMatched(kinds);
                     var failedDueTo = CurrentToken();
-                    messages.Log(notValidConditionError, $"Expected one of {expected}, but got {failedDueTo.Value}!", failedDueTo.Location, failedDueTo.Remainder);
+                    if (failedDueTo.HasValue)
+                        messages.Log(notValidConditionError, $"Expected one of {expected}, but got {failedDueTo.Value}!", failedDueTo.Location, failedDueTo.Remainder);
+                    else
+                        messages.Log(notValidConditionError, $"Expected one of {expected}, but reached end of file!");
                     break;
                 }
             }
@@ -933,6 +936,40 @@ namespace Humphrey.FrontEnd
             return paramList;
         }
 
+        // meta_data_node : [ identifier_list ]
+        public AstMetaData MetaDataNode()
+        {
+            var start = CurrentToken();
+
+            if (!OpenSquareBracket())
+                return null;
+
+            var end = CurrentToken();
+            if (CloseSquareBracket())
+            {
+                messages.Log(CompilerErrorKind.Error_EmptyMetaDataNode, $"Empty Metadata nodes are redundant", start.Location, end.Remainder);
+                return null;
+            }
+
+            var paramDefinitionList = IdentifierList();
+            if (paramDefinitionList == null)
+            {
+                messages.Log(CompilerErrorKind.Error_ExpectedIdentifierList, $"Expected a comma seperated list of identifiers, but got {CurrentToken().Value}.", CurrentToken().Location, CurrentToken().Remainder);
+                return null;
+            }
+
+            end = CurrentToken();
+            if (!CloseSquareBracket())
+            {
+                messages.Log(CompilerErrorKind.Error_ExpectedToken, $"Expected a ']' but got {end.Value}.", end.Location, end.Remainder);
+                return null;
+            }
+
+            var meta = new AstMetaData(paramDefinitionList);
+            meta.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
+            return meta;
+        }
+
         // pointer_type : * bit|identifier|functionType|structType
         public AstPointerType PointerType()
         {
@@ -1096,9 +1133,14 @@ namespace Humphrey.FrontEnd
         [ExpectedParseError("GlobalDefinition")]
         public AstGlobalDefinition GlobalScopeDefinition()
         {
+            AstMetaData meta = null;
+            if (PeekOpenSquareBracket())
+                meta = MetaDataNode();
             var (ok, identifierList, typeSpecifier, assignable, token) = Definition<AstIdentifier>(Identifier, Type, Assignable);
             if (!ok)
                 return null;
+            if (typeSpecifier != null)
+                typeSpecifier.MetaData = meta;
             var globalDef = new AstGlobalDefinition(identifierList, typeSpecifier, assignable);
             globalDef.Token = token;
             return globalDef;

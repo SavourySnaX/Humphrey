@@ -53,7 +53,15 @@ namespace Humphrey.FrontEnd
                 var functionType = ct as CompilationFunctionType;
                 if (functionType != null && initialiser == null)
                 {
-                    unit.CreateNamedType(ident.Dump(), ct, ot);
+                    if (functionType.FunctionCallingConvention==CompilationFunctionType.CallingConvention.CDecl)
+                    {
+                        // Instead of creating a type, create an external function reference instead
+                        unit.CreateExternalCFunction(functionType, ident);
+                    }
+                    else
+                    {
+                        unit.CreateNamedType(ident.Dump(), ct, ot);
+                    }
                 }
                 else if (functionType != null && initialiser != null && codeBlock != null)
                 {

@@ -7,5 +7,6 @@ namespace Humphrey.FrontEnd
         (CompilationType compilationType,IType originalType) CreateOrFetchType(CompilationUnit unit);
 
         bool IsFunctionType { get; }
+        AstMetaData MetaData { get; set; }
     }
 }

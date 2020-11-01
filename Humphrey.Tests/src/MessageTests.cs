@@ -48,6 +48,10 @@ namespace Humphrey.Tests.src
         [InlineData("ptr:*bit=1 as *bit", CompilerErrorKind.Debug)]
         [InlineData("ptr:*bit=1", CompilerErrorKind.Error_TypeMismatch)]
         [InlineData("ptr:*bit=1 as *[8]bit", CompilerErrorKind.Error_TypeMismatch)]
+        [InlineData("[metadata]t:bit", CompilerErrorKind.Debug)]
+        [InlineData("[]", CompilerErrorKind.Error_EmptyMetaDataNode)]
+        [InlineData("[%]", CompilerErrorKind.Error_ExpectedIdentifierList)]
+        [InlineData("[metadata%]", CompilerErrorKind.Error_ExpectedToken)]
         public void CheckCompilationMessages(string input, CompilerErrorKind kind)
         {
             CompilationTest(input, kind);

@@ -5,6 +5,7 @@ namespace Humphrey.FrontEnd
     {
         AstParamList inputList;
         AstParamList outputList;
+
         public AstFunctionType(AstParamList inputs, AstParamList outputs)
         {
             inputList = inputs;
@@ -15,6 +16,15 @@ namespace Humphrey.FrontEnd
         {
             var inputs = inputList.FetchParamList(unit);
             var outputs = outputList.FetchParamList(unit);
+
+            if (metaData!=null)
+            {
+                if (metaData.Contains("C_CALLING_CONVENTION"))
+                {
+                    // We should treat this function as being an external function and thus needs resolving at link time?
+                    return (unit.CreateExternalCFunctionType(this, inputs, outputs), this);
+                }
+            }
 
             return (unit.CreateFunctionType(this, inputs, outputs), this);
         }
@@ -111,6 +121,8 @@ namespace Humphrey.FrontEnd
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 
+        private AstMetaData metaData;
+        public AstMetaData MetaData { get => metaData; set => metaData = value; }
     }
 }
 

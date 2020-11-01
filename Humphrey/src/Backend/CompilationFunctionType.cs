@@ -2,14 +2,25 @@ using LLVMSharp.Interop;
 
 namespace Humphrey.Backend
 {
+
     public class CompilationFunctionType : CompilationType
     {
+        public enum CallingConvention
+        {
+            HumphreyInternal,
+            HumphreyExternal,
+            CDecl,
+        }
+        CallingConvention callingConvention;
         CompilationParam[] parameters;
+        CompilationParam returnType;
         private uint outParameterOffset;
-        public CompilationFunctionType(LLVMTypeRef type, CompilationParam[] allParameters, uint outParamOffset, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type, debugBuilder, location, ident)
+        public CompilationFunctionType(LLVMTypeRef type, CallingConvention callConvention, CompilationParam realReturnType, CompilationParam[] allParameters, uint outParamOffset, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type, debugBuilder, location, ident)
         {
             parameters = allParameters;
             outParameterOffset = outParamOffset;
+            returnType = realReturnType;
+            callingConvention = callConvention;
             CreateDebugType();
         }
 
@@ -53,7 +64,7 @@ namespace Humphrey.Backend
 
         public override CompilationType CopyAs(string identifier)
         {
-            return new CompilationFunctionType(BackendType, parameters, OutParamOffset, DebugBuilder, Location, identifier);
+            return new CompilationFunctionType(BackendType, callingConvention, returnType, parameters, OutParamOffset, DebugBuilder, Location, identifier);
         }
 
         void CreateDebugType()
@@ -65,7 +76,7 @@ namespace Humphrey.Backend
                 foreach (var t in parameters)
                     ptypes[idx++] = t.DebugType;
                 var name = DumpType();
-                var dbg = DebugBuilder.CreateFunctionType(name, ptypes, Location);
+                var dbg = DebugBuilder.CreateFunctionType(name, returnType == null ? null : returnType.DebugType, ptypes, Location);
                 CreateDebugType(dbg);
             }
         }
@@ -82,6 +93,7 @@ namespace Humphrey.Backend
             return name;
         }
 
+        public CallingConvention FunctionCallingConvention => callingConvention;
         public long InputCount => Parameters.Length - (Parameters.Length - outParameterOffset);
     }
 }
