@@ -76,7 +76,9 @@ namespace Humphrey.FrontEnd
                 arguments[a] = value;
             }
             // call the function
-            builder.Call(function, arguments);
+            var result = builder.Call(function, arguments);
+            if (ftype.FunctionCallingConvention==CompilationFunctionType.CallingConvention.CDecl)
+                return result;
 
             if (structType==null)
                 return null;        // undef?

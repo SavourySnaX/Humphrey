@@ -279,7 +279,7 @@ namespace Humphrey.Backend
             return new CompilationValue(builderRef.BuildCall(funnelShift, backendValues), value.Type, value.FrontendLocation.Combine(rotateBy.FrontendLocation));
         }
 
-        public void Call(CompilationValue func, CompilationValue[] arguments)
+        public CompilationValue Call(CompilationValue func, CompilationValue[] arguments)
         {
             var backendValues = new LLVMValueRef[arguments.Length];
             for (int a = 0; a < arguments.Length; a++)
@@ -287,7 +287,12 @@ namespace Humphrey.Backend
                 backendValues[a] = arguments[a].BackendValue;
             }
 
-            builderRef.BuildCall(func.BackendValue, backendValues);
+            var returnKind = (func.Type as CompilationFunctionType).ReturnType;
+
+            var res=builderRef.BuildCall(func.BackendValue, backendValues);
+            if (returnKind==null)
+                return null;
+            return new CompilationValue(res, returnKind.Type, func.FrontendLocation);
         }
 
         public void Branch(CompilationBlock destinationBlock)

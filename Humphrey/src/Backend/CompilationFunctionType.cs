@@ -93,6 +93,7 @@ namespace Humphrey.Backend
             return name;
         }
 
+        public CompilationParam ReturnType => returnType;
         public CallingConvention FunctionCallingConvention => callingConvention;
         public long InputCount => Parameters.Length - (Parameters.Length - outParameterOffset);
     }
