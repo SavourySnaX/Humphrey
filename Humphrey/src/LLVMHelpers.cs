@@ -257,6 +257,11 @@ namespace Extensions
             return LLVM.ABISizeOfType(targetDataRef, typeRef);
         }
 
+        public static LLVMValueRef GetConstNull(this LLVMTypeRef typeRef)
+        {
+            return LLVM.ConstNull(typeRef);
+        }
+
         public static LLVMMetadataRef CreateStructElement(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, LLVMMetadataRef file, uint line, UInt64 bitSize, uint alignBits, uint offsetBits, LLVMDIFlags flags, LLVMMetadataRef type)       
         {
             fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))

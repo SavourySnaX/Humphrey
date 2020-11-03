@@ -74,9 +74,6 @@ namespace Humphrey.Backend
 
         public CompilationValue GetCompilationValue(CompilationUnit unit, CompilationType destType)
         {
-            if (undefValue)
-                return unit.CreateUndef(destType);
-
             var (numBits, isSigned) = ComputeKind();
 
             if (destType == null && resultType != null)
@@ -84,6 +81,14 @@ namespace Humphrey.Backend
 
             if (destType == null)
                 return unit.CreateConstant(this, numBits, isSigned, location);
+
+            // Special case for undef kind
+            if (undefValue)
+                return unit.CreateUndef(destType);
+
+            // Special cases for 0 (which we allow for use in stating zero initialisation for complex types)
+            if (constant.IsZero)
+                return unit.CreateZero(destType);
 
             if (destType is CompilationEnumType compilationEnumType)
                 destType = compilationEnumType.ElementType;
@@ -128,6 +133,7 @@ namespace Humphrey.Backend
                     return new CompilationValue(constant.BackendValue.ConstIntToPtr(type.BackendType), type, FrontendLocation);
                 }
             }
+
             throw new System.NotImplementedException($"TODO - Non integer types in promotion?");
         }
 

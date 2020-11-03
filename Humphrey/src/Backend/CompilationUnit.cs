@@ -327,6 +327,11 @@ namespace Humphrey.Backend
             return new CompilationValue(type.BackendType.Undef, type, type.FrontendLocation);
         }
 
+        public CompilationValue CreateZero(CompilationType type)
+        {
+            return new CompilationValue(type.BackendType.GetConstNull(), type, type.FrontendLocation);
+        }
+
         public CompilationFunction CreateFunction(CompilationFunctionType type, AstIdentifier identifier)
         {
             string functionName = identifier.Dump();

@@ -564,6 +564,17 @@ Main:(a:bit,b:bit)(out:bit)=
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
 
+        [Theory]
+        [InlineData(@"structure:{a:[8]bit b:[8]bit} Main:()(out:[8]bit)= { t:structure=0; out=t.a+t.b; } ", "Main", 0)]
+        [InlineData(@"structA:{b:[8]bit} structB:{a:[8]bit b:structA} Main:()(out:[8]bit)= { t:structB=0; out=t.a+t.b.b; } ", "Main", 0)]
+        [InlineData(@" byte:[8]bit array:[10]byte Main:()(out:[8]bit)= { t:array=0; cnt:byte=0; i:byte=_; for i=0..10 { cnt = cnt + t[byte]; } out=cnt; } ", "Main", 0)]
+        [InlineData(@"structure:{a:[8]bit b:[8]bit} Main:()(out:[8]bit)= { t:structure=_; t=0; out=t.a+t.b; } ", "Main", 0)]
+        [InlineData(@"structA:{b:[8]bit} structB:{a:[8]bit b:structA} Main:()(out:[8]bit)= { t:structB=_; t=0; out=t.a+t.b.b; } ", "Main", 0)]
+        [InlineData(@" byte:[8]bit array:[10]byte Main:()(out:[8]bit)= { t:array=_; t=0; cnt:byte=0; i:byte=_; for i=0..10 { cnt = cnt + t[byte]; } out=cnt; } ", "Main", 0)]
+        public void CheckZeroInitialiser(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
 
         [Theory]
         [InlineData(@"Main : (a : *[8]bit, b:[8]bit) () = { *a=b; }", "Main", new byte[] { 21, 31 }, 12, new byte[] { 12, 31 })]
