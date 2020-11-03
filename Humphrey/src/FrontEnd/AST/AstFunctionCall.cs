@@ -46,6 +46,8 @@ namespace Humphrey.FrontEnd
                 ftype = ptrToFunction.ElementType as CompilationFunctionType;
                 if (ftype==null)
                     throw new System.NotImplementedException($"Todo - not a function type... pointer to function type?");
+                // need to swap the type to be functiontype and not pointer, but we don't want to dereference the value
+                function = new CompilationValue(function.BackendValue, ftype, Token);
             }
 
             CompilationValue allocSpace = default;

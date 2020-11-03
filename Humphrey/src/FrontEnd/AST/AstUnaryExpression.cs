@@ -50,6 +50,11 @@ namespace Humphrey.FrontEnd
             }
             CompilationValue src = Expression.ResolveExpressionToValue(unit, result, destType);
 
+            if (src.Type is CompilationFunctionType compilationFunctionType)
+            {
+                src = new CompilationValue(src.BackendValue, unit.CreatePointerType(compilationFunctionType, compilationFunctionType.Location), src.FrontendLocation);
+            }
+
             while (true)
             {
                 if (src.Type.Same(destType))

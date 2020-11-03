@@ -554,6 +554,16 @@ Main:(a:bit,b:bit)(out:bit)=
             Assert.True(Input32BitExpectsByteValue(CompileForTest(input, entryPointName), input32, expected), $"Test {entryPointName},{input},{input32},{expected}");
         }
 
+        [Theory]
+        [InlineData(@" FunctionType:()(out:[8]bit) Returns12:FunctionType= { out=12; } Main:(a:[8]bit,b:[8]bit)(out:[8]bit)= { ptrToFunction:FunctionType=Returns12; out = a+b+ptrToFunction(); } ", "Main", 2,3,17)]
+        [InlineData(@" FunctionType:()(out:[8]bit) Returns12:FunctionType= { out=12; } Main:(a:[8]bit,b:[8]bit)(out:[8]bit)= { ptrToFunction:FunctionType=_; ptrToFunction=Returns12; out = a+b+ptrToFunction(); } ", "Main", 2,3,17)]
+        [InlineData(@" FunctionType:()(out:[8]bit) Returns12:FunctionType= { out=12; } ptrToFunction:FunctionType=_ Main:(a:[8]bit,b:[8]bit)(out:[8]bit)= { ptrToFunction=Returns12; out = a+b+ptrToFunction(); } ", "Main", 2,3,17)]
+        [InlineData(@" FunctionType:()(out:[8]bit) Returns12:FunctionType= { out=12; } structFPtr: { ptrToFunction:FunctionType } Main:(a:[8]bit,b:[8]bit)(out:[8]bit)= { t:structFPtr=_; t.ptrToFunction=Returns12; out = a+b+t.ptrToFunction(); } ", "Main", 2,3,17)]
+        public void CheckFunctionPointer(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+
 
         [Theory]
         [InlineData(@"Main : (a : *[8]bit, b:[8]bit) () = { *a=b; }", "Main", new byte[] { 21, 31 }, 12, new byte[] { 12, 31 })]

@@ -390,6 +390,11 @@ namespace Humphrey.Backend
             if (symbolScopes.FetchValue(ident)!=null)
                 throw new Exception($"global value {identifier} already exists!");
 
+            if (type is CompilationFunctionType)
+            {
+                type = CreatePointerType(type, type.Location);
+            }
+
             var global = moduleRef.AddGlobal(type.BackendType, ident);
 
             if (initialiser != null)
@@ -412,6 +417,11 @@ namespace Humphrey.Backend
             var ident = identifier.Dump();
             if (symbolScopes.FetchValue(ident)!=null)
                 throw new Exception($"local value {identifier} already exists!");
+
+            if (type is CompilationFunctionType)
+            {
+                type = CreatePointerType(type, type.Location);
+            }
 
             var local = builder.Alloca(type);
 

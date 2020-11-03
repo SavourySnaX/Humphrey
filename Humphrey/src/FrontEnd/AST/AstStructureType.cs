@@ -23,7 +23,12 @@ namespace Humphrey.FrontEnd
                 for (int a = 0; a < element.NumElements; a++)
                 {
                     names[idx] = element.Identifiers[a].Dump();
-                    elementTypes[idx++] = element.Type.CreateOrFetchType(unit).compilationType;
+                    var current = element.Type.CreateOrFetchType(unit).compilationType;
+                    if (current is CompilationFunctionType compilationFunctionType)
+                    {
+                        current = unit.CreatePointerType(compilationFunctionType, compilationFunctionType.Location);
+                    }
+                    elementTypes[idx++] = current;
                 }
             }
 
