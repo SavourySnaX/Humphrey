@@ -23,18 +23,22 @@ namespace Humphrey.Backend
         CompilationDebugBuilder debugBuilder;
 
         Dictionary<string, IGlobalDefinition> pendingDefinitions;
+        IGlobalDefinition[] globalDefinitions;
 
         Version VersionNumber => new Version(1, 0);
         string CompilerVersion => $"Humphrey Compiler - V{VersionNumber}";
 
         bool optimisations;
+        CompilationUnit jitUnit;
+        string fileNameAndPath;
 
         public CompilationUnit(string sourceFileNameAndPath, IGlobalDefinition[] definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
         {
+            jitUnit = null;
             optimisations = !disableOptimisations;
-
+            globalDefinitions = definitions;
             this.targetTriple = targetTriple;
-
+            fileNameAndPath = sourceFileNameAndPath;
             messages = overrideDefaultMessages;
             if (messages==null)
                 messages = new CompilerMessages(true, true, false);
@@ -46,7 +50,6 @@ namespace Humphrey.Backend
             LLVM.InitializeX86TargetInfo();
             LLVM.InitializeX86AsmParser();
             LLVM.InitializeX86AsmPrinter();
-
 
             var moduleName = System.IO.Path.GetFileNameWithoutExtension(sourceFileNameAndPath);
             contextRef = CreateContext();
@@ -67,6 +70,15 @@ namespace Humphrey.Backend
             }
 
             targetDataRef = moduleRef.GetDataLayout();
+        }
+
+        public CompilationUnit GetJITEvaluator()
+        {
+            if (jitUnit==null)
+            {
+                jitUnit = new CompilationUnit(fileNameAndPath, globalDefinitions, targetTriple, true, false, messages);
+            }
+            return jitUnit;
         }
 
         public UInt64 GetTypeSizeInBits(CompilationType type)

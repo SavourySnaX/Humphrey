@@ -15,12 +15,14 @@ namespace Humphrey.Backend
         CompilationParam[] parameters;
         CompilationParam returnType;
         private uint outParameterOffset;
+        private bool evaluatedDirectly;
         public CompilationFunctionType(LLVMTypeRef type, CallingConvention callConvention, CompilationParam realReturnType, CompilationParam[] allParameters, uint outParamOffset, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type, debugBuilder, location, ident)
         {
             parameters = allParameters;
             outParameterOffset = outParamOffset;
             returnType = realReturnType;
             callingConvention = callConvention;
+            evaluatedDirectly = false;
             CreateDebugType();
         }
 
@@ -29,6 +31,9 @@ namespace Humphrey.Backend
 
         public bool HasOutputs => outParameterOffset < Parameters.Length;
 
+        public void SetCompileTimeOnly() { evaluatedDirectly = true; }
+
+        public bool CompileTimeOnly => evaluatedDirectly;
         public override bool Same(CompilationType obj)
         {
             var check = obj as CompilationFunctionType;

@@ -19,6 +19,11 @@ namespace Humphrey.Backend
             usedOutputs = new HashSet<string>();
         }
 
+        public void SetLinkage(LLVMLinkage linkType)
+        {
+            function.Linkage = linkType;
+        }
+
         public void MarkUsed(string identifier)
         {
             if (!usedOutputs.Contains(identifier))

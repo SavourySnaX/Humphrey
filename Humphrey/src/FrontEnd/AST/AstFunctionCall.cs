@@ -28,6 +28,7 @@ namespace Humphrey.FrontEnd
         {
             throw new System.NotImplementedException($"Todo implement constant expression for call....");
         }
+        unsafe delegate void Testing(System.UInt32 a, System.UInt32 b, System.UInt32 c, System.UInt32* retVal);
 
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
@@ -52,6 +53,21 @@ namespace Humphrey.FrontEnd
 
             CompilationValue allocSpace = default;
 
+            unsafe
+            {
+                if (ftype.CompileTimeOnly)
+                {
+                    var evaluate = unit.GetJITEvaluator();
+                    if (evaluate.CompileMissing("VK_API_VERSION"))
+                    {
+                        var jittedMethod = evaluate.JitMethod("VK_API_VERSION");
+                        var func = System.Runtime.InteropServices.Marshal.GetDelegateForFunctionPointer<Testing>(jittedMethod);
+                        System.UInt32 returnValue;
+                        func(1, 0, 0, &returnValue);
+                        return unit.CreateConstant($"{returnValue}", new SourceLocation(Token));
+                    }
+                }
+            }
             // create an anonymous struct to hold the outputs of the function..
             var structType = ftype.CreateOutputParameterStruct(unit, ftype.Location);
             if (structType != null) // not void function

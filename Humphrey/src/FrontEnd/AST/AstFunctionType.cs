@@ -17,21 +17,37 @@ namespace Humphrey.FrontEnd
             var inputs = inputList.FetchParamList(unit);
             var outputs = outputList.FetchParamList(unit);
 
-            if (metaData!=null)
+            CompilationFunctionType ftype = default;
+
+            if (metaData != null)
             {
                 if (metaData.Contains("C_CALLING_CONVENTION"))
                 {
                     // We should treat this function as being an external function and thus needs resolving at link time?
-                    return (unit.CreateExternalCFunctionType(this, inputs, outputs), this);
+                    ftype = unit.CreateExternalCFunctionType(this, inputs, outputs);
                 }
             }
+            if (ftype == null)
+            {
+                ftype = unit.CreateFunctionType(this, inputs, outputs);
+            }
 
-            return (unit.CreateFunctionType(this, inputs, outputs), this);
+            if (metaData != null)
+            {
+                if (metaData.Contains("COMPILE_TIME_ONLY"))
+                    ftype.SetCompileTimeOnly();
+            }
+
+            return (ftype, this);
         }
     
         public void BuildFunction(CompilationUnit unit, CompilationFunctionType functionType, AstIdentifier ident, AstCodeBlock codeBlock)
         {
             var newFunction = unit.CreateFunction(functionType, ident);
+            if (functionType.CompileTimeOnly)
+            {
+                newFunction.SetLinkage(LLVMSharp.Interop.LLVMLinkage.LLVMInternalLinkage);
+            }
 
             unit.PushScope("", unit.GetScope(newFunction));
 
