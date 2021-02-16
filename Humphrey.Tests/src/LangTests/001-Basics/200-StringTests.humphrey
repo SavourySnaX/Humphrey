@@ -7,18 +7,14 @@ Main: () (returnValue : byte) =
     returnValue=bob[4];
 }
 
-Other:()() =
-{
-    carol:[1]byte=0;
-}
-
 String:()()=
 {
     sue:="作文";
 }
 
-Single:()()=
+Copy:()(returnValue : byte)=
 {
-    bob:[5]byte=0;
-    bob[2]=64;
+    bob:="Hello World";
+    sue:=bob;
+    returnValue=sue[1];
 }

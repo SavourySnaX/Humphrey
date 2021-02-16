@@ -1037,6 +1037,7 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
 
         [Theory]
         [InlineData(@" Main : () (returnValue : [8]bit) = { bob:=""Hello World""; returnValue=bob[0]; } ", "Main", (byte)'H')]
+        [InlineData(@" Main : () (returnValue : [8]bit) = { bob:=""Hello World""; sue:=bob; returnValue=sue[6]; } ", "Main", (byte)'W')]
         public void CheckByteArrayString(string input, string entryPointName, byte expected)
         {
             Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
