@@ -55,7 +55,7 @@ namespace Humphrey.Backend
                 debugCU = builderRef.CreateCompileUnit(LLVMDWARFSourceLanguage.LLVMDWARFSourceLanguageC,
                     debugScope,
                     compilerVersion, optimised ? 1 : 0, flags, runtimeVersion, splitName, LLVMDWARFEmissionKind.LLVMDWARFEmissionFull,
-                    dwOld, splitDebugInlining, debugInfoForProfiling);
+                    dwOld, splitDebugInlining, debugInfoForProfiling, "", "");
             }
         }
 

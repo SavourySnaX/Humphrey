@@ -232,6 +232,11 @@ namespace Extensions
             }
         }
 
+        public static void SetDataLayout(this LLVMModuleRef moduleRef, LLVMTargetDataRef dataLayout)
+        {
+            LLVM.SetModuleDataLayout(moduleRef, dataLayout);
+        }
+
         public static LLVMTargetDataRef GetDataLayout(this LLVMModuleRef moduleRef)
         {
             return LLVM.GetModuleDataLayout(moduleRef);

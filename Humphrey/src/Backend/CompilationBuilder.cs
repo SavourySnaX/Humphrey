@@ -91,7 +91,7 @@ namespace Humphrey.Backend
 
         public CompilationValue Mul(CompilationValue left, CompilationValue right)
         {
-            return new CompilationValue(builderRef.BuildMul(left.BackendValue, right.BackendValue, "".AsSpan()), left.Type, left.FrontendLocation.Combine(right.FrontendLocation));
+            return new CompilationValue(builderRef.BuildMul(left.BackendValue, right.BackendValue), left.Type, left.FrontendLocation.Combine(right.FrontendLocation));
         }
         
         public CompilationValue Add(CompilationValue left, CompilationValue right)

@@ -478,7 +478,7 @@ namespace Humphrey.Backend
         {
             var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
 
-            moduleRef.DataLayout = targetMachine.CreateTargetDataLayout();
+            moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
 
             var pm = LLVMPassManagerRef.Create();
@@ -532,8 +532,9 @@ namespace Humphrey.Backend
         {
             var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
 
-            moduleRef.DataLayout = targetMachine.CreateTargetDataLayout();
+            moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
+
 
             var pm = LLVMPassManagerRef.Create();
             if (optimisations)
