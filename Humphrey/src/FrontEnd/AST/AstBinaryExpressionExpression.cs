@@ -19,12 +19,12 @@ namespace Humphrey.FrontEnd
             return $"{DumpOperator()} {lhs.Dump()} {rhs.Dump()}";
         }
 
-        public abstract CompilationConstantValue CompilationConstantValue(CompilationConstantValue left, CompilationConstantValue right);
+        public abstract CompilationConstantIntegerKind CompilationConstantValue(CompilationConstantIntegerKind left, CompilationConstantIntegerKind right);
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
-            var valueLeft = lhs.ProcessConstantExpression(unit);
-            var valueRight = rhs.ProcessConstantExpression(unit);
+            var valueLeft = lhs.ProcessConstantExpression(unit) as CompilationConstantIntegerKind;
+            var valueRight = rhs.ProcessConstantExpression(unit) as CompilationConstantIntegerKind;
 
             return CompilationConstantValue(valueLeft, valueRight);
         }
@@ -34,16 +34,16 @@ namespace Humphrey.FrontEnd
         {
             var rlhs = lhs.ProcessExpression(unit, builder);
             var rrhs = rhs.ProcessExpression(unit, builder);
-            if (rlhs is CompilationConstantValue clhs && rrhs is CompilationConstantValue crhs)
+            if (rlhs is CompilationConstantIntegerKind clhs && rrhs is CompilationConstantIntegerKind crhs)
                 return ProcessConstantExpression(unit);
 
             var vlhs = rlhs as CompilationValue;
             var vrhs = rrhs as CompilationValue;
 
             if (vlhs is null)
-                vlhs = (rlhs as CompilationConstantValue).GetCompilationValue(unit, vrhs.Type);
+                vlhs = (rlhs as CompilationConstantIntegerKind).GetCompilationValue(unit, vrhs.Type);
             if (vrhs is null)
-                vrhs = (rrhs as CompilationConstantValue).GetCompilationValue(unit, vlhs.Type);
+                vrhs = (rrhs as CompilationConstantIntegerKind).GetCompilationValue(unit, vlhs.Type);
 
             var (valueLeft, valueRight) = AstBinaryExpression.FixupBinaryExpressionInputs(unit, builder, vlhs, vrhs);
 

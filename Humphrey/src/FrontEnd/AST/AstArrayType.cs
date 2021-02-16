@@ -13,7 +13,7 @@ namespace Humphrey.FrontEnd
     
         public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
-            var exprValue = constantExpression.ProcessConstantExpression(unit);
+            var exprValue = constantExpression.ProcessConstantExpression(unit) as CompilationConstantIntegerKind;
 
             var isBit = elementType as AstBitType;
             if (isBit==null)

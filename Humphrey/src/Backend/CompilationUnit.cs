@@ -111,13 +111,13 @@ namespace Humphrey.Backend
             return moduleRef.PrintToString();
         }
 
-        public CompilationType FetchArrayType(CompilationConstantValue numElements, CompilationType elementType, SourceLocation location)
+        public CompilationType FetchArrayType(CompilationConstantIntegerKind numElements, CompilationType elementType, SourceLocation location)
         {
             uint num = (uint)numElements.Constant;
             return new CompilationArrayType(CreateArrayType(elementType.BackendType,num), elementType, num, debugBuilder, location);
         }
 
-        public CompilationType FetchIntegerType(CompilationConstantValue numBits, SourceLocation location)
+        public CompilationType FetchIntegerType(CompilationConstantIntegerKind numBits, SourceLocation location)
         {
             bool isSigned = false;
             if (numBits.Constant<BigInteger.Zero)
@@ -170,7 +170,7 @@ namespace Humphrey.Backend
             return new CompilationStructureType(backendType, elements, names, debugBuilder, location);
         }
 
-        public CompilationType FetchEnumType(CompilationType type, CompilationConstantValue[] values, Dictionary<string,uint> names, SourceLocation location)
+        public CompilationType FetchEnumType(CompilationType type, CompilationConstantIntegerKind[] values, Dictionary<string,uint> names, SourceLocation location)
         {
             return new CompilationEnumType(type, values, names, debugBuilder, location);
         }
@@ -308,7 +308,7 @@ namespace Humphrey.Backend
             return CreateConstantByteArray(nullTerminated);
         }
 
-        public CompilationValue CreateConstant(CompilationConstantValue constantValue, uint numBits, bool isSigned, SourceLocation location)
+        public CompilationValue CreateConstant(CompilationConstantIntegerKind constantValue, uint numBits, bool isSigned, SourceLocation location)
         {
             var constType = new CompilationIntegerType(contextRef.GetIntType(numBits), isSigned, debugBuilder, location);
 
@@ -317,7 +317,7 @@ namespace Humphrey.Backend
 
         public CompilationValue CreateConstant(AstNumber decimalNumber, SourceLocation location)
         {
-            var constantValue = new CompilationConstantValue(decimalNumber);
+            var constantValue = new CompilationConstantIntegerKind(decimalNumber);
             var (numBits, isSigned) = constantValue.ComputeKind();
 
             return CreateConstant(constantValue, numBits, isSigned, location);
@@ -395,7 +395,7 @@ namespace Humphrey.Backend
             }
         }
 
-        public CompilationValue CreateGlobalVariable(CompilationType type, AstIdentifier identifier, SourceLocation location, CompilationConstantValue initialiser = null)
+        public CompilationValue CreateGlobalVariable(CompilationType type, AstIdentifier identifier, SourceLocation location, ICompilationConstantValue initialiser = null)
         {
             var ident = identifier.Dump();
             if (symbolScopes.FetchValue(ident)!=null)

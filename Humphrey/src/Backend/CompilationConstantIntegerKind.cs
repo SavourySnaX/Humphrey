@@ -6,37 +6,22 @@ using Extensions;
 
 namespace Humphrey.Backend
 {
-    public class CompilationConstantValue : ICompilationValue
+    public class CompilationConstantIntegerKind : ICompilationConstantValue
     {
         BigInteger constant;
-        bool undefValue;
         IType resultType;
         SourceLocation location;
 
         Result<Tokens> frontendLocation;
 
-        public CompilationConstantValue(Result<Tokens> frontendLoc)
+        public bool Same(CompilationConstantIntegerKind other)
         {
-            undefValue = true;
-            constant = BigInteger.Zero;
-            resultType = null;
-            location = new SourceLocation(frontendLoc);
-            frontendLocation = frontendLoc;
-        }
-
-        public bool Same(CompilationConstantValue other)
-        {
-            if (undefValue!=other.undefValue)
-                return false;
-            if (undefValue)
-                return true;
             return constant==other.constant;
         }
 
-        public CompilationConstantValue(AstNumber val)
+        public CompilationConstantIntegerKind(AstNumber val)
         {
             constant = BigInteger.Parse(val.Dump());
-            undefValue = false;
             frontendLocation = val.Token;
         }
 
@@ -81,10 +66,6 @@ namespace Humphrey.Backend
 
             if (destType == null)
                 return unit.CreateConstant(this, numBits, isSigned, location);
-
-            // Special case for undef kind
-            if (undefValue)
-                return unit.CreateUndef(destType);
 
             // Special cases for 0 (which we allow for use in stating zero initialisation for complex types)
             // disallow for pointers though as we don't want implicit conversion
@@ -153,57 +134,57 @@ namespace Humphrey.Backend
             constant = constant - 1;
         }
 
-        public void Add(CompilationConstantValue rhs)
+        public void Add(CompilationConstantIntegerKind rhs)
         {
             constant = constant + rhs.Constant;
         }
-        public void Sub(CompilationConstantValue rhs)
+        public void Sub(CompilationConstantIntegerKind rhs)
         {
             constant = constant - rhs.Constant;
         }
-        public void Mul(CompilationConstantValue rhs)
+        public void Mul(CompilationConstantIntegerKind rhs)
         {
             constant = constant * rhs.Constant;
         }
-        public void Div(CompilationConstantValue rhs)
+        public void Div(CompilationConstantIntegerKind rhs)
         {
             constant = constant / rhs.Constant;
         }
-        public void Rem(CompilationConstantValue rhs)
+        public void Rem(CompilationConstantIntegerKind rhs)
         {
             constant = constant % rhs.Constant;
         }
-        public void CompareLess(CompilationConstantValue rhs)
+        public void CompareLess(CompilationConstantIntegerKind rhs)
         {
             constant = (constant < rhs.Constant) ? BigInteger.One : BigInteger.Zero;
         }
-        public void CompareLessEqual(CompilationConstantValue rhs)
+        public void CompareLessEqual(CompilationConstantIntegerKind rhs)
         {
             constant = (constant <= rhs.Constant) ? BigInteger.One : BigInteger.Zero;
         }
-        public void CompareGreater(CompilationConstantValue rhs)
+        public void CompareGreater(CompilationConstantIntegerKind rhs)
         {
             constant = (constant > rhs.Constant) ? BigInteger.One : BigInteger.Zero;
         }
-        public void CompareGreaterEqual(CompilationConstantValue rhs)
+        public void CompareGreaterEqual(CompilationConstantIntegerKind rhs)
         {
             constant = (constant >= rhs.Constant) ? BigInteger.One : BigInteger.Zero;
         }
-        public void CompareEqual(CompilationConstantValue rhs)
+        public void CompareEqual(CompilationConstantIntegerKind rhs)
         {
             constant = (constant == rhs.Constant) ? BigInteger.One : BigInteger.Zero;
         }
-        public void CompareNotEqual(CompilationConstantValue rhs)
+        public void CompareNotEqual(CompilationConstantIntegerKind rhs)
         {
             constant = (constant != rhs.Constant) ? BigInteger.One : BigInteger.Zero;
         }
 
-        public void LogicalOr(CompilationConstantValue rhs)
+        public void LogicalOr(CompilationConstantIntegerKind rhs)
         {
             constant = (constant.IsOne || rhs.Constant.IsOne) ? BigInteger.One : BigInteger.Zero;
         }
 
-        public void LogicalAnd(CompilationConstantValue rhs)
+        public void LogicalAnd(CompilationConstantIntegerKind rhs)
         {
             constant = (constant.IsOne && rhs.Constant.IsOne) ? BigInteger.One : BigInteger.Zero;
         }
@@ -217,17 +198,17 @@ namespace Humphrey.Backend
             constant = ~Constant;
         }
 
-        public void And(CompilationConstantValue rhs)
+        public void And(CompilationConstantIntegerKind rhs)
         {
             constant = constant & rhs.Constant;
         }
 
-        public void Xor(CompilationConstantValue rhs)
+        public void Xor(CompilationConstantIntegerKind rhs)
         {
             constant = constant ^ rhs.Constant;
         }
 
-        public void Or(CompilationConstantValue rhs)
+        public void Or(CompilationConstantIntegerKind rhs)
         {
             constant = constant | rhs.Constant;
         }

@@ -14,7 +14,7 @@ namespace Humphrey.FrontEnd
             return $"+ {expr.Dump()}";
         }
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
             // + is 0 + which is noop
             return expr.ProcessConstantExpression(unit);

@@ -37,7 +37,7 @@ namespace Humphrey.FrontEnd
 
         public IType Type => type;
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
             throw new System.NotImplementedException($"Todo implement constant expression processing");
         }

@@ -17,7 +17,7 @@ namespace Humphrey.FrontEnd
             return $"as {lhs.Dump()} {rhs.Dump()}";
         }
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
             var valueLeft = lhs.ProcessConstantExpression(unit);
             valueLeft.Cast(rhs);
@@ -27,7 +27,7 @@ namespace Humphrey.FrontEnd
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             var vlhs = lhs.ProcessExpression(unit, builder);
-            if (vlhs is CompilationConstantValue)
+            if (vlhs is CompilationConstantIntegerKind)
                 return ProcessConstantExpression(unit);
 
             var valueLeft = vlhs as CompilationValue;

@@ -14,9 +14,9 @@ namespace Humphrey.FrontEnd
             return $"! {expr.Dump()}";
         }
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
-            var result = expr.ProcessConstantExpression(unit);
+            var result = expr.ProcessConstantExpression(unit) as CompilationConstantIntegerKind;
             result.LogicalNot();
             return result;
         }
@@ -24,7 +24,7 @@ namespace Humphrey.FrontEnd
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             var value = expr.ProcessExpression(unit, builder);
-            if (value is CompilationConstantValue constantValue)
+            if (value is CompilationConstantIntegerKind constantValue)
             {
                 constantValue.LogicalNot();
                 return constantValue;

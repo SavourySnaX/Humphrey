@@ -13,7 +13,7 @@ namespace Humphrey.FrontEnd
             return "<";
         }
 
-        public override CompilationConstantValue CompilationConstantValue(CompilationConstantValue left, CompilationConstantValue right)
+        public override CompilationConstantIntegerKind CompilationConstantValue(CompilationConstantIntegerKind left, CompilationConstantIntegerKind right)
         {
             left.CompareLess(right);
             return left;

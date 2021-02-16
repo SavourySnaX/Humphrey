@@ -27,7 +27,7 @@ namespace Humphrey.FrontEnd
             return s.ToString();
         }
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
             var expr = initialiser as IExpression;
             if (expr == null)

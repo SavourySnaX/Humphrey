@@ -9,11 +9,11 @@ namespace Humphrey.Backend
     public class CompilationEnumType : CompilationType
     {
         CompilationType elementType;
-        CompilationConstantValue[] values;
+        CompilationConstantIntegerKind[] values;
         Dictionary<string, uint> names;
         string[] nameList;
 
-        public CompilationEnumType(CompilationType type, CompilationConstantValue[] elements, Dictionary<string, uint> elementNames, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type.BackendType, debugBuilder, location, ident)
+        public CompilationEnumType(CompilationType type, CompilationConstantIntegerKind[] elements, Dictionary<string, uint> elementNames, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type.BackendType, debugBuilder, location, ident)
         {
             elementType = type;
             values = elements;

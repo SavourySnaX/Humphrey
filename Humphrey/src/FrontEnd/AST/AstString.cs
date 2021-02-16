@@ -25,14 +25,22 @@ namespace Humphrey.FrontEnd
             return nullTerminated;
         }
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException($"TODO");
+            /*
+            var bitType = new AstBitType();
+            var byteType = new AstArrayType(new AstNumber("8"), bitType);
+            var bytes = GetNullTerminatedArray();
+            var arrayType = new AstArrayType(new AstNumber($"{bytes.Length}"), byteType);
+            arrayType.Token = Token;
+            //return new CompilationConstantValue(unit.CreateStringConstant(this), arrayType.CreateOrFetchType(unit).compilationType, Token);
+            return unit.CreateStringConstant(this);//, arrayType.CreateOrFetchType(unit).compilationType, Token);
+            */
         }
 
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            // Otherwise, for now a string Literal is an array of bytes
             var bitType = new AstBitType();
             var byteType = new AstArrayType(new AstNumber("8"), bitType);
             var bytes = GetNullTerminatedArray();
