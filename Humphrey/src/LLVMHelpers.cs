@@ -16,6 +16,11 @@ namespace Extensions
             return LLVM.ContextCreate();
         }
 
+        public static LLVMContextRef FetchGlobalContext()
+        {
+            return LLVM.GetGlobalContext();
+        }
+
         public static LLVMValueRef ConstIntToPtr(this LLVMValueRef valueRef, LLVMTypeRef typeRef)
         {
             return LLVM.ConstIntToPtr(valueRef, typeRef);

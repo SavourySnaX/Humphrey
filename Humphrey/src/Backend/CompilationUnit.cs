@@ -49,7 +49,7 @@ namespace Humphrey.Backend
 
 
             var moduleName = System.IO.Path.GetFileNameWithoutExtension(sourceFileNameAndPath);
-            contextRef = CreateContext();
+            contextRef = FetchGlobalContext();
             moduleRef = contextRef.CreateModuleWithName(moduleName);
             
             debugBuilder = new CompilationDebugBuilder(debugInfo, this, sourceFileNameAndPath, CompilerVersion, targetTriple.Contains("msvc"));
