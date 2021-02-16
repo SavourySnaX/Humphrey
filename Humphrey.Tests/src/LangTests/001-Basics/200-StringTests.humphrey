@@ -1,0 +1,24 @@
+
+byte:[8] bit
+
+Main: () (returnValue : byte) = 
+{
+    bob:[1]byte="";
+    returnValue=bob[4];
+}
+
+Other:()() =
+{
+    carol:[1]byte=0;
+}
+
+String:()()=
+{
+    sue:="作文";
+}
+
+Single:()()=
+{
+    bob:[5]byte=0;
+    bob[2]=64;
+}

@@ -43,6 +43,21 @@ namespace Extensions
             }
         }
 
+        public static LLVMValueRef CreateConstantByteArray(byte[] literal)
+        {
+            var type = CreateIntType(8);
+            var toManaged = new LLVMOpaqueValue*[literal.Length];
+            int a=0;
+            foreach (var value in literal)
+            {
+                toManaged[a++]=CreateConstantValue(type, value);
+            }
+            fixed (LLVMOpaqueValue** array = toManaged)
+            {
+                return LLVM.ConstArray(type, array, (uint)toManaged.Length);
+            }
+        }
+
         public static void ParseCommandLineOptions(string[] options, string overview)
         {
             int argc = options.Length;

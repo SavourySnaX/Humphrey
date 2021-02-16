@@ -302,6 +302,12 @@ namespace Humphrey.Backend
             return i64Type.CreateConstantValue(value);
         }
 
+        public LLVMValueRef CreateStringConstant(AstString literal)
+        {
+            var nullTerminated = literal.GetNullTerminatedArray();
+            return CreateConstantByteArray(nullTerminated);
+        }
+
         public CompilationValue CreateConstant(CompilationConstantValue constantValue, uint numBits, bool isSigned, SourceLocation location)
         {
             var constType = new CompilationIntegerType(contextRef.GetIntType(numBits), isSigned, debugBuilder, location);

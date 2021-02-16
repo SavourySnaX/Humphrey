@@ -18,6 +18,18 @@ namespace Humphrey.Tests.src
         }
 
         [Theory]
+        [InlineData("\"\"", new []{Tokens.String})]
+        [InlineData("\"some sort of string\"", new []{Tokens.String})]
+        [InlineData("\"F₁₆\"", new []{Tokens.String})]
+        [InlineData("\"if\"", new []{Tokens.String})]
+        [InlineData("\"毛唐\"", new []{Tokens.String})]
+        [InlineData(@"""Hello World"";", new []{Tokens.String, Tokens.S_SemiColon})]
+        public void CheckStringLiterals(string input, Tokens[] expected)
+        {
+            TokenTest(input, expected);
+        }
+
+        [Theory]
         [InlineData("+", Tokens.O_Plus)]
         [InlineData("-", Tokens.O_Subtract)]
         [InlineData("*", Tokens.O_Multiply)]
@@ -117,9 +129,11 @@ namespace Humphrey.Tests.src
 
         private void TokenTest(string input, Tokens[] expected)
         {
-            var tokenise = new HumphreyTokeniser();
+            var messages = new CompilerMessages(false, true, false);
+            var tokenise = new HumphreyTokeniser(messages);
             var tokens = tokenise.Tokenize(input);
             var list = tokens.ToList();
+            Assert.False(messages.HasErrors, $"Tokeniser failed due to : {messages.Dump()}");
             Assert.True(list.Count == expected.Length, $"'{input}' Expected {expected.Length} items, got {list.Count}");
             for (int a = 0; a < list.Count; a++)
             {

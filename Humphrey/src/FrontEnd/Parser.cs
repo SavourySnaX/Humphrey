@@ -267,6 +267,7 @@ namespace Humphrey.FrontEnd
 
         // number : Number
         public AstNumber Number() { return AstItem(Tokens.Number, (e) => new AstNumber(e)) as AstNumber; }
+        public AstString StringLiteral() { return AstItem(Tokens.String, (e)=>new AstString(e)) as AstString; }
 
         // identifier : Identifier
         public AstIdentifier Identifier() { return AstItem(Tokens.Identifier, (e) => new AstIdentifier(e)) as AstIdentifier; }
@@ -373,7 +374,7 @@ namespace Humphrey.FrontEnd
                 AsOperator, ReferenceOperator, FunctionCallOperator, ArraySubscriptOperator, PostIncrementOperator, PostDecrementOperator,
                 LogicalAndOperator, LogicalOrOperator, BinaryAndOperator, BinaryOrOperator, BinaryXorOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
-        public AstItemDelegate[] BaseTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType };
+        public AstItemDelegate[] BaseTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType};
         public AstItemDelegate[] Types => new AstItemDelegate[] { BaseTypeOrEnumType };
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
         public AstItemDelegate[] IdentifierOrAnonymous => new AstItemDelegate[] { Identifier, AnonymousIdentifier };
@@ -386,7 +387,7 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] GlobalDefinition => new AstItemDelegate[] { GlobalScopeDefinition };
 
         // terminal : Number | IdentifierTerminal | BracketedExpression
-        public AstItemDelegate[] Terminal => new AstItemDelegate[] { Number, IdentifierTerminal, BracketedExpression };
+        public AstItemDelegate[] Terminal => new AstItemDelegate[] { Number, StringLiteral, IdentifierTerminal, BracketedExpression };
 
         // bracketed_expresson : ( Expression )
         public IAst BracketedExpression()

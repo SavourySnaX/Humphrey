@@ -10,6 +10,7 @@ namespace Humphrey.Tests.src
         [Theory]
         [InlineData("#", CompilerErrorKind.Debug)]
         [InlineData("\b", CompilerErrorKind.Error_InvalidToken)]
+        [InlineData("\"", CompilerErrorKind.Error_FailedToFindEndOfString)]
         public void CheckComments(string input, CompilerErrorKind kind)
         {
             TokenTest(input, kind);

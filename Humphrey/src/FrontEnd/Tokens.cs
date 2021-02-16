@@ -145,6 +145,9 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Syntax", Example = "_")]
         S_Underscore,
 
+        [Token(Category = "Literal", Example = "\"blah\"")]
+        String,
+
         [Token(Category = "Comment")]
         SingleComment,
 
@@ -522,6 +525,27 @@ namespace Humphrey.FrontEnd
             return next;
         }
 
+        protected static Result<char> SkipToEndString(TokenSpan span)
+        {
+            var next = span.ConsumeChar();
+            while (next.HasValue)
+            {
+                if (next.Value == '"')
+                {
+                    next = next.Remainder.ConsumeChar();
+                    break;
+                }
+                // TODO escape codes
+                next = next.Remainder.ConsumeChar();
+            }
+            return next;
+        }
+
+        protected bool IsValidStringLiteral(string literal)
+        {
+            return (literal.StartsWith('"') && literal.EndsWith('"') && literal.Length>=2);
+        }
+
         protected static string Decimalise(string v, int radix)
         {
             BigInteger bigNumber = 0;
@@ -653,6 +677,20 @@ namespace Humphrey.FrontEnd
                             yield return new Result<Tokens>(Tokens.SingleComment, start, next.Location);
                         }
                     }
+                }
+                else if (c == '"')
+                {
+                    var start = next;
+                    next = next.Remainder.ConsumeChar();
+                    next = SkipToEndString(next.Location);
+
+                    if (!IsValidStringLiteral(start.Location.Until(next.Location).ToStringValue()))
+                    {
+                        messages.Log(CompilerErrorKind.Error_FailedToFindEndOfString, $"Missing '\"' terminator for string literal", start.Location);
+                        yield break;
+                    }
+                    else
+                        yield return new Result<Tokens>(Tokens.String, start.Location, next.Location);
                 }
                 else if (IsNumberOrIdentifierStart(c))
                 {
