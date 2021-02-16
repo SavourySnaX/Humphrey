@@ -39,7 +39,7 @@ namespace Humphrey.Backend
         public override string DumpType()
         {
             if (string.IsNullOrEmpty(Identifier))
-                return $"__anonymous__array_{ElementType.DumpType()}";
+                return $"__anonymous__array_{ElementType.DumpType()}_{elementCount}";
             return Identifier;
         }
 

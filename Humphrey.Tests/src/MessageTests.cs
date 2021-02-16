@@ -49,6 +49,7 @@ namespace Humphrey.Tests.src
         [InlineData("ptr:*bit=1 as *bit", CompilerErrorKind.Debug)]
         [InlineData("ptr:*bit=1", CompilerErrorKind.Error_TypeMismatch)]
         [InlineData("ptr:*bit=1 as *[8]bit", CompilerErrorKind.Error_TypeMismatch)]
+        [InlineData("Broken:()()={bob:[22][8]bit=0; bob=\"Hello\"; }", CompilerErrorKind.Error_TypeMismatch)]
         [InlineData("[metadata]t:bit", CompilerErrorKind.Debug)]
         [InlineData("[]", CompilerErrorKind.Error_EmptyMetaDataNode)]
         [InlineData("[%]", CompilerErrorKind.Error_ExpectedIdentifierList)]

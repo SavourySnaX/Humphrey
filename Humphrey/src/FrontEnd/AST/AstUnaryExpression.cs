@@ -71,6 +71,16 @@ namespace Humphrey.FrontEnd
                 }
                 break;
             }
+
+            var srcArray = src.Type as CompilationArrayType;
+            var dstArray = destType as CompilationArrayType;
+
+            if (srcArray!=null || dstArray!=null)
+            {
+                unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Result of expression '{expr.Token.Location.ToStringValue(expr.Token.Remainder)}' of type '{src.Type.DumpType()}' does not match destination type '{destType.DumpType()}'!", expr.Token.Location, expr.Token.Remainder);
+                return unit.CreateUndef(destType);  // Allow compilation to continue
+            }
+
             var srcEnum = src.Type as CompilationEnumType;
             var destEnum = destType as CompilationEnumType;
 
