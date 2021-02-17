@@ -97,7 +97,7 @@ namespace Humphrey.Backend
                 CompilationType type;
                 if (resultType == null)
                 {
-                    unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Attempting to assign {constant} to a pointer type {destType.Identifier}, you must supply a destination pointer type via as.", frontendLocation.Location, frontendLocation.Remainder);
+                    unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Attempting to assign {constant} to a pointer type {destType.DumpType()}, you must supply a destination pointer type via as.", frontendLocation.Location, frontendLocation.Remainder);
                     type = destType;    // Attempt recovery from error
                 }
                 else

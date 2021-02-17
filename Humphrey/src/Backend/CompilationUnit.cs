@@ -423,7 +423,7 @@ namespace Humphrey.Backend
             return globalValue;
         }
 
-        public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationType type, AstIdentifier identifier, ICompilationValue initialiser, SourceLocation location)
+        public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationType type, AstIdentifier identifier, ICompilationValue initialiser, Result<Tokens> location)
         {
             var ident = identifier.Dump();
             if (symbolScopes.FetchValue(ident)!=null)
@@ -438,10 +438,10 @@ namespace Humphrey.Backend
 
             if (initialiser != null)
             {
-                var value = Expression.ResolveExpressionToValue(unit, initialiser, type);
+                var value = AstUnaryExpression.EnsureTypeOk(unit, builder, initialiser, type, location);
                 builder.Store(value, local);
             }
-            local.Storage = new CompilationValue(local.BackendValue, CreatePointerType(type, location), identifier.Token);
+            local.Storage = new CompilationValue(local.BackendValue, CreatePointerType(type, new SourceLocation(location)), identifier.Token);
 
             if (!symbolScopes.AddValue(ident, local))
                 throw new Exception($"local {identifier} failed to add symbol!");

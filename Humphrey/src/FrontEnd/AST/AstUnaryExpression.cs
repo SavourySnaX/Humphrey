@@ -39,6 +39,7 @@ namespace Humphrey.FrontEnd
             unary.Token = expression.Token;
             return unary;
         }
+
         public static CompilationValue EnsureTypeOk(CompilationUnit unit, CompilationBuilder builder, IExpression expr, CompilationType destType)
         {
             var result = expr.ProcessExpression(unit, builder);
@@ -48,6 +49,11 @@ namespace Humphrey.FrontEnd
                     return unit.CreateUndef(destType);  // Allow recovery from a missing value error
                 throw new System.Exception($"Recovery attempt without prior error");
             }
+            return EnsureTypeOk(unit, builder, result, destType, expr.Token);
+        }
+
+        public static CompilationValue EnsureTypeOk(CompilationUnit unit, CompilationBuilder builder, ICompilationValue result, CompilationType destType, Result<Tokens> Token)
+        {
             CompilationValue src = Expression.ResolveExpressionToValue(unit, result, destType);
 
             if (src.Type is CompilationFunctionType compilationFunctionType)
@@ -77,7 +83,7 @@ namespace Humphrey.FrontEnd
 
             if (srcArray!=null || dstArray!=null)
             {
-                unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Result of expression '{expr.Token.Location.ToStringValue(expr.Token.Remainder)}' of type '{src.Type.DumpType()}' does not match destination type '{destType.DumpType()}'!", expr.Token.Location, expr.Token.Remainder);
+                unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Result of expression '{Token.Location.ToStringValue(Token.Remainder)}' of type '{src.Type.DumpType()}' does not match destination type '{destType.DumpType()}'!", Token.Location, Token.Remainder);
                 return unit.CreateUndef(destType);  // Allow compilation to continue
             }
 
@@ -113,7 +119,7 @@ namespace Humphrey.FrontEnd
                     return builder.Ext(src, destType);
                 }
 
-                unit.Messages.Log(CompilerErrorKind.Error_IntegerWidthMismatch, $"Result of expression '{expr.Token.Location.ToStringValue(expr.Token.Remainder)}' of type '{srcIntType.DumpType()}' is larger than {destIntType.DumpType()}!", expr.Token.Location, expr.Token.Remainder);
+                unit.Messages.Log(CompilerErrorKind.Error_IntegerWidthMismatch, $"Result of expression '{Token.Location.ToStringValue(Token.Remainder)}' of type '{srcIntType.DumpType()}' is larger than {destIntType.DumpType()}!", Token.Location, Token.Remainder);
                 return unit.CreateUndef(destType);  // Allow compilation to continue
             }
             throw new NotImplementedException($"TODO - Non integer types in promotion?");

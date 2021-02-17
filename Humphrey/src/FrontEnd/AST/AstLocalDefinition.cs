@@ -69,8 +69,8 @@ namespace Humphrey.FrontEnd
                 else
                 {
                     var variableName = ident.Dump();
+                    var newLocal = unit.CreateLocalVariable(unit, builder, ct, ident, exprValue, ident.Token);
                     var sourceLocation = new SourceLocation(ident.Token);
-                    var newLocal = unit.CreateLocalVariable(unit, builder, ct, ident, exprValue, sourceLocation);
 
                     // Debug information
                     var localDbg = unit.CreateAutoVariable(variableName, sourceLocation, ct.DebugType);

@@ -50,7 +50,7 @@ namespace Humphrey.FrontEnd
 
                 // Local copy
                 var type = functionType.Parameters[a].Type;
-                var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, null, new SourceLocation(functionType.Parameters[a].Token));
+                var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, null, functionType.Parameters[a].Token);
                 var cv = new CompilationValue(newFunction.BackendValue.Params[a], type, functionType.Parameters[a].Token);
                 localsBuilder.Store(cv, local.Storage);
 
@@ -68,10 +68,9 @@ namespace Humphrey.FrontEnd
                 // Temporary local storage
                 var outputType = unit.CreatePointerType(functionType.Parameters[a].Type, new SourceLocation(functionType.Parameters[a].Token));
                 var output = new CompilationValue(newFunction.BackendValue.Params[a], outputType, functionType.Parameters[a].Token);
-                var cv = localsBuilder.Load(output);
                 var type = functionType.Parameters[a].Type;
                 var paramIdent = functionType.Parameters[a].Identifier;
-                var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, cv, new SourceLocation(functionType.Parameters[a].Token));
+                var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, null, functionType.Parameters[a].Token);
                 local.Storage = new CompilationValueOutputParameter(local.Storage.BackendValue, local.Storage.Type, paramIdent.Dump(), functionType.Parameters[a].Token);
 
                 // Copy temporary storage to output
