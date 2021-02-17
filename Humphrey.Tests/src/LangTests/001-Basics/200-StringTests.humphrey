@@ -18,3 +18,5 @@ Copy:()(returnValue : byte)=
     sue:=bob;
     returnValue=sue[1];
 }
+
+AGlobalThing:="Global"

@@ -43,14 +43,13 @@ namespace Extensions
             }
         }
 
-        public static LLVMValueRef CreateConstantByteArray(byte[] literal)
+        public static LLVMValueRef CreateConstantArrayFromValues(LLVMValueRef[] constants, LLVMTypeRef type)
         {
-            var type = CreateIntType(8);
-            var toManaged = new LLVMOpaqueValue*[literal.Length];
+            var toManaged = new LLVMOpaqueValue*[constants.Length];
             int a=0;
-            foreach (var value in literal)
+            foreach (var value in constants)
             {
-                toManaged[a++]=CreateConstantValue(type, value);
+                toManaged[a++]=value;
             }
             fixed (LLVMOpaqueValue** array = toManaged)
             {

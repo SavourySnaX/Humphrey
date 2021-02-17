@@ -1037,6 +1037,7 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
 
         [Theory]
         [InlineData(@" Main : () (returnValue : [8]bit) = { bob:=""Hello World""; returnValue=bob[0]; } ", "Main", (byte)'H')]
+        [InlineData(@" global:=""Hello World"" Main : () (returnValue : [8]bit) = { returnValue=global[1]; } ", "Main", (byte)'e')]
         [InlineData(@" Main : () (returnValue : [8]bit) = { bob:=""Hello World""; sue:=bob; returnValue=sue[6]; } ", "Main", (byte)'W')]
         public void CheckByteArrayString(string input, string entryPointName, byte expected)
         {

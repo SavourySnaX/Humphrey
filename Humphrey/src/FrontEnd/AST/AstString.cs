@@ -27,16 +27,20 @@ namespace Humphrey.FrontEnd
 
         public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
-            throw new NotImplementedException($"TODO");
-            /*
             var bitType = new AstBitType();
             var byteType = new AstArrayType(new AstNumber("8"), bitType);
             var bytes = GetNullTerminatedArray();
             var arrayType = new AstArrayType(new AstNumber($"{bytes.Length}"), byteType);
             arrayType.Token = Token;
-            //return new CompilationConstantValue(unit.CreateStringConstant(this), arrayType.CreateOrFetchType(unit).compilationType, Token);
-            return unit.CreateStringConstant(this);//, arrayType.CreateOrFetchType(unit).compilationType, Token);
-            */
+
+            var initialiser = new CompilationConstantIntegerKind[bytes.Length];
+            var idx = 0;
+            foreach( var b in bytes)
+            {
+                initialiser[idx++] = new CompilationConstantIntegerKind(new AstNumber($"{b}"));
+            }
+
+            return new CompilationConstantArrayKind(byteType, initialiser, Token);
         }
 
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
@@ -46,7 +50,7 @@ namespace Humphrey.FrontEnd
             var bytes = GetNullTerminatedArray();
             var arrayType = new AstArrayType(new AstNumber($"{bytes.Length}"), byteType);
             arrayType.Token = Token;
-            return new CompilationValue(unit.CreateStringConstant(this), arrayType.CreateOrFetchType(unit).compilationType, Token);
+            return ProcessConstantExpression(unit).GetCompilationValue(unit, arrayType.CreateOrFetchType(unit).compilationType);
         }
 
         private Result<Tokens> _token;
