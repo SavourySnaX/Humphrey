@@ -33,7 +33,8 @@ namespace Humphrey.Backend
             {
                 if (!destType.Same(compiledArrayType))
                 {
-                    throw new System.Exception($"mismatching array types...");
+                    unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Result of expression '{frontendLocation.Location.ToStringValue(frontendLocation.Remainder)}' of type '{compiledArrayType.DumpType()}' does not match destination type '{destType.DumpType()}'!", frontendLocation.Location, frontendLocation.Remainder);
+                    return unit.CreateUndef(destType);  // Allow compilation to continue
                 }
             }
             var constArray = unit.CreateConstantArray(values, element.CreateOrFetchType(unit).compilationType);

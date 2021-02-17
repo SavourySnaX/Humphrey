@@ -55,6 +55,8 @@ namespace Humphrey.Tests.src
         [InlineData("Broken:()()={bob:[20][8]bit=\"Hello\"; }", CompilerErrorKind.Error_TypeMismatch)]
         [InlineData("Broken:()()={bob:[2][8]bit=0; bob=\"Hello\"; }", CompilerErrorKind.Error_TypeMismatch)]
         [InlineData("Broken:()()={bob:[22][8]bit=0; bob=\"Hello\"; }", CompilerErrorKind.Error_TypeMismatch)]
+        [InlineData("global:=\"Hello\" Broken:()()={bob:[7][8]bit=global; }", CompilerErrorKind.Error_TypeMismatch)]
+        [InlineData("global:=\"Hello\" Broken:()()={bob:[5][8]bit=global; }", CompilerErrorKind.Error_TypeMismatch)]
         [InlineData("[metadata]t:bit", CompilerErrorKind.Debug)]
         [InlineData("[]", CompilerErrorKind.Error_EmptyMetaDataNode)]
         [InlineData("[%]", CompilerErrorKind.Error_ExpectedIdentifierList)]
