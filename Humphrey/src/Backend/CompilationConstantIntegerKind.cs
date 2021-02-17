@@ -23,6 +23,7 @@ namespace Humphrey.Backend
         {
             constant = BigInteger.Parse(val.Dump());
             frontendLocation = val.Token;
+            location = new SourceLocation(frontendLocation);
         }
 
         public (uint numBits, bool isSigned) ComputeKind()
