@@ -1037,13 +1037,40 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
 
         [Theory]
         [InlineData(@" Main : () (returnValue : [8]bit) = { bob:=""Hello World""; returnValue=bob[0]; } ", "Main", (byte)'H')]
-        [InlineData(@" global:=""Hello World"" Main : () (returnValue : [8]bit) = { returnValue=global[1]; } ", "Main", (byte)'e')]
+        [InlineData(@" global:=""Hello World""\_8 Main : () (returnValue : [8]bit) = { returnValue=global[1]; } ", "Main", (byte)'e')]
         [InlineData(@" Main : () (returnValue : [8]bit) = { bob:=""Hello World""; sue:=bob; returnValue=sue[6]; } ", "Main", (byte)'W')]
-        public void CheckByteArrayString(string input, string entryPointName, byte expected)
+        [InlineData(@" Main : () (returnValue : [8]bit) = { bob:=""𐐷""₈; returnValue=bob[0]; } ", "Main", (byte)0xF0)]
+        [InlineData(@" Main : () (returnValue : [8]bit) = { bob:=""𐐷""₈; returnValue=bob[1]; } ", "Main", (byte)0x90)]
+        [InlineData(@" Main : () (returnValue : [8]bit) = { bob:=""𐐷""₈; returnValue=bob[2]; } ", "Main", (byte)0x90)]
+        [InlineData(@" Main : () (returnValue : [8]bit) = { bob:=""𐐷""₈; returnValue=bob[3]; } ", "Main", (byte)0xB7)]
+        [InlineData(@" Main : () (returnValue : [8]bit) = { bob:=""𐐷""₈; returnValue=bob[4]; } ", "Main", (byte)0x00)]
+        public void CheckArrayString8(string input, string entryPointName, byte expected)
         {
             Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
         }
 
+        [Theory]
+        [InlineData(@" Main : () (returnValue : [16]bit) = { bob:=""Hello World""\_16; returnValue=bob[0]; } ", "Main", (ushort)'H')]
+        [InlineData(@" global:=""Hello World""\_16 Main : () (returnValue : [16]bit) = { returnValue=global[1]; } ", "Main", (ushort)'e')]
+        [InlineData(@" Main : () (returnValue : [16]bit) = { bob:=""Hello World""\_16; sue:=bob; returnValue=sue[6]; } ", "Main", (ushort)'W')]
+        [InlineData(@" Main : () (returnValue : [16]bit) = { bob:=""𐐷""₁₆; returnValue=bob[0]; } ", "Main", (ushort)0xD801)]
+        [InlineData(@" Main : () (returnValue : [16]bit) = { bob:=""𐐷""₁₆; returnValue=bob[1]; } ", "Main", (ushort)0xDC37)]
+        [InlineData(@" Main : () (returnValue : [16]bit) = { bob:=""𐐷""₁₆; returnValue=bob[2]; } ", "Main", (ushort)0)]
+        public void CheckArrayString16(string input, string entryPointName, ushort expected)
+        {
+            Assert.True(InputVoidExpects16BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
+        }
+        
+        [Theory]
+        [InlineData(@" Main : () (returnValue : [32]bit) = { bob:=""Hello World""\_32; returnValue=bob[0]; } ", "Main", (uint)'H')]
+        [InlineData(@" global:=""Hello World""\_32 Main : () (returnValue : [32]bit) = { returnValue=global[1]; } ", "Main", (uint)'e')]
+        [InlineData(@" Main : () (returnValue : [32]bit) = { bob:=""Hello World""\_32; sue:=bob; returnValue=sue[6]; } ", "Main", (uint)'W')]
+        [InlineData(@" Main : () (returnValue : [32]bit) = { bob:=""𐐷""₃₂; returnValue=bob[0]; } ", "Main", (uint)0x10437)]
+        [InlineData(@" Main : () (returnValue : [32]bit) = { bob:=""𐐷""₃₂; returnValue=bob[1]; } ", "Main", (uint)0)]
+        public void CheckArrayString32(string input, string entryPointName, uint expected)
+        {
+            Assert.True(InputVoidExpects32BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
+        }
 
         public IntPtr CompileForTest(string input, string entryPointName)
         {
@@ -1078,6 +1105,26 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
         {
             var func = Marshal.GetDelegateForFunctionPointer<InputVoidOutput8Bit>(ee);
             byte returnValue;
+            func(&returnValue);
+            return returnValue == expected;
+        }
+
+        delegate void InputVoidOutput16Bit(ushort* returnVal);
+
+        public static bool InputVoidExpects16BitValue(IntPtr ee, ushort expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputVoidOutput16Bit>(ee);
+            ushort returnValue;
+            func(&returnValue);
+            return returnValue == expected;
+        }
+
+        delegate void InputVoidOutput32Bit(uint* returnVal);
+
+        public static bool InputVoidExpects32BitValue(IntPtr ee, uint expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputVoidOutput32Bit>(ee);
+            uint returnValue;
             func(&returnValue);
             return returnValue == expected;
         }

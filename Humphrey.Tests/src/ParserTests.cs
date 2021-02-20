@@ -149,6 +149,11 @@ namespace Humphrey.FrontEnd.tests
         [InlineData("\"blah\"", "\"blah\"")]
         [InlineData("\"\"", "\"\"")]
         [InlineData("\"執筆\"", "\"執筆\"")]
+        [InlineData("\"執筆\"\\_32", "\"執筆\"")]
+        [InlineData("\"執筆\"\\_16", "\"執筆\"")]
+        [InlineData("\"執筆\"\\_8", "\"執筆\"")]
+        [InlineData("\"執筆\"₈", "\"執筆\"")]
+        [InlineData("\"\\0\\a\\b\\f\\r\\n\\t\\v\\'\\\"\\\\\"", "\"\0\a\b\f\r\n\t\v\'\"\\\"")]
         [InlineData("\"",null)]
         public void CheckExpressionString(string input, string expected)
         {

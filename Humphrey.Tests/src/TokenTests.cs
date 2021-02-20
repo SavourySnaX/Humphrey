@@ -24,6 +24,12 @@ namespace Humphrey.Tests.src
         [InlineData("\"if\"", new []{Tokens.String})]
         [InlineData("\"毛唐\"", new []{Tokens.String})]
         [InlineData(@"""Hello World"";", new []{Tokens.String, Tokens.S_SemiColon})]
+        [InlineData(@"""Hello World""\_8;", new []{Tokens.String, Tokens.S_SemiColon})]
+        [InlineData(@"""Hello World""\_16;", new []{Tokens.String, Tokens.S_SemiColon})]
+        [InlineData(@"""Hello World""\_32;", new []{Tokens.String, Tokens.S_SemiColon})]
+        [InlineData(@"""Hello World""₈;", new []{Tokens.String, Tokens.S_SemiColon})]
+        [InlineData(@"""Hello World""₁₆;", new []{Tokens.String, Tokens.S_SemiColon})]
+        [InlineData(@"""Hello World""₃₂;", new []{Tokens.String, Tokens.S_SemiColon})]
         public void CheckStringLiterals(string input, Tokens[] expected)
         {
             TokenTest(input, expected);

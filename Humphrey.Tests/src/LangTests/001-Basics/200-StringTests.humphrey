@@ -1,4 +1,3 @@
-
 byte:[8] bit
 
 Main: () (returnValue : byte) = 
@@ -19,4 +18,6 @@ Copy:()(returnValue : byte)=
     returnValue=sue[1];
 }
 
-AGlobalThing:="Global"
+AGlobalThing:="\\Global\\"
+AGlobalThing16:="\\Global\\"\_16
+AGlobalThing32:="\\Global\\"\_32

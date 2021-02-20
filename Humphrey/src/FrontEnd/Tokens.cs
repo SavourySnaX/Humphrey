@@ -528,22 +528,143 @@ namespace Humphrey.FrontEnd
         protected static Result<char> SkipToEndString(TokenSpan span)
         {
             var next = span.ConsumeChar();
+            var state = 0;
+
             while (next.HasValue)
             {
-                if (next.Value == '"')
+                if (state == 0)
                 {
-                    next = next.Remainder.ConsumeChar();
-                    break;
+                    if (next.Value == '\\')
+                        state = 20;
+                    else if (next.Value == '"')
+                    {
+                        next = next.Remainder.ConsumeChar();
+                        if (next.HasValue)
+                        {
+                            if (next.Value == '\\')
+                                state = 1;
+                            else if (next.Value >= '₀' && next.Value <= '₉')
+                                state = 10;
+                            else
+                                break;
+                        }
+                    }
                 }
-                // TODO escape codes
+                else
+                {
+                    if (state == 1)
+                    {
+                        if (next.Value == '_')
+                            state = 2;
+                        else
+                            break;
+                    }
+                    else
+                    {
+                        if (state == 2)
+                        {
+                            if (!char.IsDigit(next.Value))
+                                break;
+                        }
+                        if (state == 10)
+                        {
+                            if (next.Value < '₀' || next.Value > '₉')
+                                break;
+                        }
+                        if (state == 20)
+                        {
+                            state = 0;
+                        }
+                    }
+                }
+
                 next = next.Remainder.ConsumeChar();
             }
             return next;
         }
 
-        protected bool IsValidStringLiteral(string literal)
+        public static bool ConvertString(string input, out string output, out AstString.StringKind kind)
         {
-            return (literal.StartsWith('"') && literal.EndsWith('"') && literal.Length>=2);
+            output = null;
+            kind = AstString.StringKind.UTF8;
+            if (!input.StartsWith('"'))
+                return false;
+            // find end quotation
+            var endQuoteOffset = -1;
+            for (int offset = input.Length - 1; offset >= 0; offset--)
+            {
+                if (input[offset]=='"')
+                {
+                    endQuoteOffset = offset;
+                    break;
+                }
+            }
+            if (endQuoteOffset<1)
+                return false;
+
+            var builder = new StringBuilder();
+            int escapeState = 0;
+            for (int offset = 1; offset < endQuoteOffset;offset++)
+            {
+                if (escapeState==0)
+                {
+                    if (input[offset]=='\\')
+                        escapeState = 1;
+                    else
+                        builder.Append(input[offset]);
+                }
+                else
+                {
+                    if (input[offset]=='a')
+                        builder.Append('\a');
+                    else if (input[offset]=='b')
+                        builder.Append('\b');
+                    else if (input[offset]=='f')
+                        builder.Append('\f');
+                    else if (input[offset]=='n')
+                        builder.Append('\n');
+                    else if (input[offset]=='r')
+                        builder.Append('\r');
+                    else if (input[offset]=='t')
+                        builder.Append('\t');
+                    else if (input[offset]=='v')
+                        builder.Append('\v');
+                    else if (input[offset]=='\'')
+                        builder.Append('\'');
+                    else if (input[offset]=='\"')
+                        builder.Append('\"');
+                    else if (input[offset]=='\\')
+                        builder.Append('\\');
+                    else if (input[offset]=='0')
+                        builder.Append('\0');
+                    else
+                    {
+                        return false;
+                    }
+                    escapeState = 0;
+                }
+            }
+            output = builder.ToString();
+
+            if (endQuoteOffset!=input.Length-1)
+            {
+                if (!ExtractSubValue(input, endQuoteOffset+1, out var result))
+                    return false;
+                if (result == 8)
+                    kind = AstString.StringKind.UTF8;
+                else if (result == 16)
+                    kind = AstString.StringKind.UTF16;
+                else if (result == 32)
+                    kind = AstString.StringKind.UTF32;
+                else
+                    return false;
+            }
+            return true;
+        }
+
+        protected bool VerifyStringLiteral(string encoded)
+        {
+            return ConvertString(encoded, out _, out _);
         }
 
         protected static string Decimalise(string v, int radix)
@@ -569,7 +690,6 @@ namespace Humphrey.FrontEnd
         {
             int offset = 0;
             var builderN = new StringBuilder();
-            var builderR = new StringBuilder();
 
             if (string.IsNullOrEmpty(number))
                 return null;
@@ -577,15 +697,63 @@ namespace Humphrey.FrontEnd
             if (number.Length >= 2 && (number[1] == 'b' || number[1] == 'x'))
                 offset = 2;
 
-            int radix = 0;
+            int extractOffset = -1;
             for (int c = offset; c < number.Length; c++)
             {
                 if (number[c] == '_')
                     continue;
-                else if (radix == 1)
+                if (number[c] >= '₀' && number[c] <= '₉')
+                {
+                    extractOffset = c;
+                    break;
+                }
+                else if (number[c] == '\\')
+                {
+                    extractOffset = c;
+                    break;
+                }
+                else
+                {
+                    builderN.Append(number[c]);
+                }
+            }
+
+            var radii = 10;
+            if (extractOffset != -1)
+            {
+                if (!ExtractSubValue(number, extractOffset, out radii))
+                    return null;
+            }
+
+            if (offset == 2)
+            {
+                if (offset == 2)
+                {
+                    if (number[1] == 'b')
+                        radii = 2;
+                    else
+                        radii = 16;
+                }
+            }
+
+            return Decimalise(builderN.ToString(), radii);
+        }
+
+        private static bool ExtractSubValue(string number, int offset, out int radii)
+        {
+            int radix = 0;
+            radii = 10;
+            var builderR = new StringBuilder();
+            for (int c = offset; c < number.Length; c++)
+            {
+                if (radix == 1)
                     builderR.Append(number[c] - '₀');
                 else if (radix == 2)
+                {
+                    if (number[c] != '_')
+                        return false;
                     radix++;
+                }
                 else if (radix == 3)
                     builderR.Append(number[c]);
                 else
@@ -598,25 +766,10 @@ namespace Humphrey.FrontEnd
                     else if (number[c] == '\\')
                         radix = 2;
                     else
-                        builderN.Append(number[c]);
+                        return false;
                 }
             }
-
-            int radii = 10;
-            if (offset == 2 || radix > 0)
-            {
-                if (offset == 2)
-                {
-                    if (number[1] == 'b')
-                        radii = 2;
-                    else
-                        radii = 16;
-                }
-                else
-                    radii = int.Parse(builderR.ToString());
-            }
-
-            return Decimalise(builderN.ToString(), radii);
+            return int.TryParse(builderR.ToString(), System.Globalization.NumberStyles.Integer, null, out radii);
         }
 
         protected bool IsLegalNumberFormat(string number)
@@ -684,13 +837,15 @@ namespace Humphrey.FrontEnd
                     next = next.Remainder.ConsumeChar();
                     next = SkipToEndString(next.Location);
 
-                    if (!IsValidStringLiteral(start.Location.Until(next.Location).ToStringValue()))
+                    if (VerifyStringLiteral(start.Location.Until(next.Location).ToStringValue()))
+                    {
+                        yield return new Result<Tokens>(Tokens.String, start.Location, next.Location);
+                    }
+                    else
                     {
                         messages.Log(CompilerErrorKind.Error_FailedToFindEndOfString, $"Missing '\"' terminator for string literal", start.Location);
                         yield break;
                     }
-                    else
-                        yield return new Result<Tokens>(Tokens.String, start.Location, next.Location);
                 }
                 else if (IsNumberOrIdentifierStart(c))
                 {
