@@ -10,6 +10,7 @@ namespace Humphrey.Tests.src
         [Theory]
         [InlineData("#", CompilerErrorKind.Debug)]
         [InlineData("\b", CompilerErrorKind.Error_InvalidToken)]
+        [InlineData("\"", CompilerErrorKind.Error_FailedToFindEndOfString)]
         public void CheckComments(string input, CompilerErrorKind kind)
         {
             TokenTest(input, kind);
@@ -48,6 +49,14 @@ namespace Humphrey.Tests.src
         [InlineData("ptr:*bit=1 as *bit", CompilerErrorKind.Debug)]
         [InlineData("ptr:*bit=1", CompilerErrorKind.Error_TypeMismatch)]
         [InlineData("ptr:*bit=1 as *[8]bit", CompilerErrorKind.Error_TypeMismatch)]
+        [InlineData("Working:()()={bob:[6][8]bit=0; bob=\"Hello\"; }", CompilerErrorKind.Debug)]
+        [InlineData("byte:[8]bit Working:()()={bob:[6]byte=\"Hello\"; }", CompilerErrorKind.Debug)]
+        [InlineData("Broken:()()={bob:[1][8]bit=\"Hello\"; }", CompilerErrorKind.Error_TypeMismatch)]
+        [InlineData("Broken:()()={bob:[20][8]bit=\"Hello\"; }", CompilerErrorKind.Error_TypeMismatch)]
+        [InlineData("Broken:()()={bob:[2][8]bit=0; bob=\"Hello\"; }", CompilerErrorKind.Error_TypeMismatch)]
+        [InlineData("Broken:()()={bob:[22][8]bit=0; bob=\"Hello\"; }", CompilerErrorKind.Error_TypeMismatch)]
+        [InlineData("global:=\"Hello\" Broken:()()={bob:[7][8]bit=global; }", CompilerErrorKind.Error_TypeMismatch)]
+        [InlineData("global:=\"Hello\" Broken:()()={bob:[5][8]bit=global; }", CompilerErrorKind.Error_TypeMismatch)]
         [InlineData("[metadata]t:bit", CompilerErrorKind.Debug)]
         [InlineData("[]", CompilerErrorKind.Error_EmptyMetaDataNode)]
         [InlineData("[%]", CompilerErrorKind.Error_ExpectedIdentifierList)]

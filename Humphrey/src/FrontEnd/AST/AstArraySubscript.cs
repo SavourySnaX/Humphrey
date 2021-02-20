@@ -24,7 +24,7 @@ namespace Humphrey.FrontEnd
             return $"{expr.Dump()} [ {subscriptIdx.Dump()} ]";
         }
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
             throw new System.NotImplementedException($"Todo implement constant expression for subscript....");
         }
@@ -33,16 +33,16 @@ namespace Humphrey.FrontEnd
         {
             var rlhs = expr.ProcessExpression(unit, builder);
             var rrhs = subscriptIdx.ProcessExpression(unit, builder);
-            if (rlhs is CompilationConstantValue clhs && rrhs is CompilationConstantValue crhs)
+            if (rlhs is CompilationConstantIntegerKind clhs && rrhs is CompilationConstantIntegerKind crhs)
                 throw new System.NotImplementedException($"Array subscript on constant is not possible yet?");
 
             var vlhs = rlhs as CompilationValue;
             var vrhs = rrhs as CompilationValue;
 
             if (vlhs is null)
-                vlhs = (rlhs as CompilationConstantValue).GetCompilationValue(unit, vrhs.Type);
+                vlhs = (rlhs as CompilationConstantIntegerKind).GetCompilationValue(unit, vrhs.Type);
             if (vrhs is null)
-                vrhs = (rrhs as CompilationConstantValue).GetCompilationValue(unit, unit.FetchIntegerType(64, false, new SourceLocation(subscriptIdx.Token)));
+                vrhs = (rrhs as CompilationConstantIntegerKind).GetCompilationValue(unit, unit.FetchIntegerType(64, false, new SourceLocation(subscriptIdx.Token)));
 
             return (vlhs, vrhs);
         }
@@ -53,7 +53,7 @@ namespace Humphrey.FrontEnd
             var range = subscriptIdx as AstInclusiveRange;
             var brhs = range.InclusiveStart?.ProcessExpression(unit, builder);
             var erhs = range.InclusiveEnd?.ProcessExpression(unit,builder);
-            if (rlhs is CompilationConstantValue clhs && brhs is CompilationConstantValue cbrhs && erhs is CompilationConstantValue cerhs)
+            if (rlhs is CompilationConstantIntegerKind clhs && brhs is CompilationConstantIntegerKind cbrhs && erhs is CompilationConstantIntegerKind cerhs)
                 throw new System.NotImplementedException($"Array subscript on constant is not possible yet?");
 
             var vlhs = rlhs as CompilationValue;
@@ -61,29 +61,29 @@ namespace Humphrey.FrontEnd
             CompilationValue verhs = null;
 
             if (vlhs is null)
-                vlhs = (rlhs as CompilationConstantValue).GetCompilationValue(unit, null);
+                vlhs = (rlhs as CompilationConstantIntegerKind).GetCompilationValue(unit, null);
 
             if (brhs != null)
             {
                 vbrhs = brhs as CompilationValue;
                 if (vbrhs is null)
-                    vbrhs = (brhs as CompilationConstantValue).GetCompilationValue(unit, unit.FetchIntegerType(64, false, new SourceLocation(range.InclusiveStart.Token)));
+                    vbrhs = (brhs as CompilationConstantIntegerKind).GetCompilationValue(unit, unit.FetchIntegerType(64, false, new SourceLocation(range.InclusiveStart.Token)));
             }
             if (erhs != null)
             {
                 verhs = erhs as CompilationValue;
                 if (verhs is null)
-                    verhs = (erhs as CompilationConstantValue).GetCompilationValue(unit, unit.FetchIntegerType(64, false, new SourceLocation(range.InclusiveEnd.Token)));
+                    verhs = (erhs as CompilationConstantIntegerKind).GetCompilationValue(unit, unit.FetchIntegerType(64, false, new SourceLocation(range.InclusiveEnd.Token)));
             }
 
-            if ( vlhs.Type is CompilationIntegerType integerType && (brhs is CompilationConstantValue || brhs == null ) && (erhs is CompilationConstantValue || erhs == null) )
+            if ( vlhs.Type is CompilationIntegerType integerType && (brhs is CompilationConstantIntegerKind || brhs == null ) && (erhs is CompilationConstantIntegerKind || erhs == null) )
             {
                 // compute constant width of result (so truncation can be applied if needed)
                 System.Int64 start = 0;
-                if (brhs is CompilationConstantValue cstart)
+                if (brhs is CompilationConstantIntegerKind cstart)
                     start = (System.Int64)cstart.Constant;
                 System.Int64 end = start + integerType.IntegerWidth;
-                if (erhs is CompilationConstantValue cend)
+                if (erhs is CompilationConstantIntegerKind cend)
                     end = (System.Int64)cend.Constant;
 
                 var constantWidth = (uint)(System.Math.Abs(end - start) + 1);

@@ -17,7 +17,7 @@ namespace Humphrey.FrontEnd
             return $". {lhs.Dump()} {rhs.Dump()}";
         }
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
             throw new System.NotImplementedException($"ProcessConstantExpression for reference operator is not implemented");
         }

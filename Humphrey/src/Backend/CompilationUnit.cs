@@ -49,7 +49,7 @@ namespace Humphrey.Backend
 
 
             var moduleName = System.IO.Path.GetFileNameWithoutExtension(sourceFileNameAndPath);
-            contextRef = CreateContext();
+            contextRef = FetchGlobalContext();
             moduleRef = contextRef.CreateModuleWithName(moduleName);
             
             debugBuilder = new CompilationDebugBuilder(debugInfo, this, sourceFileNameAndPath, CompilerVersion, targetTriple.Contains("msvc"));
@@ -111,13 +111,13 @@ namespace Humphrey.Backend
             return moduleRef.PrintToString();
         }
 
-        public CompilationType FetchArrayType(CompilationConstantValue numElements, CompilationType elementType, SourceLocation location)
+        public CompilationType FetchArrayType(CompilationConstantIntegerKind numElements, CompilationType elementType, SourceLocation location)
         {
             uint num = (uint)numElements.Constant;
             return new CompilationArrayType(CreateArrayType(elementType.BackendType,num), elementType, num, debugBuilder, location);
         }
 
-        public CompilationType FetchIntegerType(CompilationConstantValue numBits, SourceLocation location)
+        public CompilationType FetchIntegerType(CompilationConstantIntegerKind numBits, SourceLocation location)
         {
             bool isSigned = false;
             if (numBits.Constant<BigInteger.Zero)
@@ -170,7 +170,7 @@ namespace Humphrey.Backend
             return new CompilationStructureType(backendType, elements, names, debugBuilder, location);
         }
 
-        public CompilationType FetchEnumType(CompilationType type, CompilationConstantValue[] values, Dictionary<string,uint> names, SourceLocation location)
+        public CompilationType FetchEnumType(CompilationType type, CompilationConstantIntegerKind[] values, Dictionary<string,uint> names, SourceLocation location)
         {
             return new CompilationEnumType(type, values, names, debugBuilder, location);
         }
@@ -302,7 +302,17 @@ namespace Humphrey.Backend
             return i64Type.CreateConstantValue(value);
         }
 
-        public CompilationValue CreateConstant(CompilationConstantValue constantValue, uint numBits, bool isSigned, SourceLocation location)
+        public LLVMValueRef CreateConstantArray(ICompilationConstantValue[] values, CompilationType elementType)
+        {
+            var constants = new LLVMValueRef[values.Length];
+            for (int a = 0; a < values.Length;a++)
+            {
+                constants[a] = values[a].GetCompilationValue(this, elementType).BackendValue;
+            }
+            return CreateConstantArrayFromValues(constants, elementType.BackendType);
+        }
+
+        public CompilationValue CreateConstant(CompilationConstantIntegerKind constantValue, uint numBits, bool isSigned, SourceLocation location)
         {
             var constType = new CompilationIntegerType(contextRef.GetIntType(numBits), isSigned, debugBuilder, location);
 
@@ -311,7 +321,7 @@ namespace Humphrey.Backend
 
         public CompilationValue CreateConstant(AstNumber decimalNumber, SourceLocation location)
         {
-            var constantValue = new CompilationConstantValue(decimalNumber);
+            var constantValue = new CompilationConstantIntegerKind(decimalNumber);
             var (numBits, isSigned) = constantValue.ComputeKind();
 
             return CreateConstant(constantValue, numBits, isSigned, location);
@@ -389,7 +399,7 @@ namespace Humphrey.Backend
             }
         }
 
-        public CompilationValue CreateGlobalVariable(CompilationType type, AstIdentifier identifier, SourceLocation location, CompilationConstantValue initialiser = null)
+        public CompilationValue CreateGlobalVariable(CompilationType type, AstIdentifier identifier, SourceLocation location, ICompilationConstantValue initialiser = null)
         {
             var ident = identifier.Dump();
             if (symbolScopes.FetchValue(ident)!=null)
@@ -417,7 +427,7 @@ namespace Humphrey.Backend
             return globalValue;
         }
 
-        public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationType type, AstIdentifier identifier, ICompilationValue initialiser, SourceLocation location)
+        public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationType type, AstIdentifier identifier, ICompilationValue initialiser, Result<Tokens> location)
         {
             var ident = identifier.Dump();
             if (symbolScopes.FetchValue(ident)!=null)
@@ -432,10 +442,10 @@ namespace Humphrey.Backend
 
             if (initialiser != null)
             {
-                var value = Expression.ResolveExpressionToValue(unit, initialiser, type);
+                var value = AstUnaryExpression.EnsureTypeOk(unit, builder, initialiser, type, location);
                 builder.Store(value, local);
             }
-            local.Storage = new CompilationValue(local.BackendValue, CreatePointerType(type, location), identifier.Token);
+            local.Storage = new CompilationValue(local.BackendValue, CreatePointerType(type, new SourceLocation(location)), identifier.Token);
 
             if (!symbolScopes.AddValue(ident, local))
                 throw new Exception($"local {identifier} failed to add symbol!");
@@ -478,7 +488,7 @@ namespace Humphrey.Backend
         {
             var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
 
-            moduleRef.DataLayout = targetMachine.CreateTargetDataLayout();
+            moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
 
             var pm = LLVMPassManagerRef.Create();
@@ -532,8 +542,9 @@ namespace Humphrey.Backend
         {
             var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
 
-            moduleRef.DataLayout = targetMachine.CreateTargetDataLayout();
+            moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
+
 
             var pm = LLVMPassManagerRef.Create();
             if (optimisations)

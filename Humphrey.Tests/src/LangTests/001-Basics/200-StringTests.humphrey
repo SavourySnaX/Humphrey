@@ -1,0 +1,23 @@
+byte:[8] bit
+
+Main: () (returnValue : byte) = 
+{
+    bob:[1]byte="";
+    returnValue=bob[4];
+}
+
+String:()()=
+{
+    sue:="作文";
+}
+
+Copy:()(returnValue : byte)=
+{
+    bob:="Hello World";
+    sue:=bob;
+    returnValue=sue[1];
+}
+
+AGlobalThing:="\\Global\\"
+AGlobalThing16:="\\Global\\"\_16
+AGlobalThing32:="\\Global\\"\_32

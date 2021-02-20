@@ -1,15 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="libLLVM" Version="10.0.0" />
-    <PackageReference Include="libLLVM.runtime.win-x64" Version="10.0.0" />
-    <PackageReference Include="LLVMSharp" Version="10.0.0-beta" />
+    <PackageReference Include="libLLVM" Version="11.0.0"/>
+    <PackageReference Include="libLLVM.runtime.win-x64" Version="11.0.0"/>
+    <PackageReference Include="LLVMSharp" Version="11.0.0-beta"/>
   </ItemGroup>
-
 </Project>

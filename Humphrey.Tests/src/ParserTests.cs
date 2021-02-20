@@ -146,6 +146,25 @@ namespace Humphrey.FrontEnd.tests
         }
 
         [Theory]
+        [InlineData("\"blah\"", "\"blah\"")]
+        [InlineData("\"\"", "\"\"")]
+        [InlineData("\"執筆\"", "\"執筆\"")]
+        [InlineData("\"執筆\"\\_32", "\"執筆\"")]
+        [InlineData("\"執筆\"\\_16", "\"執筆\"")]
+        [InlineData("\"執筆\"\\_8", "\"執筆\"")]
+        [InlineData("\"執筆\"₈", "\"執筆\"")]
+        [InlineData("\"\\0\\a\\b\\f\\r\\n\\t\\v\\'\\\"\\\\\"", "\"\0\a\b\f\r\n\t\v\'\"\\\"")]
+        [InlineData("\"",null)]
+        public void CheckExpressionString(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.ParseExpression(), expected);
+        }
+
+
+        [Theory]
         [InlineData("a=1","a = 1")]
         [InlineData("a={}","a = { }")]
         [InlineData("a[15]=1","a [ 15 ] = 1")]

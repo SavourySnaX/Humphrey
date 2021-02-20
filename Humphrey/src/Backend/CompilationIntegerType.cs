@@ -20,8 +20,11 @@ namespace Humphrey.Backend
             var check = obj as CompilationIntegerType;
             if (check == null)
                 return false;
-            return signedType == check.signedType && Identifier == check.Identifier && IntegerWidth == check.IntegerWidth;
+
+            var anonMatch = Identifier == "" || check.Identifier == "" || Identifier == check.Identifier;
+            return signedType == check.signedType && anonMatch && IntegerWidth == check.IntegerWidth;
         }
+
         public override CompilationType CopyAs(string identifier)
         {
             return new CompilationIntegerType(BackendType, signedType, DebugBuilder, Location, identifier);

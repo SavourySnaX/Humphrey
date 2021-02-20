@@ -19,12 +19,12 @@ namespace Humphrey.FrontEnd
             //Indexed by name rather than integer
 
             var enumType = type.CreateOrFetchType(unit).compilationType;
-            var values = new CompilationConstantValue[definitions.Length];
+            var values = new CompilationConstantIntegerKind[definitions.Length];
             var names = new Dictionary<string, uint>();
             uint idx = 0;
             foreach(var element in definitions)
             {
-                values[idx] = element.ProcessConstantExpression(unit);
+                values[idx] = element.ProcessConstantExpression(unit) as CompilationConstantIntegerKind;
                 for (int a = 0; a < element.NumElements; a++)
                 {
                     names[element.Identifiers[a].Dump()] = idx;

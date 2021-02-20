@@ -13,15 +13,16 @@ namespace Humphrey.FrontEnd
             return $"_";
         }
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
-            return new CompilationConstantValue(Token);
+            return new CompilationConstantUndefKind(Token);
         }
 
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            return new CompilationConstantValue(Token);
+            return ProcessConstantExpression(unit);
         }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

@@ -14,7 +14,7 @@ namespace Humphrey.FrontEnd
             return $"* {expr.Dump()}";
         }
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
             throw new System.Exception($"Cannot derefence a constant expression");
         }
@@ -22,7 +22,7 @@ namespace Humphrey.FrontEnd
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             var value = expr.ProcessExpression(unit, builder);
-            if (value is CompilationConstantValue constantValue)
+            if (value is CompilationConstantIntegerKind constantValue)
             {
                 throw new System.Exception($"Cannot derefence a constant expression");
             }
@@ -40,7 +40,7 @@ namespace Humphrey.FrontEnd
         public void ProcessExpressionForStore(CompilationUnit unit, CompilationBuilder builder, IExpression value)
         {
             var dest = expr.ProcessExpression(unit, builder);
-            if (value is CompilationConstantValue constantValue)
+            if (value is CompilationConstantIntegerKind constantValue)
             {
                 throw new System.Exception($"Cannot derefence a constant expression");
             }

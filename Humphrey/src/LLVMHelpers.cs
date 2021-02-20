@@ -16,6 +16,11 @@ namespace Extensions
             return LLVM.ContextCreate();
         }
 
+        public static LLVMContextRef FetchGlobalContext()
+        {
+            return LLVM.GetGlobalContext();
+        }
+
         public static LLVMValueRef ConstIntToPtr(this LLVMValueRef valueRef, LLVMTypeRef typeRef)
         {
             return LLVM.ConstIntToPtr(valueRef, typeRef);
@@ -35,6 +40,20 @@ namespace Extensions
             fixed (byte* bvalue = Encoding.ASCII.GetBytes(value))
             {
                 return LLVM.ConstIntOfString(type, (sbyte*)bvalue, (byte)radix);
+            }
+        }
+
+        public static LLVMValueRef CreateConstantArrayFromValues(LLVMValueRef[] constants, LLVMTypeRef type)
+        {
+            var toManaged = new LLVMOpaqueValue*[constants.Length];
+            int a=0;
+            foreach (var value in constants)
+            {
+                toManaged[a++]=value;
+            }
+            fixed (LLVMOpaqueValue** array = toManaged)
+            {
+                return LLVM.ConstArray(type, array, (uint)toManaged.Length);
             }
         }
 
@@ -230,6 +249,11 @@ namespace Extensions
             {
                 return LLVM.DIBuilderCreatePointerType(builderRef, pointee, sizeInBits, alignInBits, addressSpace, (sbyte*)namePtr, (UIntPtr)name.Length);
             }
+        }
+
+        public static void SetDataLayout(this LLVMModuleRef moduleRef, LLVMTargetDataRef dataLayout)
+        {
+            LLVM.SetModuleDataLayout(moduleRef, dataLayout);
         }
 
         public static LLVMTargetDataRef GetDataLayout(this LLVMModuleRef moduleRef)

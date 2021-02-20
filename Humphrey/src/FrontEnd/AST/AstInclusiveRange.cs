@@ -21,7 +21,7 @@ namespace Humphrey.FrontEnd
             return $"{inclusiveStart.Dump()} .. {inclusiveStop.Dump()}";
         }
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
             throw new System.NotImplementedException($"Should never be directly called");
         }

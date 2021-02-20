@@ -7,6 +7,7 @@ namespace Humphrey.FrontEnd
     {
         // Tokeniser block
         Error_InvalidToken = Error | TokeniseError | 0x01,
+        Error_FailedToFindEndOfString = Error | TokeniseError | 0x02,
         
         // Parser block
         Error_ExpectedGlobalDefinition = Error | ParseError | 0x01,

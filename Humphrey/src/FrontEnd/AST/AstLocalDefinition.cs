@@ -69,8 +69,8 @@ namespace Humphrey.FrontEnd
                 else
                 {
                     var variableName = ident.Dump();
+                    var newLocal = unit.CreateLocalVariable(unit, builder, ct, ident, exprValue, ident.Token);
                     var sourceLocation = new SourceLocation(ident.Token);
-                    var newLocal = unit.CreateLocalVariable(unit, builder, ct, ident, exprValue, sourceLocation);
 
                     // Debug information
                     var localDbg = unit.CreateAutoVariable(variableName, sourceLocation, ct.DebugType);
@@ -99,7 +99,7 @@ namespace Humphrey.FrontEnd
             return s.ToString();
         }
 
-        public CompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
+        public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
             throw new System.NotImplementedException($"Todo implement constant expression processing");
         }
