@@ -168,6 +168,17 @@ namespace Humphrey.FrontEnd
                 break;
             }
 
+            var leftPointer = left.Type as CompilationPointerType;
+            var rightPointer = right.Type as CompilationPointerType;
+
+            if (leftPointer != null && rightPointer != null)
+            {
+                if (leftPointer.Same(rightPointer))
+                    return (left, right);
+                else
+                    throw new Exception($"TODO - Error incompatable pointer");
+            }
+
             var leftEnum = left.Type as CompilationEnumType;
             var rightEnum = right.Type as CompilationEnumType;
 
