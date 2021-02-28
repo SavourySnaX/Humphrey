@@ -101,13 +101,17 @@ namespace Humphrey.FrontEnd
             {
                 var gep = builder.InBoundsGEP(vlhs, pointerType, new LLVMSharp.Interop.LLVMValueRef[] { builder.Ext(vrhs, i64Type).BackendValue });
                 var dereferenced = builder.Load(gep);
-                return new CompilationValue(dereferenced.BackendValue, pointerType.ElementType, Token);
+                var result = new CompilationValue(dereferenced.BackendValue, pointerType.ElementType, Token);
+                result.Storage = dereferenced.Storage;
+                return result;
             }
             if (vlhs.Type is CompilationArrayType arrayType)
             {
                 var gep = builder.InBoundsGEP(vlhs.Storage, vlhs.Storage.Type as CompilationPointerType, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, unit.FetchIntegerType(64, false, new SourceLocation(subscriptIdx.Token))).BackendValue });
                 var dereferenced = builder.Load(gep);
-                return new CompilationValue(dereferenced.BackendValue, arrayType.ElementType, Token);
+                var result = new CompilationValue(dereferenced.BackendValue, arrayType.ElementType, Token);
+                result.Storage = dereferenced.Storage;
+                return result;
             }
             if (vlhs.Type is CompilationIntegerType integerType)
             {

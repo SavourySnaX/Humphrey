@@ -641,6 +641,11 @@ FetchAlpha:(colour:*RGBA)(alpha:U8)=
     alpha=colour.a;
 }
 
+FetchFirstAlpha:(colour:*RGBA)(alpha:U8)=
+{
+    alpha=colour[0].a;
+}
+
 InsertRed:(colour:*RGBA, red:U8)()=
 {
     colour.r=red;
@@ -660,6 +665,11 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
 {
     colour.a=alpha;
 }
+
+InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
+{
+    colour[0].a=alpha;
+}
 ";
 
         public static IEnumerable<object[]> PointerToStructReadData => new List<object[]>
@@ -672,6 +682,8 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
                 new object[] { rgbaTestProgram, "FetchBlue", new RGBA_CSharp { red = 11, green = 22, blue = 33, alpha = 44 }, 33 },
                 new object[] { rgbaTestProgram, "FetchAlpha", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 11 },
                 new object[] { rgbaTestProgram, "FetchAlpha", new RGBA_CSharp { red = 11, green = 22, blue = 33, alpha = 44 }, 44 },
+                new object[] { rgbaTestProgram, "FetchFirstAlpha", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 11 },
+                new object[] { rgbaTestProgram, "FetchFirstAlpha", new RGBA_CSharp { red = 11, green = 22, blue = 33, alpha = 44 }, 44 },
             };
 
         [Theory]
@@ -695,6 +707,9 @@ InsertAlpha:(colour:*RGBA, alpha:U8)()=
                 new object[] { rgbaTestProgram, "InsertAlpha", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 12, new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 12 } },
                 new object[] { rgbaTestProgram, "InsertAlpha", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 0, new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 0 } },
                 new object[] { rgbaTestProgram, "InsertAlpha", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 255, new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 255 } },
+                new object[] { rgbaTestProgram, "InsertFirstAlpha", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 12, new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 12 } },
+                new object[] { rgbaTestProgram, "InsertFirstAlpha", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 0, new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 0 } },
+                new object[] { rgbaTestProgram, "InsertFirstAlpha", new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 11 }, 255, new RGBA_CSharp { red = 44, green = 33, blue = 22, alpha = 255 } },
             };
 
         [Theory]

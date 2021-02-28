@@ -164,7 +164,9 @@ namespace Humphrey.Backend
             var ptrType = ptr.Type as CompilationPointerType;
             if (ptrType==null)
                 throw new System.ArgumentException($"GEP requires a pointer value");
-            return new CompilationValue(builderRef.BuildInBoundsGEP(ptr.BackendValue, indices), resolvedType, ptr.FrontendLocation);
+            var value = new CompilationValue(builderRef.BuildInBoundsGEP(ptr.BackendValue, indices), resolvedType, ptr.FrontendLocation);
+            value.Storage = value;
+            return value;
         }
 
         public CompilationValue Ext(CompilationValue src, CompilationType toType)
