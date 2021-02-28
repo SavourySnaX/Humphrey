@@ -619,6 +619,8 @@ namespace Humphrey.FrontEnd
                         builder.Append('\a');
                     else if (input[offset]=='b')
                         builder.Append('\b');
+                    else if (input[offset]=='e')
+                        builder.Append('\x1b');
                     else if (input[offset]=='f')
                         builder.Append('\f');
                     else if (input[offset]=='n')
