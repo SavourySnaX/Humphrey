@@ -29,6 +29,8 @@ namespace Humphrey.FrontEnd
             else
             {
                 var compilationValue = value as CompilationValue;
+                if (compilationValue==null)
+                    throw new CompilationAbortException($"Cannot derefence an undefined value");
                 var compilationPointerType = compilationValue.Type as CompilationPointerType;
                 if (compilationPointerType == null)
                     throw new System.Exception($"Cannot derefence a non pointer type");
