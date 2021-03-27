@@ -18,7 +18,13 @@ namespace Humphrey.FrontEnd
             var isBit = elementType as AstBitType;
             if (isBit==null)
             {
-                return (unit.FetchArrayType(exprValue, elementType.CreateOrFetchType(unit).compilationType, new SourceLocation(elementType.Token)), this);
+                var elementCompilationType = elementType.CreateOrFetchType(unit).compilationType;
+                if (elementCompilationType == null)
+                {
+                    // return a fake array type to allow compilation to continue
+                    elementCompilationType = new AstBitType().CreateOrFetchType(unit).compilationType;
+                }
+                return (unit.FetchArrayType(exprValue, elementCompilationType, new SourceLocation(elementType.Token)), this);
             }
             else
                 return (unit.FetchIntegerType(exprValue, new SourceLocation(elementType.Token)), this);
