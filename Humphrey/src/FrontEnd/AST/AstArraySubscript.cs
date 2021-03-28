@@ -39,6 +39,11 @@ namespace Humphrey.FrontEnd
             var vlhs = rlhs as CompilationValue;
             var vrhs = rrhs as CompilationValue;
 
+            if (vlhs == null && rlhs == null)
+            {
+                throw new CompilationAbortException($"Todo Implement recovery for this");
+            }
+
             if (vlhs is null)
                 vlhs = (rlhs as CompilationConstantIntegerKind).GetCompilationValue(unit, vrhs.Type);
             if (vrhs is null)
