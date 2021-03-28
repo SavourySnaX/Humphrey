@@ -24,6 +24,12 @@ namespace Humphrey.FrontEnd
             var value = expr.ProcessExpression(unit, builder);
             if (value is CompilationConstantIntegerKind constantValue)
             {
+                var constPointer = constantValue.GetCompilationValue(unit, null);
+                if (constPointer.Type is CompilationPointerType constPointerType)
+                {
+                    var dereferenced = builder.Load(constPointer);
+                    return new CompilationValue(dereferenced.BackendValue, constPointerType.ElementType, Token);
+                }
                 throw new System.Exception($"Cannot derefence a constant expression");
             }
             else
