@@ -336,6 +336,9 @@ namespace Humphrey.FrontEnd
         // binary_xor_operator : ^
         public IAst BinaryXorOperator() { return AstItem(Tokens.O_BinaryXor, (e) => new AstOperator(e)); }
         // address_of_operator : &
+        public IAst LogicalShiftLeftOperator() { return AstItem(Tokens.O_LogicalShiftLeft, (e) => new AstOperator(e)); }
+        public IAst LogicalShiftRightOperator() { return AstItem(Tokens.O_LogicalShiftRight, (e) => new AstOperator(e)); }
+        public IAst ArithmeticShiftRightOperator() { return AstItem(Tokens.O_ArithmaticShiftRight, (e) => new AstOperator(e)); }
         public IAst AddressOfOperator() { return AstItem(Tokens.O_BinaryAnd, (e) => new AstOperator(e)); }
         // as_operator : as
         public IAst AsOperator() { return AstItem(Tokens.O_As, (e) => new AstOperator(e)); }
@@ -372,7 +375,8 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] BinaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, DivideOperator, ModulusOperator, 
                 CompareEqualOperator, CompareNotEqualOperator, CompareLessOperator, CompareLessEqualOperator, CompareGreaterOperator, CompareGreaterEqualOperator,
                 AsOperator, ReferenceOperator, FunctionCallOperator, ArraySubscriptOperator, PostIncrementOperator, PostDecrementOperator,
-                LogicalAndOperator, LogicalOrOperator, BinaryAndOperator, BinaryOrOperator, BinaryXorOperator };
+                LogicalAndOperator, LogicalOrOperator, BinaryAndOperator, BinaryOrOperator, BinaryXorOperator,
+                LogicalShiftLeftOperator, LogicalShiftRightOperator, ArithmeticShiftRightOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
         public AstItemDelegate[] BaseTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType};
         public AstItemDelegate[] Types => new AstItemDelegate[] { BaseTypeOrEnumType };

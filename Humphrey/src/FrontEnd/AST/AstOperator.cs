@@ -38,6 +38,10 @@ namespace Humphrey.FrontEnd
                     case "<=":
                     case ">=":
                         return 600;
+                    case "<<":
+                    case ">>":
+                    case ">>>":
+                        return 550;
                     case "+":
                     case "-":
                         return 500;
