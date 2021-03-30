@@ -110,8 +110,9 @@ namespace Humphrey.FrontEnd
                     {
                         return src;
                     }
-
-                    throw new NotImplementedException($"TODO - signed/unsigned mismatch");
+                
+                    unit.Messages.Log(CompilerErrorKind.Error_SignedUnsignedMismatch, $"Result of expression '{Token.Location.ToStringValue(Token.Remainder)}' of type '{srcIntType.DumpType()}' is same width but signedness of type does not match {destIntType.DumpType()}!", Token.Location, Token.Remainder);
+                    return unit.CreateUndef(destType);
                 }
                 else if (srcIntType.IntegerWidth < destIntType.IntegerWidth)
                 {

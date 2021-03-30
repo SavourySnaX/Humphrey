@@ -24,6 +24,7 @@ namespace Humphrey.FrontEnd
         Error_UndefinedType = Error | CompileError | 0x03,
         Error_UndefinedValue = Error | CompileError | 0x04,
         Error_TypeMismatch = Error | CompileError | 0x05,
+        Error_SignedUnsignedMismatch = Error | CompileError | 0x06,
         Error_CompilationAborted = Error | CompileError | 0xFF,
         
         // LLVM block
