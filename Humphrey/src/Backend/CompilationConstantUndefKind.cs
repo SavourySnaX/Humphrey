@@ -28,7 +28,8 @@ namespace Humphrey.Backend
 
             if (destType == null)
             {
-                throw new System.NotImplementedException("Invalid");
+                unit.Messages.Log(CompilerErrorKind.Error_UndefinedType, $"An Undef value '_' cannot be used in an expression that requires a type", FrontendLocation.Location, FrontendLocation.Remainder);
+                throw new CompilationAbortException();
             }
 
             return unit.CreateUndef(destType);
