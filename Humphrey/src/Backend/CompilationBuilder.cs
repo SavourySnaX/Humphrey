@@ -129,6 +129,50 @@ namespace Humphrey.Backend
             return new CompilationValue(builderRef.BuildXor(left.BackendValue, right.BackendValue), left.Type, left.FrontendLocation.Combine(right.FrontendLocation));
         }
 
+        public CompilationValue LogicalShiftLeft(CompilationValue left, CompilationValue right)
+        {
+            var leftInt = left.Type as CompilationIntegerType;
+            var rightInt = right.Type as CompilationIntegerType;
+
+            if (leftInt != null && rightInt != null)
+            {
+                var cNumBits = new CompilationConstantIntegerKind(new AstNumber($"{leftInt.IntegerWidth}"));
+                var numBits = unit.CreateConstant(cNumBits, leftInt.IntegerWidth, false, new SourceLocation(left.FrontendLocation));
+                var shiftAmount = URem(right, numBits);
+                return ShiftLeft(left, shiftAmount);
+            }
+            throw new NotImplementedException($"Unhandled types in LogicalShiftLeft");
+        }
+        
+        public CompilationValue LogicalShiftRight(CompilationValue left, CompilationValue right)
+        {
+            var leftInt = left.Type as CompilationIntegerType;
+            var rightInt = right.Type as CompilationIntegerType;
+
+            if (leftInt != null && rightInt != null)
+            {
+                var cNumBits = new CompilationConstantIntegerKind(new AstNumber($"{leftInt.IntegerWidth}"));
+                var numBits = unit.CreateConstant(cNumBits, leftInt.IntegerWidth, false, new SourceLocation(left.FrontendLocation));
+                var shiftAmount = URem(right, numBits);
+                return ShiftRightLogical(left, shiftAmount);
+            }
+            throw new NotImplementedException($"Unhandled types in LogicalShiftRight");
+        }
+        public CompilationValue ArithmeticShiftRight(CompilationValue left, CompilationValue right)
+        {
+            var leftInt = left.Type as CompilationIntegerType;
+            var rightInt = right.Type as CompilationIntegerType;
+
+            if (leftInt != null && rightInt != null)
+            {
+                var cNumBits = new CompilationConstantIntegerKind(new AstNumber($"{leftInt.IntegerWidth}"));
+                var numBits = unit.CreateConstant(cNumBits, leftInt.IntegerWidth, false, new SourceLocation(left.FrontendLocation));
+                var shiftAmount = URem(right, numBits);
+                return ShiftRightArithmetic(left, shiftAmount);
+            }
+            throw new NotImplementedException($"Unhandled types in LogicalShiftRight");
+        }
+
         public CompilationValue Negate(CompilationValue src)
         {
             return new CompilationValue(builderRef.BuildNeg(src.BackendValue), src.Type, src.FrontendLocation);
@@ -215,7 +259,6 @@ namespace Humphrey.Backend
 
         public CompilationValue Cast(CompilationValue src, CompilationType toType)
         {
-
             if (src.Type is CompilationIntegerType sit && toType is CompilationIntegerType tt)
             {
                 if (sit.IntegerWidth > tt.IntegerWidth)
@@ -257,6 +300,14 @@ namespace Humphrey.Backend
         public CompilationValue ShiftLeft(CompilationValue toShift, CompilationValue shiftAmount)
         {
             return new CompilationValue(builderRef.BuildShl(toShift.BackendValue, shiftAmount.BackendValue), toShift.Type, toShift.FrontendLocation.Combine(shiftAmount.FrontendLocation));
+        }
+        public CompilationValue ShiftRightLogical(CompilationValue toShift, CompilationValue shiftAmount)
+        {
+            return new CompilationValue(builderRef.BuildLShr(toShift.BackendValue, shiftAmount.BackendValue), toShift.Type, toShift.FrontendLocation.Combine(shiftAmount.FrontendLocation));
+        }
+        public CompilationValue ShiftRightArithmetic(CompilationValue toShift, CompilationValue shiftAmount)
+        {
+            return new CompilationValue(builderRef.BuildAShr(toShift.BackendValue, shiftAmount.BackendValue), toShift.Type, toShift.FrontendLocation.Combine(shiftAmount.FrontendLocation));
         }
 
         public CompilationValue RotateLeft(CompilationValue value, CompilationValue rotateBy)

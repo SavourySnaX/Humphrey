@@ -194,6 +194,55 @@ namespace Humphrey.Backend
         {
             constant = constant.IsOne ? BigInteger.One : BigInteger.Zero;
         }
+
+        public void LogicalShiftLeft(CompilationConstantIntegerKind rhs)
+        {
+            var kind = ComputeKind();
+            var tConstant = rhs.constant;
+            while (tConstant<0)
+                tConstant += kind.numBits;
+            tConstant = tConstant % kind.numBits;
+            while (tConstant > BigInteger.Zero)
+            {
+                constant = constant << 1;
+                tConstant -= 1;
+            }
+        }
+
+        public void LogicalShiftRight(CompilationConstantIntegerKind rhs)
+        {
+            var kind = ComputeKind();
+            var tConstant = rhs.constant;
+            while (tConstant<0)
+                tConstant += kind.numBits;
+            tConstant = tConstant % kind.numBits;
+            var maskTopBit = (1<<(int)(kind.numBits-1))-1;
+            while (tConstant > BigInteger.Zero)
+            {
+                constant = constant >> 1;
+                constant &= maskTopBit;   // clear top bit
+                tConstant -= 1;
+            }
+        }
+
+        public void ArithmeticShiftRight(CompilationConstantIntegerKind rhs)
+        {
+            var kind = ComputeKind();
+            var tConstant = rhs.constant;
+            while (tConstant<0)
+                tConstant += kind.numBits;
+            tConstant = tConstant % kind.numBits;
+            var maskTopBit = (1<<(int)(kind.numBits-1))-1;
+            var setTopBit = 1<<(int)(kind.numBits-1) & constant;
+            while (tConstant > BigInteger.Zero)
+            {
+                constant = constant >> 1;
+                constant &= maskTopBit;     // clear top bit
+                constant |= setTopBit;      // or in arithmetic bit
+                tConstant -= 1;
+            }
+        }
+
         public void Not()
         {
             constant = ~Constant;

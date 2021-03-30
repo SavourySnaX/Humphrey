@@ -965,6 +965,128 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
             Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input},{ival},{expected}");
         }
 
+        // LogicalShiftLeft is    val << ((unsigned)amount % (numBits in val))
+        [Theory]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<0) & 0b11111111; }", "Main", 0b11011001)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<1) & 0b11111111; }", "Main", 0b10110010)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<2) & 0b11111111; }", "Main", 0b01100100)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(-2<<1) & 0b11111111; }", "Main", 0b11111100)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<6) & 0b11111111; }", "Main", 0b01000000)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<7) & 0b11111111; }", "Main", 0b10000000)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<9) & 0b11111111; }", "Main", 0b10110010)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<(-1)) & 0b11111111; }", "Main", 0b10000000)]
+        public void CheckLogicalShiftLeftConst(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a<<0; }", "Main", 0b11011001, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a<<1; }", "Main", 0b11011001, 0b10110010)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a<<2; }", "Main", 0b11011001, 0b01100100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a<<6; }", "Main", 0b11011001, 0b01000000)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a<<7; }", "Main", 0b11011001, 0b10000000)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a<<9; }", "Main", 0b11011001, 0b10110010)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a<<(-1); }", "Main", 0b11011001, 0b10000000)]
+        public void CheckLogicalShiftLeft(string input, string entryPointName, byte ival, byte expected)
+        {
+            Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input},{ival},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a<<b; }", "Main", 0b11011001, 0, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a<<b; }", "Main", 0b11011001, 1, 0b10110010)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a<<b; }", "Main", 0b11011001, 2, 0b01100100)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a<<b; }", "Main", 0b11011001, 6, 0b01000000)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a<<b; }", "Main", 0b11011001, 7, 0b10000000)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a<<b; }", "Main", 0b11011001, 9, 0b10110010)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a<<b; }", "Main", 0b11011001, 0xFF, 0b10000000)]
+        public void CheckLogicalShiftLeftVar(string input, string entryPointName, byte ival, byte shift, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival,shift, expected), $"Test {entryPointName},{input},{ival},{shift},{expected}");
+        }
+
+        // LogicalShiftRight is    val >> ((unsigned)amount % (numBits in val))
+        [Theory]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>0) & 0b11111111; }", "Main", 0b11011001)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>1) & 0b11111111; }", "Main", 0b01101100)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>2) & 0b11111111; }", "Main", 0b00110110)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11111110>>1) & 0b11111111; }", "Main", 0b01111111)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>6) & 0b11111111; }", "Main", 0b00000011)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>7) & 0b11111111; }", "Main", 0b00000001)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>9) & 0b11111111; }", "Main", 0b01101100)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>(-1)) & 0b11111111; }", "Main", 0b00000001)]
+        public void CheckLogicalShiftRightConst(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>0; }", "Main", 0b11011001, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>1; }", "Main", 0b11011001, 0b01101100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>2; }", "Main", 0b11011001, 0b00110110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>6; }", "Main", 0b01011001, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>7; }", "Main", 0b11011001, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>9; }", "Main", 0b11011001, 0b01101100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>(-1); }", "Main", 0b11011001, 0b00000001)]
+        public void CheckLogicalShiftRight(string input, string entryPointName, byte ival, byte expected)
+        {
+            Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input},{ival},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>b; }", "Main", 0b11011001, 0, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>b; }", "Main", 0b11011001, 1, 0b01101100)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>b; }", "Main", 0b11011001, 2, 0b00110110)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>b; }", "Main", 0b11011001, 6, 0b00000011)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>b; }", "Main", 0b11011001, 7, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>b; }", "Main", 0b11011001, 9, 0b01101100)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>b; }", "Main", 0b11011001, 0xFF, 0b00000001)]
+        public void CheckLogicalShiftRightVar(string input, string entryPointName, byte ival, byte shift, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival,shift, expected), $"Test {entryPointName},{input},{ival},{shift},{expected}");
+        }
+
+        // ArithmeticShiftRight is    val >> ((unsigned)amount % (numBits in val))
+        [Theory]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>>0) & 0b11111111; }", "Main", 0b11011001)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>>1) & 0b11111111; }", "Main", 0b11101100)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>>2) & 0b11111111; }", "Main", 0b11110110)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11111110>>>1) & 0b11111111; }", "Main", 0b11111111)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>>6) & 0b11111111; }", "Main", 0b11111111)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>>7) & 0b11111111; }", "Main", 0b11111111)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>>9) & 0b11111111; }", "Main", 0b11101100)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001>>>(-1)) & 0b11111111; }", "Main", 0b11111111)]
+        public void CheckArithmeticShiftRightConst(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>>0; }", "Main", 0b11011001, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>>1; }", "Main", 0b11011001, 0b11101100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>>2; }", "Main", 0b11011001, 0b11110110)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>>6; }", "Main", 0b01011001, 0b00000001)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>>7; }", "Main", 0b11011001, 0b11111111)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>>9; }", "Main", 0b11011001, 0b11101100)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a>>>(-1); }", "Main", 0b11011001, 0b11111111)]
+        public void CheckArithmeticShiftRight(string input, string entryPointName, byte ival, byte expected)
+        {
+            Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input},{ival},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>>b; }", "Main", 0b11011001, 0, 0b11011001)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>>b; }", "Main", 0b11011001, 1, 0b11101100)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>>b; }", "Main", 0b11011001, 2, 0b11110110)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>>b; }", "Main", 0b11011001, 6, 0b11111111)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>>b; }", "Main", 0b11011001, 7, 0b11111111)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>>b; }", "Main", 0b11011001, 9, 0b11101100)]
+        [InlineData(@"Main : (a:[8]bit,b:[8]bit) (out : [8]bit) = { out=a>>>b; }", "Main", 0b11011001, 0xFF, 0b11111111)]
+        public void CheckArithmeticShiftRightVar(string input, string entryPointName, byte ival, byte shift, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival,shift, expected), $"Test {entryPointName},{input},{ival},{shift},{expected}");
+        }
 
         [Theory]
         [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a[0..]; }", "Main", 0b11011001, 0b11011001)]

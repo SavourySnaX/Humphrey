@@ -61,6 +61,9 @@ namespace Humphrey.Tests.src
         [InlineData("<", Tokens.O_Less)]
         [InlineData(">", Tokens.O_Greater)]
         [InlineData("as", Tokens.O_As)]
+        [InlineData("<<", Tokens.O_LogicalShiftLeft)]  // unsigned
+        [InlineData(">>", Tokens.O_LogicalShiftRight)] // unsigned
+        [InlineData(">>>", Tokens.O_ArithmaticShiftRight)] // signed
         public void CheckOperatorTokens(string input, Tokens expected)
         {
             TokenTest(input, new[] { expected });

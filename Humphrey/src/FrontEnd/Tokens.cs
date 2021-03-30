@@ -114,6 +114,14 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Operator", Example = ">")]
         O_Greater,
 
+        [Token(Category = "Operator", Example = "<<")]
+        O_LogicalShiftLeft,
+        
+        [Token(Category = "Operator", Example = ">>")]
+        O_LogicalShiftRight,
+
+        [Token(Category = "Operator", Example = ">>>")]
+        O_ArithmaticShiftRight,
 
         [Token(Category = "Operator", Example = "as")]
         O_As,
@@ -373,6 +381,13 @@ namespace Humphrey.FrontEnd
             [('>', '=')] = Tokens.O_GreaterEquals,
             [('&', '&')] = Tokens.O_LogicalAnd,
             [('|', '|')] = Tokens.O_LogicalOr,
+            [('<', '<')] = Tokens.O_LogicalShiftLeft,
+            [('>', '>')] = Tokens.O_LogicalShiftRight,
+        };
+
+        readonly Dictionary<(char, char, char), Tokens> _tripleOperators = new Dictionary<(char, char, char), Tokens>
+        {
+            [('>', '>', '>')] = Tokens.O_ArithmaticShiftRight,
         };
 
         readonly Dictionary<string, Tokens> _keywords = new Dictionary<string, Tokens>
@@ -806,9 +821,16 @@ namespace Humphrey.FrontEnd
                     next = next.Remainder.ConsumeChar();
                     if (_dualOperators.TryGetValue((c, next.Value), out var dualToken))
                     {
+                        var secondC = next.Value;
                         remainder = next.Remainder;
                         token = dualToken;
                         next = next.Remainder.ConsumeChar();
+                        if (_tripleOperators.TryGetValue((c, secondC, next.Value), out var tripleToken))
+                        {
+                            remainder = next.Remainder;
+                            token = tripleToken;
+                            next = next.Remainder.ConsumeChar();
+                        }
                     }
                     yield return new Result<Tokens>(token, location, remainder);
                 }

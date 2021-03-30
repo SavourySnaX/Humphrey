@@ -131,6 +131,15 @@ namespace Humphrey.FrontEnd
                 case "||":
                     expression = new AstBinaryLogicalOr(left, right);
                     break;
+                case "<<":
+                    expression = new AstBinaryLogicalShiftLeft(left, right);
+                    break;
+                case ">>":
+                    expression = new AstBinaryLogicalShiftRight(left, right);
+                    break;
+                case ">>>":
+                    expression = new AstBinaryArithmeticShiftRight(left, right);
+                    break;
                 default:
                     throw new NotImplementedException($"Unimplemented binary operator : {oper.Dump()}");
             }
