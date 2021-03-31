@@ -290,6 +290,7 @@ namespace Humphrey.FrontEnd
         public IAst ForKeyword() { return AstItem(Tokens.KW_For, (e) => new AstKeyword(e)); }
         public IAst IfKeyword() { return AstItem(Tokens.KW_If, (e) => new AstKeyword(e)); }
         public IAst ElseKeyword() { return AstItem(Tokens.KW_Else, (e) => new AstKeyword(e)); }
+        public IAst WhileKeyword() { return AstItem(Tokens.KW_While, (e) => new AstKeyword(e)); }
 
         // predec : --
         public IAst PreDecrementOperator() { return AstItem(Tokens.O_MinusMinus, (e) => new AstOperator(e)); }
@@ -383,7 +384,7 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
         public AstItemDelegate[] IdentifierOrAnonymous => new AstItemDelegate[] { Identifier, AnonymousIdentifier };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
-        public AstItemDelegate[] Statements => new AstItemDelegate[] { ReturnStatement, ForStatement, IfStatement, CouldBeLocalScopeDefinitionOrAssignmentOrExpression };
+        public AstItemDelegate[] Statements => new AstItemDelegate[] { ReturnStatement, ForStatement, IfStatement, WhileStatement, CouldBeLocalScopeDefinitionOrAssignmentOrExpression };
 
         public AstItemDelegate[] StructDefinitions => new AstItemDelegate[] { StructElementDefinition };
         public AstItemDelegate[] EnumDefinitions => new AstItemDelegate[] { EnumElementDefinition };
@@ -732,6 +733,28 @@ namespace Humphrey.FrontEnd
             range.Token = new Result<Tokens>(inclusiveBegin.Token.Value, inclusiveBegin.Token.Location, exclusiveEnd.Token.Remainder);
             return range;
         }
+
+        public AstWhileStatement WhileStatement()
+        {
+            var start = CurrentToken();
+            if (WhileKeyword() == null)
+                return null;
+
+            var expression = ParseExpression();
+            if (expression == null)
+                return null;
+
+            var codeBlock = CodeBlock();
+            if (codeBlock == null)
+                return null;
+
+            var end = codeBlock.Token;
+
+            AstWhileStatement statement = new AstWhileStatement(expression, codeBlock);
+            statement.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
+            return statement;
+        }
+
 
         public AstIfStatement IfStatement()
         {

@@ -463,6 +463,16 @@ namespace Humphrey.FrontEnd.tests
             CheckAst(input, parser.IfStatement(), expected);
         }
 
+        [Theory]
+        [InlineData("while x == 0 {}", "while == x 0 { }")]
+        [InlineData("while x == 0 return", null)]
+        public void CheckWhileStatement(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.WhileStatement(), expected);
+        }
 
         [Theory]
         [InlineData("[]", null)]

@@ -333,6 +333,7 @@ namespace Humphrey.Backend.tests
         [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { x,y:[8]bit=0; for x=a..b { y=y+1; } returnValue=y;}", "Main", 0, 99, 99)]
         [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { x,y:[8]bit=0; for x=a..b { y=y+1; } returnValue=y;}", "Main", 10, 11, 1)]
         [InlineData(@"Main : (a : [8]bit, b : [8]bit) (returnValue : [8]bit) = { x,y:[8]bit=0; for x=a..b { y=y+2; } returnValue=y;}", "Main", 10, 11, 2)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(returnValue:[8]bit)={ x:[8]bit=0; returnValue=0; for x=a..b{returnValue=5; return;} }", "Main", 0, 2, 5)]
         public void CheckForIntRangeLoop(string input, string entryPointName, byte ival1, byte ival2, byte expected)
         {
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
@@ -440,7 +441,19 @@ Main:(a:bit,b:bit)(out:bit)=
         [Theory]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a==99 {out=12;} else {out=b;}}", "Main", 99, 22, 12)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a==99 {out=12;} else {out=b;}}", "Main", 6, 22, 22)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a==99 {out=12; return;} else {out=b;}}", "Main", 6, 22, 22)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a==99 {out=12; } else {out=b; return;}}", "Main", 6, 22, 22)]
         public void CheckIfElse(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={ out=b; while a==99 { out=12; return; }}", "Main", 99, 22, 12)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={ out=b; while a==99 { out=12; return; }}", "Main", 12, 22, 22)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={ res:[8]bit=0; while a>0 { res=res+b; a=a-1; } out=res; }", "Main", 5, 1, 5)]
+        [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={ res:[8]bit=0; while a>0 { res=res+b; a=a-1; } out=res; }", "Main", 5, 2, 10)]
+        public void CheckWhile(string input, string entryPointName, byte ival1, byte ival2, byte expected)
         {
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
