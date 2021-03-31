@@ -53,7 +53,7 @@ namespace Humphrey.FrontEnd
             if (vrhs is null)
                 vrhs = (rrhs as CompilationConstantIntegerKind).GetCompilationValue(unit, vlhs.Type);
 
-            var (valueLeft, valueRight) = AstBinaryExpression.FixupBinaryExpressionInputs(unit, builder, vlhs, vrhs);
+            var (valueLeft, valueRight) = AstBinaryExpression.FixupBinaryExpressionInputs(unit, builder, vlhs, vrhs, Token);
 
             return CompilationValue(builder, valueLeft, valueRight);
         }

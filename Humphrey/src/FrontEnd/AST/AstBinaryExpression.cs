@@ -148,7 +148,7 @@ namespace Humphrey.FrontEnd
             return expression;
         }
 
-        public static (CompilationValue lhs, CompilationValue rhs) FixupBinaryExpressionInputs(CompilationUnit unit, CompilationBuilder builder, CompilationValue left, CompilationValue right)
+        public static (CompilationValue lhs, CompilationValue rhs) FixupBinaryExpressionInputs(CompilationUnit unit, CompilationBuilder builder, CompilationValue left, CompilationValue right, Result<Tokens> token)
         {
             while (true)
             {
@@ -209,7 +209,8 @@ namespace Humphrey.FrontEnd
                         return (left, right);
                     }
 
-                    throw new NotImplementedException($"TODO - signed/unsigned mismatch");
+                    unit.Messages.Log(CompilerErrorKind.Error_SignedUnsignedMismatch, $"Result of expression '{token.Location.ToStringValue(token.Remainder)}' of type '{leftIntType.DumpType()}' is same width but signedness of type does not match {rightIntType.DumpType()}!", token.Location, token.Remainder);
+                    return (left,right);
                 }
 
                 if (leftIntType.IntegerWidth<rightIntType.IntegerWidth)
