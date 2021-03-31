@@ -42,6 +42,9 @@ namespace Humphrey.FrontEnd
 
         [Token(Category = "Keyword", Example = "return")]
         KW_Return,
+        
+        [Token(Category = "Keyword", Example = "while")]
+        KW_While,
 
         [Token(Category = "Operator", Example = "+")]
         O_Plus,
@@ -398,6 +401,7 @@ namespace Humphrey.FrontEnd
             ["return"] = Tokens.KW_Return,
             ["if"] = Tokens.KW_If,
             ["else"] = Tokens.KW_Else,
+            ["while"] = Tokens.KW_While,
         };
 
         protected static Result<char> SkipWhiteSpace(TokenSpan span)

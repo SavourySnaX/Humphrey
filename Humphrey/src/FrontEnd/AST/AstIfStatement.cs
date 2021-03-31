@@ -32,7 +32,10 @@ namespace Humphrey.FrontEnd
             // Insert branch at end of trueBlock
             {
                 var endCondBuilder = unit.CreateBuilder(function, trueBlock.exit);
-                endCondBuilder.Branch(endBlock);
+                if (trueBlock.exit.BackendValue.Terminator == null)
+                {
+                    endCondBuilder.Branch(endBlock);
+                }
             }
 
             // Jump to correct block
@@ -49,7 +52,10 @@ namespace Humphrey.FrontEnd
                 // Insert branch at end of elseBlock
                 {
                     var endCondBuilder = unit.CreateBuilder(function, falseBlock.exit);
-                    endCondBuilder.Branch(endBlock);
+                    if (falseBlock.exit.BackendValue.Terminator == null)
+                    {
+                        endCondBuilder.Branch(endBlock);
+                    }
                 }
             }
 

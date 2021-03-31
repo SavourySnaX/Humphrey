@@ -90,6 +90,7 @@ namespace Humphrey.Tests.src
         [InlineData("for", Tokens.KW_For)]
         [InlineData("if", Tokens.KW_If)]
         [InlineData("else", Tokens.KW_Else)]
+        [InlineData("while", Tokens.KW_While)]
         public void CheckKeywordTokens(string input, Tokens expected)
         {
             TokenTest(input, new[] { expected });

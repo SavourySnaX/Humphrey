@@ -50,7 +50,10 @@ namespace Humphrey.FrontEnd
             // insert branch at end of for_block
             {
                 var loopBlockBuilder = unit.CreateBuilder(function, compilationBlock.exit);
-                loopBlockBuilder.Branch(iterBlock);
+                if (compilationBlock.exit.BackendValue.Terminator==null)
+                {
+                    loopBlockBuilder.Branch(iterBlock);
+                }
             }
 
             // IterBlock performs iter next
