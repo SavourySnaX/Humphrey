@@ -43,7 +43,9 @@ namespace Humphrey.FrontEnd
             // CheckBlock performs iter end check basically
             {
                 var checkBuilder = unit.CreateBuilder(function, checkBlock);
-                var cond = new AstBinaryCompareLess(identifiers[0], rangeList[0].ExclusiveEnd).ProcessExpression(unit, checkBuilder);
+                var compare = new AstBinaryCompareLess(identifiers[0], rangeList[0].ExclusiveEnd);
+                compare.Token=rangeList[0].Token;
+                var cond = compare.ProcessExpression(unit, checkBuilder);
                 checkBuilder.ConditionalBranch(Expression.ResolveExpressionToValue(unit, cond, null), compilationBlock.entry, endBlock);
             }
 
