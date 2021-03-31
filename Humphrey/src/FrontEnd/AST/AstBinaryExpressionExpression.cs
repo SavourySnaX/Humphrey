@@ -33,7 +33,15 @@ namespace Humphrey.FrontEnd
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             var rlhs = lhs.ProcessExpression(unit, builder);
+            if (rlhs==null)
+            {
+                throw new CompilationAbortException($"Aborting due to missing symbol");
+            }
             var rrhs = rhs.ProcessExpression(unit, builder);
+            if (rrhs==null)
+            {
+                throw new CompilationAbortException($"Aborting due to missing symbol");
+            }
             if (rlhs is CompilationConstantIntegerKind clhs && rrhs is CompilationConstantIntegerKind crhs)
                 return ProcessConstantExpression(unit);
 

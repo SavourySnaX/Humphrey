@@ -30,6 +30,12 @@ namespace Humphrey.FrontEnd
         public CompilationValue CommonProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             var rlhs = lhs.ProcessExpression(unit, builder);
+
+            if (rlhs == null)
+            {
+                throw new CompilationAbortException($"Aborting Compilation due to missing symbol");
+            }
+
             var vlhs = rlhs as CompilationValue;
             if (vlhs is null)
                 throw new System.NotImplementedException($"Not sure it makes sense to have an a constant here");
