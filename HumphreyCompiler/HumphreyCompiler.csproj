@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="libLLVM" Version="11.0.0" />
+    <PackageReference Include="libLLVM.runtime.win-x64" Version="11.0.0" />
+    <PackageReference Include="LLVMSharp" Version="11.0.0-beta" />
+  </ItemGroup>
+</Project>
