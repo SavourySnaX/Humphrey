@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -16,6 +16,6 @@
     <PackageReference Include="coverlet.collector" Version="3.0.2"/>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Humphrey\Humphrey.csproj"/>
+    <ProjectReference Include="..\HumphreyCompiler\HumphreyCompiler.csproj"/>
   </ItemGroup>
 </Project>
