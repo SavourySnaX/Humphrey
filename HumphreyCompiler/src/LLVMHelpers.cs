@@ -60,18 +60,24 @@ namespace Extensions
         public static void ParseCommandLineOptions(string[] options, string overview)
         {
             int argc = options.Length;
-            byte[][] toManaged = new byte[argc][];
             int a = 0;
             var onstackArray = stackalloc sbyte*[argc];
+            int totLength = 0;
+            foreach (var opt in options)
+            {
+                totLength += Encoding.ASCII.GetByteCount(options[a]) + 1;
+            }
+            var bAlloc = stackalloc sbyte[totLength];
+            int offset = 0;
             foreach (var opt in options)
             {
                 var bArray = Encoding.ASCII.GetBytes(options[a]);
-                var bAlloc = stackalloc sbyte[bArray.Length + 1];
                 for (int b = 0; b < bArray.Length;b++)
                 {
-                    bAlloc[b] = (sbyte)bArray[b];
+                    bAlloc[offset+b] = (sbyte)bArray[b];
                 }
-                onstackArray[a++] = bAlloc;
+                onstackArray[a++] = &bAlloc[offset];
+                offset += bArray.Length + 1;
             }
 
             fixed (byte* pOverview = Encoding.ASCII.GetBytes(overview))
