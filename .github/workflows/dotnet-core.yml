@@ -19,7 +19,11 @@ jobs:
         dotnet-version: 5.0.x
     - name: Install dependencies
       run: dotnet restore Humphrey.Tests
-    - name: Build
+    - name: Install dependencies
+      run: dotnet restore Humphrey
+    - name: Build Program
+      run: dotnet build Humphrey --configuration Release --no-restore
+    - name: Build Tests
       run: dotnet build Humphrey.Tests --configuration Release --no-restore
     - name: Test
       run: dotnet test Humphrey.Tests --no-restore --verbosity normal
