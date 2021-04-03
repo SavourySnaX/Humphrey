@@ -45,7 +45,18 @@ namespace Humphrey.FrontEnd
         ErrorKindMask = 0x0C00,
     }
 
-    public class CompilerMessages
+    public interface ICompilerMessages
+    {
+        bool HasErrors { get; }
+
+        string Dump();
+        bool HasMessageKindBeenLogged(CompilerErrorKind kind);
+        void Log(CompilerErrorKind kind, string message);
+        void Log(CompilerErrorKind kind, string message, TokenSpan? location);
+        void Log(CompilerErrorKind kind, string message, TokenSpan? location, TokenSpan? remain);
+    }
+
+    public class CompilerMessages : ICompilerMessages
     {
         private List<(CompilerErrorKind errorKind, string message, TokenSpan? location, TokenSpan? remain)> messages;
         private HashSet<CompilerErrorKind> logged;
@@ -66,7 +77,7 @@ namespace Humphrey.FrontEnd
 
         public bool HasMessageKindBeenLogged(CompilerErrorKind kind)
         {
-            return logged.Contains(kind&~CompilerErrorKind.KindMask);
+            return logged.Contains(kind & ~CompilerErrorKind.KindMask);
         }
 
         public void Log(CompilerErrorKind kind, string message)
