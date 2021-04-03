@@ -16,114 +16,116 @@ namespace Humphrey.FrontEnd
 
         public string Category { get; set; }
         public string Example { get; set; }
+
+        public string SemanticKind { get; set; }
     }
 
     public enum Tokens
     {
         None,
 
-        [Token(Category = "Identifier", Example = "variable_name")]
+        [Token(Category = "Identifier", Example = "variable_name", SemanticKind = "Variable|Type|Struct|Enum|Parameter|EnumValue")]
         Identifier,
 
-        [Token(Category = "Number", Example = "1234")]
+        [Token(Category = "Number", Example = "1234", SemanticKind = "Number")]
         Number,
 
-        [Token(Category = "Keyword", Example = "bit")]
+        [Token(Category = "Keyword", Example = "bit", SemanticKind = "Keyword")]
         KW_Bit,
 
-        [Token(Category = "Keyword", Example = "for")]
+        [Token(Category = "Keyword", Example = "for", SemanticKind = "Keyword")]
         KW_For,
 
-        [Token(Category = "Keyword", Example = "if")]
+        [Token(Category = "Keyword", Example = "if", SemanticKind = "Keyword")]
         KW_If,
 
-        [Token(Category = "Keyword", Example = "else")]
+        [Token(Category = "Keyword", Example = "else", SemanticKind = "Keyword")]
         KW_Else,
 
-        [Token(Category = "Keyword", Example = "return")]
+        [Token(Category = "Keyword", Example = "return", SemanticKind = "Keyword")]
         KW_Return,
         
-        [Token(Category = "Keyword", Example = "while")]
+        [Token(Category = "Keyword", Example = "while", SemanticKind = "Keyword")]
         KW_While,
 
-        [Token(Category = "Operator", Example = "+")]
+        [Token(Category = "Operator", Example = "+", SemanticKind = "Operator")]
         O_Plus,
 
-        [Token(Category = "Operator", Example = "-")]
+        [Token(Category = "Operator", Example = "-", SemanticKind = "Operator")]
         O_Subtract,
 
-        [Token(Category = "Operator", Example = "*")]
+        [Token(Category = "Operator", Example = "*", SemanticKind = "Operator")]
         O_Multiply,
 
-        [Token(Category = "Operator", Example = "/")]
+        [Token(Category = "Operator", Example = "/", SemanticKind = "Operator")]
         O_Divide,
 
-        [Token(Category = "Operator", Example = "%")]
+        [Token(Category = "Operator", Example = "%", SemanticKind = "Operator")]
         O_Modulus,
 
-        [Token(Category = "Operator", Example = "=")]
+        [Token(Category = "Operator", Example = "=", SemanticKind = "Operator")]
         O_Equals,
 
-        [Token(Category = "Operator", Example = "!")]
+        [Token(Category = "Operator", Example = "!", SemanticKind = "Operator")]
         O_LogicalNot,
         
-        [Token(Category = "Operator", Example = "||")]
+        [Token(Category = "Operator", Example = "||", SemanticKind = "Operator")]
         O_LogicalOr,
         
-        [Token(Category = "Operator", Example = "&&")]
+        [Token(Category = "Operator", Example = "&&", SemanticKind = "Operator")]
         O_LogicalAnd,
 
-        [Token(Category = "Operator", Example = "~")]
+        [Token(Category = "Operator", Example = "~", SemanticKind = "Operator")]
         O_BinaryNot,
         
-        [Token(Category = "Operator", Example = "|")]
+        [Token(Category = "Operator", Example = "|", SemanticKind = "Operator")]
         O_BinaryOr,
         
-        [Token(Category = "Operator", Example = "&")]
+        [Token(Category = "Operator", Example = "&", SemanticKind = "Operator")]
         O_BinaryAnd,
 
-        [Token(Category = "Operator", Example = "^")]
+        [Token(Category = "Operator", Example = "^", SemanticKind = "Operator")]
         O_BinaryXor,
 
-        [Token(Category = "Operator", Example = ".")]
+        [Token(Category = "Operator", Example = ".", SemanticKind = "Operator")]
         O_Dot,
-        [Token(Category = "Operator", Example = "..")]
+        [Token(Category = "Operator", Example = "..", SemanticKind = "Operator")]
         O_DotDot,
 
-        [Token(Category = "Operator", Example = ":")]
+        [Token(Category = "Operator", Example = ":", SemanticKind = "Operator")]
         O_Colon,
         
-        [Token(Category = "Operator", Example = "==")]
+        [Token(Category = "Operator", Example = "==", SemanticKind = "Operator")]
         O_EqualsEquals,
 
-        [Token(Category = "Operator", Example = "++")]
+        [Token(Category = "Operator", Example = "++", SemanticKind = "Operator")]
         O_PlusPlus,
 
-        [Token(Category = "Operator", Example = "--")]
+        [Token(Category = "Operator", Example = "--", SemanticKind = "Operator")]
         O_MinusMinus,
 
-        [Token(Category = "Operator", Example = "!=")]
+        [Token(Category = "Operator", Example = "!=", SemanticKind = "Operator")]
         O_NotEquals,
 
-        [Token(Category = "Operator", Example = "<=")]
+        [Token(Category = "Operator", Example = "<=", SemanticKind = "Operator")]
         O_LessEquals,
 
-        [Token(Category = "Operator", Example = ">=")]
+        [Token(Category = "Operator", Example = ">=", SemanticKind = "Operator")]
         O_GreaterEquals,
         
-        [Token(Category = "Operator", Example = "<")]
+        [Token(Category = "Operator", Example = "<", SemanticKind = "Operator")]
         O_Less,
         
-        [Token(Category = "Operator", Example = ">")]
+        [Token(Category = "Operator", Example = ">", SemanticKind = "Operator")]
         O_Greater,
 
-        [Token(Category = "Operator", Example = "<<")]
+        [Token(Category = "Operator", Example = "<<", SemanticKind = "Operator")]
         O_LogicalShiftLeft,
         
-        [Token(Category = "Operator", Example = ">>")]
+        [Token(Category = "Operator", Example = ">>", SemanticKind = "Operator")]
         O_LogicalShiftRight,
 
-        [Token(Category = "Operator", Example = ">>>")]
+        [Token(Category = "Operator", Example = ">>>", SemanticKind = "Operator")]
         O_ArithmaticShiftRight,
 
         [Token(Category = "Operator", Example = "as")]
@@ -156,13 +158,13 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Syntax", Example = "_")]
         S_Underscore,
 
-        [Token(Category = "Literal", Example = "\"blah\"")]
+        [Token(Category = "Literal", Example = "\"blah\"", SemanticKind = "String")]
         String,
 
-        [Token(Category = "Comment")]
+        [Token(Category = "Comment", SemanticKind = "Comment")]
         SingleComment,
 
-        [Token(Category = "Comment")]
+        [Token(Category = "Comment", SemanticKind = "Comment")]
         MultiLineComment
     }
 
@@ -337,9 +339,9 @@ namespace Humphrey.FrontEnd
 
     public class HumphreyTokeniser
     {
-        CompilerMessages messages;
+        ICompilerMessages messages;
 
-        public HumphreyTokeniser(CompilerMessages overrideDefaultMessages = null)
+        public HumphreyTokeniser(ICompilerMessages overrideDefaultMessages = null)
         {
             messages = overrideDefaultMessages;
             if (messages==null)

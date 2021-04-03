@@ -37,11 +37,11 @@ namespace Humphrey.FrontEnd
         Queue<Result<Tokens>> searchResetQueue;
         Queue<Result<Tokens>> searchResetBuffer;
 
-        CompilerMessages messages;
+        ICompilerMessages messages;
 
         bool saveTokens;
 
-        public HumphreyParser(IEnumerable<Result<Tokens>> toParse, CompilerMessages overrideDefaultMessages = null)
+        public HumphreyParser(IEnumerable<Result<Tokens>> toParse, ICompilerMessages overrideDefaultMessages = null)
         {
             saveTokens = false;
             messages = overrideDefaultMessages;
