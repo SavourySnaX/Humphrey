@@ -108,6 +108,73 @@ namespace Humphrey.FrontEnd
         {
             throw new System.NotImplementedException();
         }
+
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            return type;
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            var codeBlock = initialiser as AstCodeBlock;
+            var expr = initialiser as IExpression;
+            IType ot = default;
+
+            if (type == null)
+            {
+                if (expr != null)
+                {
+                    type = expr.ResolveExpressionType(pass);
+                }
+
+                if (type == null)
+                {
+                    pass.Messages.Log(CompilerErrorKind.Error_UndefinedType, "Cannot infer type from initialiser", Token.Location, Token.Remainder);
+                    return;
+                }
+            }
+                
+            ot = type.ResolveBaseType(pass);
+
+            foreach (var ident in identifiers)
+            {
+                var functionType = ot as AstFunctionType;
+                if (functionType != null && initialiser == null)
+                {
+                    if (!pass.AddType(ident, functionType))
+                    {
+                        pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {ident.Name} already exists", ident.Token.Location, ident.Token.Remainder);
+                    }
+                    functionType.Semantic(pass, null);
+                }
+                else if (functionType != null && initialiser != null && codeBlock != null)
+                {
+                    if (!pass.AddFunction(ident, type))
+                    {
+                        pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {ident.Name} already exists", ident.Token.Location, ident.Token.Remainder);
+                    }
+                    functionType.Semantic(pass, codeBlock);
+                }
+                else if (initialiser == null)
+                {
+                    if (!pass.AddType(ident, type))
+                    {
+                        pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {ident.Name} already exists", ident.Token.Location, ident.Token.Remainder);
+                    }
+                    type.Semantic(pass);
+                }
+                else
+                {
+                    if (!pass.AddValue(ident, SemanticPass.IdentifierKind.LocalValue, type))
+                    {
+                        pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {ident.Name} already exists", ident.Token.Location, ident.Token.Remainder);
+                    }
+                    type.Semantic(pass);
+                    expr.Semantic(pass);
+                }
+            }
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

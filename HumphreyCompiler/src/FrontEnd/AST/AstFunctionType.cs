@@ -5,11 +5,13 @@ namespace Humphrey.FrontEnd
     {
         AstParamList inputList;
         AstParamList outputList;
+        private bool semanticDone;
 
         public AstFunctionType(AstParamList inputs, AstParamList outputs)
         {
             inputList = inputs;
             outputList = outputs;
+            semanticDone = false;
         }
     
         public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
@@ -111,17 +113,75 @@ namespace Humphrey.FrontEnd
 
             unit.PopScope();
         }
+
+        public IType ResolveOutputType(SemanticPass pass)
+        {
+            var outputs = outputList.Params;
+            if (outputs.Length==0)
+            {
+                throw new System.NotImplementedException($"TODO - error no outputs from function");
+            }
+            if (outputs.Length==1)
+            {
+                return outputs[0].Type;
+            }
+            var astStructMembers = new AstStructElement[outputs.Length];
+            for (int a=0;a<outputs.Length;a++)
+            {
+                astStructMembers[a] = new AstStructElement(new[] { new AstIdentifier(outputs[a].Identifier.Name) }, outputs[a].Type, null);
+            }
+            var str = new AstStructureType(astStructMembers, true);
+            return str;
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            // do nothing
+        }
+        
+        public void Semantic(SemanticPass pass, AstCodeBlock codeBlock)
+        {
+            pass.PushScope("");
+
+            foreach (var input in inputList.Params)
+            {
+                if (!pass.AddValue(input.Identifier, SemanticPass.IdentifierKind.FunctionParam, input.Type, !semanticDone))
+                {
+                    pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {input.Identifier.Name} already exists", input.Identifier.Token.Location, input.Identifier.Token.Remainder);
+                }
+            }
+            foreach (var output in outputList.Params)
+            {
+                if (!pass.AddValue(output.Identifier, SemanticPass.IdentifierKind.FunctionParam, output.Type, !semanticDone))
+                {
+                    pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {output.Identifier.Name} already exists", output.Identifier.Token.Location, output.Identifier.Token.Remainder);
+                }
+            }
+            semanticDone = true;
+            codeBlock?.Semantic(pass);
+
+            pass.PopScope();
+        }
+
         public bool IsFunctionType => true;
 
         public string Dump()
         {
             return $"({inputList.Dump()}) ({outputList.Dump()})";
         }
+
+        public IType ResolveBaseType(SemanticPass pass)
+        {
+            return this;
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 
         private AstMetaData metaData;
         public AstMetaData MetaData { get => metaData; set => metaData = value; }
+
+        public SemanticPass.IdentifierKind GetBaseType => SemanticPass.IdentifierKind.Function;
     }
 }
 

@@ -25,6 +25,8 @@ namespace Humphrey.FrontEnd
             return pList;
         }
 
+        public AstParamDefinition[] Params => paramList;
+
         public Result<Tokens> FetchParamLocation(uint idx)
         {
             if (idx>=paramList.Length)

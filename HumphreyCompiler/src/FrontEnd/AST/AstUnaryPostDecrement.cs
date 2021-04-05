@@ -55,6 +55,17 @@ namespace Humphrey.FrontEnd
                 return cv;
             }
         }
+
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            return expr.ResolveExpressionType(pass);
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            expr.Semantic(pass);
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

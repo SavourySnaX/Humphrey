@@ -82,6 +82,90 @@ namespace Humphrey.FrontEnd
 
             builder.Store(storeValue, dst.Storage);
         }
+
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            var resolved = lhs.ResolveExpressionType(pass);
+            var enumType = resolved as AstEnumType;
+            if (enumType != null)
+            {
+                pass.AddEnumElementLocation(rhs.Token, enumType.Type);
+                return enumType.Type;
+            }
+
+            var structType = resolved as AstStructureType;
+            if (structType == null)
+            {
+                var pointerType = resolved as AstPointerType;
+                if (pointerType!=null)
+                {
+                    structType = pointerType.ElementType as AstStructureType;
+                }
+            }
+
+            if (structType != null)
+            {
+                foreach (var e in structType.Elements)
+                {
+                    foreach (var i in e.Identifiers)
+                    {
+                        if (rhs.Name == i.Name)
+                        {
+                            pass.AddStructElementLocation(rhs.Token, e.Type);
+                            return e.Type;
+                        }
+                    }
+                }
+                throw new System.NotImplementedException($"error struct element not found");
+            }
+            
+            throw new System.NotImplementedException($"TODO");
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            lhs.Semantic(pass);
+           // throw new System.Exception($"Should not reach here");
+            /*
+            var resolved = lhs.ResolveExpressionType(pass); // perhaps cache the types allways
+
+            var enumType = resolved as AstEnumType;
+            if (enumType != null)
+            {
+                // do enum
+
+                return;
+            }
+
+            var structType = resolved as AstStructureType;
+            if (structType == null)
+            {
+                var pointerType = resolved as AstPointerType;
+                if (pointerType!=null)
+                {
+                    structType = pointerType.ElementType as AstStructureType;
+                }
+            }
+
+            if (structType != null)
+            {
+                foreach (var e in structType.Elements)
+                {
+                    foreach (var i in e.Identifiers)
+                    {
+                        if (rhs.Name == i.Name)
+                        {
+                            pass.AddStructElementLocation(rhs.Token, e.Type);
+                            return;
+                        }
+                    }
+                }
+                throw new System.NotImplementedException($"error struct element not found");
+            }
+            
+            throw new System.NotImplementedException($"TODO");*/
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

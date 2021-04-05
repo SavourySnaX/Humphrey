@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System;
 using System.Collections.Generic;
 
-namespace Humphrey.Backend.tests
+namespace Humphrey.Backend.Tests
 {
     public unsafe class JitTests
     {
@@ -1229,6 +1229,8 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens, messages);
             var parsed = parser.File();
+            var semantic = new SemanticPass("test", messages);
+            semantic.RunPass(parsed);
             var compiler = new HumphreyCompiler(messages);
             var unit = compiler.Compile(parsed, "test", "x86_64", false, false);
 

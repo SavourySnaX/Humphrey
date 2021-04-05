@@ -10,7 +10,7 @@ namespace Humphrey.FrontEnd
             elementType = type;
             constantExpression = arraySize;
         }
-    
+
         public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
             var exprValue = constantExpression.ProcessConstantExpression(unit) as CompilationConstantIntegerKind;
@@ -36,10 +36,24 @@ namespace Humphrey.FrontEnd
         {
             return $"[{constantExpression.Dump()}] {elementType.Dump()}";
         }
+
+        public void Semantic(SemanticPass pass)
+        {
+            constantExpression.Semantic(pass);
+            elementType.Semantic(pass);
+        }
+
+        public IType ResolveBaseType(SemanticPass pass)
+        {
+            return this;    // or element type?
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 
         private AstMetaData metaData;
         public AstMetaData MetaData { get => metaData; set => metaData = value; }
+
+        public SemanticPass.IdentifierKind GetBaseType => elementType.GetBaseType;
     }
 }

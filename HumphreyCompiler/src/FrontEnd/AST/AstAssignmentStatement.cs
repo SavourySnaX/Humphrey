@@ -35,6 +35,26 @@ namespace Humphrey.FrontEnd
         {
             return $"{exprList.Dump()} = {assignable.Dump()}";
         }
+
+        public void Semantic(SemanticPass pass)
+        {
+            var expr = assignable as IExpression;
+            if (expr == null)
+            {
+                pass.Messages.Log(CompilerErrorKind.Error_MustBeExpression, "Right hand side of assignment must be an expression", Token.Location, Token.Remainder);
+            }
+            else
+            {
+                expr.Semantic(pass);
+            }
+            foreach (var dest in exprList.Expressions)
+            {
+                var store = dest as IStorable;
+
+                store.Semantic(pass);
+            }
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

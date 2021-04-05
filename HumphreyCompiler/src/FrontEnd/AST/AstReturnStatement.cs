@@ -20,6 +20,12 @@ namespace Humphrey.FrontEnd
         {
             return "return";
         }
+
+        public void Semantic(SemanticPass pass)
+        {
+            // do nothing
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

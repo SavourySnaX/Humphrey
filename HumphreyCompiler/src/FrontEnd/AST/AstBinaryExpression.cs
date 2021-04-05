@@ -11,7 +11,7 @@ namespace Humphrey.FrontEnd
             switch (oper.Dump())
             {
                 case ".":
-                    expression = new AstBinaryReference(left,right);
+                    expression = new AstBinaryReference(left, right);
                     break;
                 default:
                     throw new NotImplementedException($"Unimplemented binary operator rhs identifer : {oper.Dump()}");
@@ -29,13 +29,13 @@ namespace Humphrey.FrontEnd
                     expression = new AstArraySubscript(left, right);
                     break;
                 case "++":
-                    if (right!=null)
+                    if (right != null)
                         throw new Exception($"Right hand side of post increment should be null");
                     expression = new AstUnaryPostIncrement(left);
                     right = left;
                     break;
                 case "--":
-                    if (right!=null)
+                    if (right != null)
                         throw new Exception($"Right hand side of post decrement should be null");
                     expression = new AstUnaryPostDecrement(left);
                     right = left;
@@ -53,7 +53,7 @@ namespace Humphrey.FrontEnd
             switch (oper.Dump())
             {
                 case "(":
-                    expression = new AstFunctionCall(left,right);
+                    expression = new AstFunctionCall(left, right);
                     break;
                 default:
                     throw new NotImplementedException($"Unimplemented binary operator rhs identifer : {oper.Dump()}");
@@ -210,14 +210,14 @@ namespace Humphrey.FrontEnd
                     }
 
                     unit.Messages.Log(CompilerErrorKind.Error_SignedUnsignedMismatch, $"Result of expression '{token.Location.ToStringValue(token.Remainder)}' of type '{leftIntType.DumpType()}' is same width but signedness of type does not match {rightIntType.DumpType()}!", token.Location, token.Remainder);
-                    return (left,right);
+                    return (left, right);
                 }
 
-                if (leftIntType.IntegerWidth<rightIntType.IntegerWidth)
+                if (leftIntType.IntegerWidth < rightIntType.IntegerWidth)
                 {
                     return (builder.Ext(left, rightIntType), right);
                 }
-                if (rightIntType.IntegerWidth<leftIntType.IntegerWidth)
+                if (rightIntType.IntegerWidth < leftIntType.IntegerWidth)
                 {
                     return (left, builder.Ext(right, leftIntType));
                 }
@@ -227,8 +227,71 @@ namespace Humphrey.FrontEnd
 
             throw new NotImplementedException($"TODO - Non integer types in promotion?");
         }
+
+        public static IType ResolveExpressionType(SemanticPass pass, IType left, IType right, Result<Tokens> token)
+        {
+            left = left.ResolveBaseType(pass);
+            right = right.ResolveBaseType(pass);
+            while (true)
+            {
+                if (left is AstStructureType lst)
+                {
+                    if (lst.Elements.Length == 1)
+                    {
+                        if (lst.Elements[0].NumElements == 1)
+                        {
+                            left = lst.Elements[0].Type;
+                            continue;
+                        }
+                    }
+                }
+                if (right is AstStructureType rst)
+                {
+                    if (rst.Elements.Length == 1)
+                    {
+                        if (rst.Elements[0].NumElements == 1)
+                        {
+                            right = rst.Elements[0].Type;
+                            continue;
+                        }
+                    }
+                }
+                break;
+            }
+
+            var lP = left as AstPointerType;
+            var rP = right as AstPointerType;
+
+            if (lP != null && rP != null)
+            {
+                if (lP.ElementType == rP.ElementType)
+                    return lP;
+                else
+                {
+                    pass.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Type mismatch : '{left.Token.Value}' != '{right.Token.Value}", token.Location, token.Remainder);
+                    return left;
+                }
+            }
+
+            var lE = left as AstEnumType;
+            var rE = right as AstEnumType;
+
+            if (lE != null)
+            {
+                left = lE.Type;
+            }
+            if (rE != null)
+            {
+                right = rE.Type;
+            }
+
+            if (left.GetType() != right.GetType())
+            {
+                throw new System.NotImplementedException($"Type mismatch in binary expression... really need int ast type");
+            }
+
+            return left;
+        }
     }
-
-
 }
 

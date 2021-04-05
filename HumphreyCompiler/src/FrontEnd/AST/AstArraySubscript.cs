@@ -240,6 +240,18 @@ namespace Humphrey.FrontEnd
 
             throw new System.NotImplementedException($"Todo implement expression for store for subscript of array type...");
         }
+
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            return expr.ResolveExpressionType(pass);
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            subscriptIdx.Semantic(pass);
+            expr.Semantic(pass);
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

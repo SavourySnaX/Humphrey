@@ -9,7 +9,7 @@ namespace Humphrey.FrontEnd
         Error_InvalidToken = Error | TokeniseError | 0x01,
         Error_FailedToFindEndOfString = Error | TokeniseError | 0x02,
         
-        // Parser block
+        // Parser/Semantic block
         Error_ExpectedGlobalDefinition = Error | ParseError | 0x01,
         Error_ExpectedEnumMemberDefinition = Error | ParseError | 0x02,
         Error_ExpectedStructMemberDefinition = Error | ParseError | 0x03,
@@ -17,6 +17,8 @@ namespace Humphrey.FrontEnd
         Error_EmptyMetaDataNode = Error | ParseError | 0x05,
         Error_ExpectedIdentifierList = Error | ParseError | 0x06,
         Error_ExpectedToken = Error | ParseError | 0x07,
+        Error_DuplicateSymbol = Error | ParseError | 0x08,
+        Error_MustBeExpression = Error | ParseError | 0x09,
 
         // Compilation block
         Error_MissingOutputAssignment = Error | CompileError | 0x01,

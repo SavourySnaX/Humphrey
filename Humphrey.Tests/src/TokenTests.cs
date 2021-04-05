@@ -2,7 +2,7 @@
 using System.Linq;
 using Xunit;
 
-namespace Humphrey.Tests.src
+namespace Humphrey.FrontEnd.Tests
 {
     public class TokenTests
     {

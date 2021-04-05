@@ -58,6 +58,17 @@ namespace Humphrey.FrontEnd
             return CompilationValue(builder, valueLeft, valueRight);
         }
 
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            return AstBinaryExpression.ResolveExpressionType(pass, lhs.ResolveExpressionType(pass), rhs.ResolveExpressionType(pass), Token);
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            lhs.Semantic(pass);
+            rhs.Semantic(pass);
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

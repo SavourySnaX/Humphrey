@@ -65,6 +65,21 @@ namespace Humphrey.FrontEnd
             }
         }
 
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            var ptr = expr.ResolveExpressionType(pass) as AstPointerType;
+            if (ptr==null)
+            {
+                throw new System.NotImplementedException($"TODO");
+            }
+            return ptr.ElementType;
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            expr.Semantic(pass);
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

@@ -46,6 +46,17 @@ namespace Humphrey.FrontEnd
         {
             throw new System.NotImplementedException();
         }
+
+        public void Semantic(SemanticPass pass)
+        {
+            pass.PushScope("");
+            foreach (var statement in statementList)
+            {
+                statement.Semantic(pass);
+            }
+            pass.PopScope();
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

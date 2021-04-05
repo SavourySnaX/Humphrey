@@ -23,6 +23,16 @@ namespace Humphrey.FrontEnd
             return ProcessConstantExpression(unit);
         }
 
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            return null;
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            // nothing to do
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

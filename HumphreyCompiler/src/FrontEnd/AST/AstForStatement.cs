@@ -98,6 +98,21 @@ namespace Humphrey.FrontEnd
             s.Append($" {loopBlock.Dump()}");
             return s.ToString();
         }
+
+        public void Semantic(SemanticPass pass)
+        {
+            foreach (var i in identifiers)
+            {
+                i.Semantic(pass);
+            }
+            foreach (var r in rangeList)
+            {
+                r.InclusiveStart.Semantic(pass);
+                r.ExclusiveEnd.Semantic(pass);
+            }
+            loopBlock.Semantic(pass);
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

@@ -22,6 +22,12 @@ namespace Humphrey.FrontEnd
         {
             return $"{expression.Dump()}";
         }
+
+        public void Semantic(SemanticPass pass)
+        {
+            expression.Semantic(pass);
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

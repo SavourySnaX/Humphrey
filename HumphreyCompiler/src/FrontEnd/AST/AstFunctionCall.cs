@@ -88,6 +88,26 @@ namespace Humphrey.FrontEnd
             // return the anonymous struct as the ICompilationValue
             return builder.Load(allocSpace);
         }
+
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            var func = expr.ResolveExpressionType(pass) as AstFunctionType;
+            if (func ==null)
+            {
+                throw new System.NotImplementedException($"TODO");
+            }
+            return func.ResolveOutputType(pass);
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            expr.Semantic(pass);
+            foreach (var e in argumentList.Expressions)
+            {
+                e.Semantic(pass);
+            }
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

@@ -30,7 +30,7 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Number", Example = "1234", SemanticKind = "Number")]
         Number,
 
-        [Token(Category = "Keyword", Example = "bit", SemanticKind = "Keyword")]
+        [Token(Category = "Keyword", Example = "bit", SemanticKind = "Type")]
         KW_Bit,
 
         [Token(Category = "Keyword", Example = "for", SemanticKind = "Keyword")]
@@ -168,7 +168,7 @@ namespace Humphrey.FrontEnd
         MultiLineComment
     }
 
-    public struct TokenSpan
+    public struct TokenSpan : IEquatable<TokenSpan>
     {
         public TokenSpan(string f, string e, int p = 0, uint l = 1, uint c = 1)
         {
@@ -289,6 +289,19 @@ namespace Humphrey.FrontEnd
             return s.ToString();
         }
 
+        public override bool Equals(object obj) => obj is TokenSpan other && Equals(other);
+
+        public bool Equals(TokenSpan other)
+        {
+            return (Filename == other.filename) &&
+                (Position == other.Position);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Filename.GetHashCode(), Position.GetHashCode());
+        }
+
         public uint Line => line;
         public uint Column => column;
         public string Filename => filename;
@@ -296,7 +309,7 @@ namespace Humphrey.FrontEnd
         public int Position => position;
     }
 
-    public struct Result<T>
+    public struct Result<T> : IEquatable<Result<T>>
     {
         public Result(T val, TokenSpan loc, TokenSpan remain)
         {
@@ -329,6 +342,18 @@ namespace Humphrey.FrontEnd
             if (location.Position < toCombine.location.Position)
                 return new Result<T>(value, location, toCombine.remaining);
             return new Result<T>(toCombine.value, toCombine.location, remaining);
+        }
+
+        public override bool Equals(object obj) => obj is Result<T> other && Equals(other);
+        
+        public bool Equals(Result<T> other)
+        {
+            return location.Equals(other.location) && remaining.Equals(other.remaining);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(location.GetHashCode(), remaining.GetHashCode());
         }
 
         public bool HasValue => hasValue;

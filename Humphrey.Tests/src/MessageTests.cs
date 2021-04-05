@@ -1,9 +1,8 @@
-using Humphrey.Backend;
 using Humphrey.FrontEnd;
 using System.Linq;
 using Xunit;
 
-namespace Humphrey.Tests.src
+namespace Humphrey.Tests
 {
     public class MessageTests
     {
@@ -47,6 +46,9 @@ namespace Humphrey.Tests.src
         [InlineData("brokenType:=_", CompilerErrorKind.Error_UndefinedType)]
         [InlineData("Func:()()={bob,cat:bit=1; cat=bob;}", CompilerErrorKind.Debug)]
         [InlineData("Func:()()={brokenValue,cat:bit=1; cat=bob;}", CompilerErrorKind.Error_UndefinedValue)]
+        [InlineData("Func:()()={} Func:()()={}", CompilerErrorKind.Error_DuplicateSymbol)]
+        [InlineData("Func:bit Func:()()={}", CompilerErrorKind.Error_DuplicateSymbol)]
+        [InlineData("Func:=_", CompilerErrorKind.Error_UndefinedType)]
         [InlineData("ptr:*bit=1 as *bit", CompilerErrorKind.Debug)]
         [InlineData("ptr:*bit=1", CompilerErrorKind.Error_TypeMismatch)]
         [InlineData("ptr:*bit=1 as *[8]bit", CompilerErrorKind.Error_TypeMismatch)]
@@ -59,6 +61,7 @@ namespace Humphrey.Tests.src
         [InlineData("Broken:()()={bob:[22][8]bit=0; bob=\"Hello\"; }", CompilerErrorKind.Error_TypeMismatch)]
         [InlineData("global:=\"Hello\" Broken:()()={bob:[7][8]bit=global; }", CompilerErrorKind.Error_TypeMismatch)]
         [InlineData("global:=\"Hello\" Broken:()()={bob:[5][8]bit=global; }", CompilerErrorKind.Error_TypeMismatch)]
+        [InlineData("Main:(a:bit)()={ a={}; }", CompilerErrorKind.Error_MustBeExpression)]
         [InlineData("[metadata]t:bit", CompilerErrorKind.Debug)]
         [InlineData("[]", CompilerErrorKind.Error_EmptyMetaDataNode)]
         [InlineData("[%]", CompilerErrorKind.Error_ExpectedIdentifierList)]
@@ -73,9 +76,20 @@ namespace Humphrey.Tests.src
             var messages = new CompilerMessages(true, true, false);
             var tokenise = new HumphreyTokeniser(messages);
             var tokens = tokenise.Tokenize(input);
-            var parser = new HumphreyParser(tokens, messages);
-            var parsed = parser.File();
-            var unit = new HumphreyCompiler(messages).Compile(parsed, "test", "x86_64", false, false);
+            if (!messages.HasErrors)
+            {
+                var parser = new HumphreyParser(tokens, messages);
+                var parsed = parser.File();
+                if (!messages.HasErrors)
+                {
+                    var semantic = new SemanticPass("test", messages);
+                    semantic.RunPass(parsed);
+                    if (!messages.HasErrors)
+                    {
+                        var unit = new HumphreyCompiler(messages).Compile(parsed, "test", "x86_64", false, false);
+                    }
+                }
+            }
             if (expected == CompilerErrorKind.Debug)
                 Assert.True(messages.Dump().Length == 0, $"No compiler messages should have been generated but got {messages.Dump()}");
             else

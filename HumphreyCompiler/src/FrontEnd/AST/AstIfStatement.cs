@@ -75,6 +75,13 @@ namespace Humphrey.FrontEnd
             return s.ToString();
         }
 
+        public void Semantic(SemanticPass pass)
+        {
+            condition.Semantic(pass);
+            conditionTrue.Semantic(pass);
+            conditionElse?.Semantic(pass);
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 
