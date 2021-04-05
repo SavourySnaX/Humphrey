@@ -7,10 +7,12 @@ namespace Humphrey.FrontEnd
     {
         IType type;
         AstEnumElement[] definitions;
+        private bool semanticDone;
         public AstEnumType(IType enumType, AstEnumElement[] defList)
         {
             type = enumType;
             definitions = defList;
+            semanticDone = false;
         }
     
         public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
@@ -52,6 +54,23 @@ namespace Humphrey.FrontEnd
             return s.ToString();
         }
 
+        public void Semantic(SemanticPass pass)
+        {
+            if (!semanticDone)
+            {
+                semanticDone = true;
+                foreach (var d in definitions)
+                {
+                    d.Semantic(pass);
+                }
+            }
+        }
+
+        public IType ResolveBaseType(SemanticPass pass)
+        {
+            return this;
+        }
+
         public AstEnumElement[] Elements => definitions;
         public IType Type => type;
         
@@ -60,6 +79,8 @@ namespace Humphrey.FrontEnd
 
         private AstMetaData metaData;
         public AstMetaData MetaData { get => metaData; set => metaData = value; }
+
+        public SemanticPass.IdentifierKind GetBaseType => SemanticPass.IdentifierKind.EnumType;
     }
 }
 

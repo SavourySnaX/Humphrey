@@ -34,6 +34,22 @@ namespace Humphrey.FrontEnd
                 return compilationValue.Storage;
             }
         }
+
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            var t = expr.ResolveExpressionType(pass);
+            if (t==null)
+            {
+                throw new System.NotImplementedException($"TODO error undefined type?");
+            }
+            return new AstPointerType(t);
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            expr.Semantic(pass);
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

@@ -51,6 +51,12 @@ namespace Humphrey.FrontEnd
             return $"while {condition.Dump()} {loop.Dump()}";
         }
 
+        public void Semantic(SemanticPass pass)
+        {
+            condition.Semantic(pass);
+            loop.Semantic(pass);
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

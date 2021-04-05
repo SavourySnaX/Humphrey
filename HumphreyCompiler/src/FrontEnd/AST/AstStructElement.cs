@@ -14,6 +14,10 @@ namespace Humphrey.FrontEnd
             initialiser = init;
         }
 
+        public AstStructElement()
+        {
+        }
+
         public int NumElements => identifiers.Length;
         public IIdentifier[] Identifiers => identifiers;
         public string Dump()
@@ -46,6 +50,20 @@ namespace Humphrey.FrontEnd
         {
             throw new System.NotImplementedException();
         }
+
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            return type;
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            foreach (var i in identifiers)
+            {
+                pass.AddStructElementLocation(i.Token, Type);
+            }
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

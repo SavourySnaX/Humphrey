@@ -168,24 +168,29 @@ namespace Humphrey.Experiments
 
                 if (!messages.HasErrors)
                 {
-                    var compiler = new HumphreyCompiler(messages);
-                    var cu = compiler.Compile(parse, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo);
-
+                    var semantic = new SemanticPass(options.inputFiles[0], messages);
+                    semantic.RunPass(parse);
                     if (!messages.HasErrors)
                     {
-                        if (options.outputFileName != null)
+                        var compiler = new HumphreyCompiler(messages);
+                        var cu = compiler.Compile(parse, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo);
+
+                        if (!messages.HasErrors)
                         {
-                            if (options.emitLLVM)
-                                cu.EmitToBitCodeFile(options.outputFileName);
+                            if (options.outputFileName != null)
+                            {
+                                if (options.emitLLVM)
+                                    cu.EmitToBitCodeFile(options.outputFileName);
+                                else
+                                    cu.EmitToFile(options.outputFileName);
+                            }
                             else
-                                cu.EmitToFile(options.outputFileName);
-                        }
-                        else
-                        {
-                            if (options.emitLLVM)
-                                Console.WriteLine(cu.Dump());
-                            else
-                                cu.DumpDisassembly();
+                            {
+                                if (options.emitLLVM)
+                                    Console.WriteLine(cu.Dump());
+                                else
+                                    cu.DumpDisassembly();
+                            }
                         }
                     }
                 }

@@ -25,11 +25,23 @@ namespace Humphrey.FrontEnd
             return $"* {elementType.Dump()}";
         }
 
+        public void Semantic(SemanticPass pass)
+        {
+            elementType.Semantic(pass);
+        }
+
+        public IType ResolveBaseType(SemanticPass pass)
+        {
+            return this;
+        }
+
         public IType ElementType => elementType;
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
         private AstMetaData metaData;
         public AstMetaData MetaData { get => metaData; set => metaData = value; }
+
+        public SemanticPass.IdentifierKind GetBaseType => elementType.GetBaseType;
     }
 }
 

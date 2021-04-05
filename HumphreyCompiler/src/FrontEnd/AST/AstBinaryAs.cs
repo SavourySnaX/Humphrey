@@ -38,6 +38,17 @@ namespace Humphrey.FrontEnd
 
             return builder.Cast(valueLeft, typeRight);
         }
+
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            return rhs;
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            lhs.Semantic(pass);
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

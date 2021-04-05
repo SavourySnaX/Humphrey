@@ -6,7 +6,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System;
 
-namespace Humphrey.FrontEnd.tests
+namespace Humphrey.FrontEnd.Tests
 {
     public class LangTests
     {

@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using Xunit;
 
-namespace Humphrey.FrontEnd.tests
+namespace Humphrey.FrontEnd.Tests
 {
     public class ParserTests
     {

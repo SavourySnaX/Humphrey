@@ -6,12 +6,17 @@ namespace Humphrey.FrontEnd
     {
         AstIdentifier[] identifiers;
         IAssignable initialiser;
+        IType parentType;
         public AstEnumElement(AstIdentifier[] identifierList, IAssignable init)
         {
             identifiers = identifierList;
             initialiser = init;
         }
 
+        public void SetEnumKind(IType type)
+        {
+            parentType = type;
+        }
         public int NumElements => identifiers.Length;
         public AstIdentifier[] Identifiers => identifiers;
         public string Dump()
@@ -40,6 +45,20 @@ namespace Humphrey.FrontEnd
         {
             throw new System.NotImplementedException();
         }
+
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            foreach (var i in identifiers)
+            {
+                pass.AddEnumElementLocation(i.Token, parentType);
+            }
+        }
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

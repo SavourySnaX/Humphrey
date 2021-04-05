@@ -1074,6 +1074,10 @@ namespace Humphrey.FrontEnd
 
             var enumType = new AstEnumType(type, definitionList);
             enumType.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
+            foreach (var d in definitionList)
+            {
+                d.SetEnumKind(type);
+            }
             return enumType;
         }
 

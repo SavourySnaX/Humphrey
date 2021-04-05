@@ -31,6 +31,17 @@ namespace Humphrey.FrontEnd
             throw new System.NotImplementedException($"Should never be directly called");
         }
 
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            inclusiveStart?.Semantic(pass);
+            inclusiveStop?.Semantic(pass);
+        }
+
         public IExpression InclusiveStart => inclusiveStart;
         public IExpression InclusiveEnd => inclusiveStop;
         private Result<Tokens> _token;

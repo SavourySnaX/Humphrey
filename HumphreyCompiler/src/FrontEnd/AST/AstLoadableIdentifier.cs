@@ -45,6 +45,25 @@ namespace Humphrey.FrontEnd
                 throw new System.NotImplementedException($"Cannot store value to type");
             }
         }
+
+        public IType ResolveExpressionType(SemanticPass pass)
+        {
+            return pass.FetchNamedType(this);
+        }
+
+        public void Semantic(SemanticPass pass)
+        {
+            if (!pass.AddSemanticLocation(this, Token))
+            {
+                pass.Messages.Log(CompilerErrorKind.Error_UndefinedValue, $"Type '{Name}' is not found in the current scope.", Token.Location, Token.Remainder);
+            }
+        }
+
+        public IType ResolveBaseType(SemanticPass pass)
+        {
+            return pass.FetchNamedType(this).ResolveBaseType(pass);
+        }
+
         public string Name => name;
 
         private Result<Tokens> _token;
@@ -52,6 +71,8 @@ namespace Humphrey.FrontEnd
 
         private AstMetaData metaData;
         public AstMetaData MetaData { get => metaData; set => metaData = value; }
+
+        public SemanticPass.IdentifierKind GetBaseType => SemanticPass.IdentifierKind.None;
     }
 }
 

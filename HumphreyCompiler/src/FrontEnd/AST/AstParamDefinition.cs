@@ -20,6 +20,10 @@ namespace Humphrey.FrontEnd
         {
             return $"{ident.Dump()} : {type.Dump()}";
         }
+
+        public IType Type => type;
+        public AstIdentifier Identifier => ident;
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 
