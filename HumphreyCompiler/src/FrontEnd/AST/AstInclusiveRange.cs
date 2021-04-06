@@ -33,7 +33,7 @@ namespace Humphrey.FrontEnd
 
         public IType ResolveExpressionType(SemanticPass pass)
         {
-            throw new System.NotImplementedException();
+            throw new System.NotImplementedException($"Should never be directly called");
         }
 
         public void Semantic(SemanticPass pass)

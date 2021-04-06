@@ -121,9 +121,19 @@ namespace Humphrey.FrontEnd
             {
                 throw new System.NotImplementedException($"TODO - error no outputs from function");
             }
-            if (outputs.Length==1)
+            if (metaData != null)
             {
-                return outputs[0].Type;
+                if (metaData.Contains("C_CALLING_CONVENTION"))
+                {
+                    if (outputs.Length == 1)
+                    {
+                        return outputs[0].Type;
+                    }
+                    else
+                    {
+                        throw new System.NotImplementedException($"TODO - error illegal for c functions to return multiple params");
+                    }
+                }
             }
             var astStructMembers = new AstStructElement[outputs.Length];
             for (int a=0;a<outputs.Length;a++)
@@ -149,6 +159,7 @@ namespace Humphrey.FrontEnd
                 {
                     pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {input.Identifier.Name} already exists", input.Identifier.Token.Location, input.Identifier.Token.Remainder);
                 }
+                input.Type.Semantic(pass);
             }
             foreach (var output in outputList.Params)
             {
@@ -156,6 +167,7 @@ namespace Humphrey.FrontEnd
                 {
                     pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {output.Identifier.Name} already exists", output.Identifier.Token.Location, output.Identifier.Token.Remainder);
                 }
+                output.Type.Semantic(pass);
             }
             semanticDone = true;
             codeBlock?.Semantic(pass);

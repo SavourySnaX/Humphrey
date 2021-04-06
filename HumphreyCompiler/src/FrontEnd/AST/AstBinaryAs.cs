@@ -47,6 +47,7 @@ namespace Humphrey.FrontEnd
         public void Semantic(SemanticPass pass)
         {
             lhs.Semantic(pass);
+            rhs.Semantic(pass);
         }
 
         private Result<Tokens> _token;

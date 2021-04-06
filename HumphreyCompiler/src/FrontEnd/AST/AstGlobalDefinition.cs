@@ -30,17 +30,6 @@ namespace Humphrey.FrontEnd
             if (type == null)
             {
                 throw new System.Exception($"Should not occur, types should be resolved as part of semantic pass");
-                /*
-                // Need to compute type from initialiser
-                if (expr != null)
-                {
-                    ct = Expression.ResolveExpressionToValue(unit, exprValue, null).Type;
-                }
-                else
-                {
-                    throw new System.Exception($"Type is not computable for functions!");
-                }
-                */
             }
             else 
                 (ct,ot) = type.CreateOrFetchType(unit);

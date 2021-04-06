@@ -230,28 +230,28 @@ namespace Humphrey.FrontEnd
 
         public static IType ResolveExpressionType(SemanticPass pass, IType left, IType right, Result<Tokens> token)
         {
-            left = left.ResolveBaseType(pass);
-            right = right.ResolveBaseType(pass);
+            var resolvedLeft = left.ResolveBaseType(pass);
+            var resolvedRight = right.ResolveBaseType(pass);
             while (true)
             {
-                if (left is AstStructureType lst)
+                if (resolvedLeft is AstStructureType lst)
                 {
                     if (lst.Elements.Length == 1)
                     {
                         if (lst.Elements[0].NumElements == 1)
                         {
-                            left = lst.Elements[0].Type;
+                            resolvedLeft = lst.Elements[0].Type;
                             continue;
                         }
                     }
                 }
-                if (right is AstStructureType rst)
+                if (resolvedRight is AstStructureType rst)
                 {
                     if (rst.Elements.Length == 1)
                     {
                         if (rst.Elements[0].NumElements == 1)
                         {
-                            right = rst.Elements[0].Type;
+                            resolvedRight = rst.Elements[0].Type;
                             continue;
                         }
                     }
@@ -259,13 +259,13 @@ namespace Humphrey.FrontEnd
                 break;
             }
 
-            var lP = left as AstPointerType;
-            var rP = right as AstPointerType;
+            var lP = resolvedLeft as AstPointerType;
+            var rP = resolvedRight as AstPointerType;
 
             if (lP != null && rP != null)
             {
                 if (lP.ElementType == rP.ElementType)
-                    return lP;
+                    return left;
                 else
                 {
                     pass.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Type mismatch : '{left.Token.Value}' != '{right.Token.Value}", token.Location, token.Remainder);
@@ -273,20 +273,25 @@ namespace Humphrey.FrontEnd
                 }
             }
 
-            var lE = left as AstEnumType;
-            var rE = right as AstEnumType;
+            var lE = resolvedLeft as AstEnumType;
+            var rE = resolvedRight as AstEnumType;
 
             if (lE != null)
             {
-                left = lE.Type;
+                resolvedLeft = lE.Type;
             }
             if (rE != null)
             {
-                right = rE.Type;
+                resolvedRight = rE.Type;
             }
 
-            if (left.GetType() != right.GetType())
+            if (resolvedLeft.GetType() != resolvedRight.GetType())
             {
+                if (resolvedLeft.GetType()==typeof(AstArrayType) && resolvedRight.GetType()==typeof(AstBitType))
+                    return left;
+                if (resolvedRight.GetType()==typeof(AstArrayType) && resolvedLeft.GetType()==typeof(AstBitType))
+                    return right;
+                    
                 throw new System.NotImplementedException($"Type mismatch in binary expression... really need int ast type");
             }
 
