@@ -67,7 +67,8 @@ namespace Humphrey.FrontEnd
 
         public IType ResolveExpressionType(SemanticPass pass)
         {
-            var ptr = expr.ResolveExpressionType(pass) as AstPointerType;
+            var resolved = expr.ResolveExpressionType(pass);
+            var ptr = resolved.ResolveBaseType(pass) as AstPointerType;
             if (ptr==null)
             {
                 throw new System.NotImplementedException($"TODO");

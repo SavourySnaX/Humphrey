@@ -5,9 +5,11 @@ namespace Humphrey.FrontEnd
     public class AstLoadableIdentifier : IExpression,IType,ILoadValue,IStorable, IIdentifier
     {
         string name;
+        private bool semanticDone;
         public AstLoadableIdentifier(string value)
         {
             name = value;
+            semanticDone = false;
         }
     
         public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
@@ -48,14 +50,23 @@ namespace Humphrey.FrontEnd
 
         public IType ResolveExpressionType(SemanticPass pass)
         {
-            return pass.FetchNamedType(this);
+            var typeOfValue = pass.ResolveValueType(this);
+            if (typeOfValue==null)
+            {
+                return this;    // This identifier refers to a type
+            }
+            return typeOfValue;
         }
 
         public void Semantic(SemanticPass pass)
         {
-            if (!pass.AddSemanticLocation(this, Token))
+            if (!semanticDone)
             {
-                pass.Messages.Log(CompilerErrorKind.Error_UndefinedValue, $"Type '{Name}' is not found in the current scope.", Token.Location, Token.Remainder);
+                semanticDone = true;
+                if (!pass.AddSemanticLocation(this, Token))
+                {
+                    pass.Messages.Log(CompilerErrorKind.Error_UndefinedValue, $"Type '{Name}' is not found in the current scope.", Token.Location, Token.Remainder);
+                }
             }
         }
 

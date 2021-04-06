@@ -86,20 +86,20 @@ namespace Humphrey.FrontEnd
         public IType ResolveExpressionType(SemanticPass pass)
         {
             var resolved = lhs.ResolveExpressionType(pass);
-            var enumType = resolved as AstEnumType;
+            var baseResolved = resolved.ResolveBaseType(pass);
+            var enumType = baseResolved as AstEnumType;
             if (enumType != null)
             {
-                pass.AddEnumElementLocation(rhs.Token, enumType.Type);
                 return enumType.Type;
             }
 
-            var structType = resolved as AstStructureType;
+            var structType = baseResolved as AstStructureType;
             if (structType == null)
             {
-                var pointerType = resolved as AstPointerType;
+                var pointerType = baseResolved as AstPointerType;
                 if (pointerType!=null)
                 {
-                    structType = pointerType.ElementType as AstStructureType;
+                    structType = pointerType.ElementType.ResolveBaseType(pass) as AstStructureType;
                 }
             }
 
@@ -111,7 +111,6 @@ namespace Humphrey.FrontEnd
                     {
                         if (rhs.Name == i.Name)
                         {
-                            pass.AddStructElementLocation(rhs.Token, e.Type);
                             return e.Type;
                         }
                     }
@@ -125,25 +124,22 @@ namespace Humphrey.FrontEnd
         public void Semantic(SemanticPass pass)
         {
             lhs.Semantic(pass);
-           // throw new System.Exception($"Should not reach here");
-            /*
-            var resolved = lhs.ResolveExpressionType(pass); // perhaps cache the types allways
-
-            var enumType = resolved as AstEnumType;
+            var resolved = lhs.ResolveExpressionType(pass);
+            var baseResolved = resolved.ResolveBaseType(pass);
+            var enumType = baseResolved as AstEnumType;
             if (enumType != null)
             {
-                // do enum
-
+                pass.AddEnumElementLocation(rhs.Token, enumType.Type);
                 return;
             }
 
-            var structType = resolved as AstStructureType;
+            var structType = baseResolved as AstStructureType;
             if (structType == null)
             {
-                var pointerType = resolved as AstPointerType;
+                var pointerType = baseResolved as AstPointerType;
                 if (pointerType!=null)
                 {
-                    structType = pointerType.ElementType as AstStructureType;
+                    structType = pointerType.ElementType.ResolveBaseType(pass) as AstStructureType;
                 }
             }
 
@@ -163,7 +159,7 @@ namespace Humphrey.FrontEnd
                 throw new System.NotImplementedException($"error struct element not found");
             }
             
-            throw new System.NotImplementedException($"TODO");*/
+            throw new System.NotImplementedException($"TODO");
         }
 
         private Result<Tokens> _token;

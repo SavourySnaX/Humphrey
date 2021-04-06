@@ -91,10 +91,17 @@ namespace Humphrey.FrontEnd
 
         public IType ResolveExpressionType(SemanticPass pass)
         {
-            var func = expr.ResolveExpressionType(pass) as AstFunctionType;
+            var resolved = expr.ResolveExpressionType(pass);
+            var func = resolved as AstFunctionType;
             if (func ==null)
             {
-                throw new System.NotImplementedException($"TODO");
+                var baseT = resolved.ResolveBaseType(pass);
+                func = baseT as AstFunctionType;
+                if (func == null)
+                {
+                    // undefined symbol
+                    throw new System.NotImplementedException($"TODO");
+                }
             }
             return func.ResolveOutputType(pass);
         }

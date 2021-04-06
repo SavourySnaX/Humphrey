@@ -48,6 +48,7 @@ namespace Humphrey.FrontEnd
             return this;    // or element type?
         }
 
+        public IType ElementType => elementType;
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

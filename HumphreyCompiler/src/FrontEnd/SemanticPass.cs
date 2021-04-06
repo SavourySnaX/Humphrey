@@ -14,17 +14,20 @@ namespace Humphrey.FrontEnd
         public class SemanticInfo
         {
             private IType _ast;
+            private IType _base;
             private IdentifierKind _kind;
 
-            public SemanticInfo(IType type, IdentifierKind kind)
+            public SemanticInfo(IType type, IType baseT, IdentifierKind kind)
             {
                 _ast = type;
+                _base = baseT;
                 _kind = kind;
                 if (kind == IdentifierKind.Type && type != null)
                     _kind = type.GetBaseType;
             }
 
             public IType Ast => _ast;
+            public IType Base => _base;
             public IdentifierKind Kind => _kind;
         }
 
@@ -89,6 +92,17 @@ namespace Humphrey.FrontEnd
             return type;
         }
 
+        public IType ResolveValueType(IIdentifier identifier)
+        {
+            var res = symbolScopes.FetchValue(identifier.Name);
+            if (res==null)
+            {
+                Missing(identifier.Name);
+                res = symbolScopes.FetchValue(identifier.Name);
+            }
+            return res;
+        }
+
         public IType FetchNamedType(IIdentifier identifier)
         {
             var res = FetchAnyType(identifier);
@@ -109,19 +123,19 @@ namespace Humphrey.FrontEnd
             if (pendingDefinitions.TryGetValue(identifier, out var definition))
             {
                 symbolScopes.SaveScopes();
-                definition.Semantic(this);
                 foreach (var ident in definition.Identifiers)
                 {
                     pendingDefinitions.Remove(ident.Dump());
                 }
+                definition.Semantic(this);
                 symbolScopes.RestoreScopes();
             }
         }
 
         public bool AddFunction(IIdentifier identifier, IType type)
         {
-            type = type.ResolveBaseType(this);
-            var s = new SemanticPass.SemanticInfo(type, SemanticPass.IdentifierKind.Function);
+            var baseT = type.ResolveBaseType(this);
+            var s = new SemanticPass.SemanticInfo(type, baseT, SemanticPass.IdentifierKind.Function);
             var ok = symbolScopes.AddFunction(identifier.Name, type, s);
             if (ok)
             {
@@ -132,8 +146,8 @@ namespace Humphrey.FrontEnd
 
         public bool AddType(IIdentifier identifier, IType type)
         {
-            type = type.ResolveBaseType(this);
-            var s = new SemanticPass.SemanticInfo(type, SemanticPass.IdentifierKind.Type);
+            var baseT = type.ResolveBaseType(this);
+            var s = new SemanticPass.SemanticInfo(type, baseT, SemanticPass.IdentifierKind.Type);
             var ok = symbolScopes.AddType(identifier.Name, type, s);
             if (ok)
             {
@@ -144,8 +158,8 @@ namespace Humphrey.FrontEnd
 
         public bool AddValue(IIdentifier identifier, SemanticPass.IdentifierKind kind, IType type, bool addSemanticInfo = true)
         {
-            type = type.ResolveBaseType(this);
-            var s = new SemanticPass.SemanticInfo(type, kind);
+            var baseT = type.ResolveBaseType(this);
+            var s = new SemanticPass.SemanticInfo(type, baseT, kind);
             var ok = symbolScopes.AddValue(identifier.Name, type, s);
             if (ok && addSemanticInfo)  // addSemanticInfo is bodge to ensure function pointer delegate types work
             {
@@ -170,13 +184,13 @@ namespace Humphrey.FrontEnd
 
         public void AddStructElementLocation(Result<Tokens> token, IType type)
         {
-            var s = new SemanticPass.SemanticInfo(type, IdentifierKind.StructMember);
+            var s = new SemanticPass.SemanticInfo(type, type.ResolveBaseType(this), IdentifierKind.StructMember);
             semanticInfo.Add(token, s);
         }
         
         public void AddEnumElementLocation(Result<Tokens> token, IType type)
         {
-            var s = new SemanticPass.SemanticInfo(type, IdentifierKind.EnumMember);
+            var s = new SemanticPass.SemanticInfo(type, type.ResolveBaseType(this), IdentifierKind.EnumMember);
             semanticInfo.Add(token, s);
         }
 

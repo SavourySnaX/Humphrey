@@ -42,7 +42,7 @@ namespace Humphrey.FrontEnd
             {
                 throw new System.NotImplementedException($"TODO error undefined type?");
             }
-            return new AstPointerType(t);
+            return new AstPointerType(t.ResolveBaseType(pass));
         }
 
         public void Semantic(SemanticPass pass)

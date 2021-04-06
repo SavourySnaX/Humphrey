@@ -28,15 +28,7 @@ namespace Humphrey.FrontEnd
 
             if (type == null)
             {
-                // Need to compute type from initialiser
-                if (expr != null)
-                {
-                    ct = Expression.ResolveExpressionToValue(unit, exprValue, null).Type;
-                }
-                else
-                {
-                    throw new System.Exception($"Type is not computable for functions!");
-                }
+                throw new System.Exception($"Should not occur, types should be resolved as part of semantic pass");
             }
             else 
                 (ct,ot) = type.CreateOrFetchType(unit);
@@ -64,11 +56,11 @@ namespace Humphrey.FrontEnd
                 else if (initialiser == null)
                 {
                     // should be scoped
-                    unit.CreateNamedType(ident.Dump(), ct, ot);
+                    unit.CreateNamedType(ident.Name, ct, ot);
                 }
                 else
                 {
-                    var variableName = ident.Dump();
+                    var variableName = ident.Name;
                     var newLocal = unit.CreateLocalVariable(unit, builder, ct, ident, exprValue, ident.Token);
                     var sourceLocation = new SourceLocation(ident.Token);
 

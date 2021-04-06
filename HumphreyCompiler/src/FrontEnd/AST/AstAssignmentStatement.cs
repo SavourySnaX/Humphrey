@@ -45,12 +45,13 @@ namespace Humphrey.FrontEnd
             }
             else
             {
+                expr.ResolveExpressionType(pass);
                 expr.Semantic(pass);
             }
             foreach (var dest in exprList.Expressions)
             {
+                dest.ResolveExpressionType(pass);
                 var store = dest as IStorable;
-
                 store.Semantic(pass);
             }
         }

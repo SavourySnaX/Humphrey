@@ -58,6 +58,7 @@ namespace Humphrey.FrontEnd
 
         public void Semantic(SemanticPass pass)
         {
+            type.Semantic(pass);
             foreach (var i in identifiers)
             {
                 pass.AddStructElementLocation(i.Token, Type);

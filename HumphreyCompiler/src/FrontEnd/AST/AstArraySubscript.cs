@@ -243,7 +243,21 @@ namespace Humphrey.FrontEnd
 
         public IType ResolveExpressionType(SemanticPass pass)
         {
-            return expr.ResolveExpressionType(pass);
+            var resolved = expr.ResolveExpressionType(pass);
+            var resolvedBase = resolved.ResolveBaseType(pass);
+            if (resolvedBase is AstArrayType arrayType)
+            {
+                if (subscriptIdx is AstInclusiveRange)
+                    return resolved;
+                return arrayType.ElementType;
+            }
+            if (resolvedBase is AstPointerType pointerType)
+            {
+                if (subscriptIdx is AstInclusiveRange)
+                    return resolved;
+                return pointerType.ElementType;
+            }
+            throw new System.NotImplementedException($"TODO other subscripts");
         }
 
         public void Semantic(SemanticPass pass)

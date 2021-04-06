@@ -59,6 +59,7 @@ namespace Humphrey.FrontEnd
             if (!semanticDone)
             {
                 semanticDone = true;
+                type.Semantic(pass);
                 foreach (var d in definitions)
                 {
                     d.Semantic(pass);
