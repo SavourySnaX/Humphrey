@@ -56,6 +56,9 @@ namespace Humphrey.FrontEnd
             }
         }
 
+        public AstExpressionList ExpressionList => exprList;
+        public IAssignable Assignable => assignable;
+        
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 
