@@ -162,6 +162,9 @@ namespace Humphrey.FrontEnd
             throw new System.NotImplementedException($"TODO");
         }
 
+        public IExpression LHS => lhs;
+        public AstIdentifier RHS => rhs;
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

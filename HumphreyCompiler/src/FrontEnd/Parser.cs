@@ -622,8 +622,12 @@ namespace Humphrey.FrontEnd
             RestoreTokens();
             SaveTokens();
             var expr = ParseExpression();
-            if (expr!=null && SemiColonSyntax())
+            if (expr!=null)
             {
+                if (!SemiColonSyntax())
+                {
+                    messages.Log(CompilerErrorKind.Error_ExpectedToken, "Missing ; at end of expression", expr.Token.Location, expr.Token.Remainder);
+                }
                 FlushTokens();
                 var exprStatement = new AstExpressionStatement(expr);
                 exprStatement.Token = expr.Token;
@@ -687,9 +691,13 @@ namespace Humphrey.FrontEnd
         // expression_identifier : identifier_terminal
         public IExpression ExpressionIdentifier()
         {
+            var start = CurrentToken();
             var ident = Identifier();
             if (ident == null)
-                return null;
+            {
+                messages.Log(CompilerErrorKind.Error_ExpectedIdentifier, $"Expected an identifier, but got '{start.ToStringValue()}'", start.Location, start.Remainder);
+                ident = new AstIdentifier(null);
+            }
             operands.Push(ident);
             var op = OneOf(BinaryOperators) as IOperator;
             var terminal = operands.Peek() as IExpression;
