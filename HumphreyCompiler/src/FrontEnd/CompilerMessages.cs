@@ -19,6 +19,7 @@ namespace Humphrey.FrontEnd
         Error_ExpectedToken = Error | ParseError | 0x07,
         Error_DuplicateSymbol = Error | ParseError | 0x08,
         Error_MustBeExpression = Error | ParseError | 0x09,
+        Error_ExpectedIdentifier = Error | ParseError | 0x0A,
 
         // Compilation block
         Error_MissingOutputAssignment = Error | CompileError | 0x01,
