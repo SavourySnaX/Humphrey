@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Text;
 using Xunit;
 
 namespace Humphrey.FrontEnd.Tests
@@ -493,6 +494,65 @@ namespace Humphrey.FrontEnd.Tests
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens);
             CheckAst(input, CheckArraySubscriptHelper(parser), expected);
+        }
+
+        IEnumerable<IAst> IterateGraph(IAst root)
+        {
+            Queue<IAst> pending = new Queue<IAst>();
+
+            pending.Enqueue(root);
+
+            while (pending.Count>0)
+            {
+                var next = pending.Dequeue();
+                yield return next;
+
+                switch (next)
+                {
+                    case AstGlobalDefinition astGlobalDefinition:
+
+                        pending.Enqueue(astGlobalDefinition.Initialiser);
+                        break;
+                    case AstCodeBlock astCodeBlock:
+                        foreach (var s in astCodeBlock.Statements)
+                        {
+                            pending.Enqueue(s);
+                        }
+                        break;
+                    case AstExpressionStatement astExpressionStatement:
+                        pending.Enqueue(astExpressionStatement.Expression);
+                        break;
+                    default:
+                        throw new System.NotImplementedException($"TODO");
+                }
+            }
+        }
+
+        [Theory]
+        [InlineData("Main:()()={ partial; }", "partial", new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock),typeof(AstExpressionStatement), typeof(AstLoadableIdentifier)})]
+        [InlineData("Main:()()={ partial }", "partial", new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock),typeof(AstExpressionStatement), typeof(AstLoadableIdentifier)})]
+        public void PartialRecovery(string input, string symbol, System.Type[] types)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            var parsed = parser.File();
+            Assert.True(parsed.Length==1);  // Only 1 global at once for now
+
+            int compareIdx = 0;
+            foreach (var t in IterateGraph(parsed[0]))
+            {
+                Assert.True(types[compareIdx] == t.GetType(), $"{types[compareIdx]}!={t.GetType()}");
+                compareIdx++;
+                if (compareIdx==types.Length)
+                {
+                    if (t is IIdentifier identifier)
+                    {
+                        Assert.True(identifier.Name == symbol);
+                    }
+                    break;
+                }
+            }
         }
 
         IAst CheckArraySubscriptHelper(HumphreyParser parser)
