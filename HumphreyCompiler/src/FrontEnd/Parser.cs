@@ -614,8 +614,12 @@ namespace Humphrey.FrontEnd
             RestoreTokens();
             SaveTokens();
             var assign = Assignment();
-            if (assign!=null && SemiColonSyntax())
+            if (assign!=null)
             {
+                if (!SemiColonSyntax())
+                {
+                    messages.Log(CompilerErrorKind.Error_ExpectedToken, "Missing ; at end of expression", assign.Token.Location, assign.Token.Remainder);
+                }
                 FlushTokens();
                 return assign;
             }
@@ -715,9 +719,14 @@ namespace Humphrey.FrontEnd
                 return null;
             if (EqualsOperator()==null)
                 return null;
-            var assignable = Assignable();
+            var rhs = CurrentToken();
+            var assignable = ParseExpression();
             if (assignable == null)
-                return null;
+            {
+                messages.Log(CompilerErrorKind.Error_MustBeExpression, "Right hand side of assignment must be an expression", rhs.Location, rhs.Remainder);
+                assignable = new AstNumber("0");
+                assignable.Token = rhs;
+            }
 
             var assign = new AstAssignmentStatement(exprList, assignable);
             assign.Token = new Result<Tokens>(exprList.Token.Value, exprList.Token.Location, assignable.Token.Remainder);

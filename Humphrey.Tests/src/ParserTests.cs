@@ -171,7 +171,6 @@ namespace Humphrey.FrontEnd.Tests
 
         [Theory]
         [InlineData("a=1","a = 1")]
-        [InlineData("a={}","a = { }")]
         [InlineData("a[15]=1","a [ 15 ] = 1")]
         [InlineData("a()=1","a ( ) = 1")]
         [InlineData("a[15]()=1","a [ 15 ] ( ) = 1")]

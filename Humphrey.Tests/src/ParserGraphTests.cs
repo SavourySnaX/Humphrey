@@ -10,6 +10,8 @@ namespace Humphrey.FrontEnd.Tests
         [InlineData("Main:()()={ partial; }", "partial", CompilerErrorKind.Debug, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock),typeof(AstExpressionStatement), typeof(AstLoadableIdentifier)})]
         [InlineData("Main:()()={ partial }", "partial", CompilerErrorKind.Error_ExpectedToken, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock),typeof(AstExpressionStatement), typeof(AstLoadableIdentifier)})]
         [InlineData("Main:()()={ partial. }", "partial", CompilerErrorKind.Error_ExpectedIdentifier, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock),typeof(AstExpressionStatement), typeof(AstBinaryReference), typeof(AstLoadableIdentifier)})]
+        [InlineData("Main:()()={ partial.lib }", "lib", CompilerErrorKind.Error_ExpectedToken, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock),typeof(AstExpressionStatement), typeof(AstBinaryReference), typeof(AstLoadableIdentifier), typeof(AstIdentifier)})]
+        [InlineData("Main:()()={ partial.lib= }", null, CompilerErrorKind.Error_MustBeExpression, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock), typeof(AstAssignmentStatement), typeof(AstExpressionList), typeof(AstBinaryReference), typeof(AstLoadableIdentifier), typeof(AstIdentifier)})]
         public void PartialRecovery(string input, string symbol, CompilerErrorKind expectedError, System.Type[] types)
         {
             var messages = new CompilerMessages(false, false, false);
@@ -32,9 +34,12 @@ namespace Humphrey.FrontEnd.Tests
                 compareIdx++;
                 if (compareIdx==types.Length)
                 {
-                    if (t is IIdentifier identifier)
+                    if (symbol != null)
                     {
-                        Assert.True(identifier.Name == symbol);
+                        if (t is IIdentifier identifier)
+                        {
+                            Assert.True(identifier.Name == symbol);
+                        }
                     }
                     break;
                 }
@@ -68,12 +73,28 @@ namespace Humphrey.FrontEnd.Tests
                         pending.Enqueue(astExpressionStatement.Expression);
                         break;
                     case AstBinaryReference astBinaryReference:
-                        pending.Enqueue(astBinaryReference.LHS);
+                        foreach (var s in IterateGraph(astBinaryReference.LHS))
+                        {
+                            pending.Enqueue(s);
+                        }
                         pending.Enqueue(astBinaryReference.RHS);
                         break;
                     case AstLoadableIdentifier astLoadableIdentifier:
                         break;
                     case AstIdentifier astIdentifier:
+                        break;
+                    case AstAssignmentStatement astAssignmentStatement:
+                        foreach (var s in IterateGraph(astAssignmentStatement.ExpressionList))
+                        {
+                            pending.Enqueue(s);
+                        }
+                        pending.Enqueue(astAssignmentStatement.Assignable);
+                        break;
+                    case AstExpressionList astExpressionList:
+                        foreach (var e in astExpressionList.Expressions)
+                        {
+                            pending.Enqueue(e);
+                        }
                         break;
                     default:
                         throw new System.NotImplementedException($"TODO");
