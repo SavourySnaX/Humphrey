@@ -62,6 +62,8 @@ namespace Humphrey.FrontEnd
 
         public Result<Tokens> BlockStart;
         public Result<Tokens> BlockEnd;
+
+        public IStatement[] Statements => statementList;
     }
 }
 

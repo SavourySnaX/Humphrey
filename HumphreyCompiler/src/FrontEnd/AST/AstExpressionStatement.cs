@@ -28,6 +28,7 @@ namespace Humphrey.FrontEnd
             expression.Semantic(pass);
         }
 
+        public IExpression Expression => expression;
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 
