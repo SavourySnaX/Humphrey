@@ -68,10 +68,11 @@ namespace Humphrey.FrontEnd
             {
                 if (searchResetQueue.Count == 0)
                 {
+                    var last = CurrentToken();
                     if (tokens.MoveNext())
                         lookahead = tokens.Current;
                     else
-                        lookahead = new Result<Tokens>();
+                        lookahead = new Result<Tokens>(last.Remainder);
                 }
                 else
                 {
@@ -349,7 +350,7 @@ namespace Humphrey.FrontEnd
         public IAst DotDotOperator() { return AstItem(Tokens.O_DotDot, (e) => new AstOperator(e)); }
         // function_call_operator : (
         public IAst FunctionCallOperator() { return AstItem(Tokens.S_OpenParanthesis, (e) => new AstOperator(e)); }
-        // function_call_operator : [
+        // array_subscript_operator : [
         public IAst ArraySubscriptOperator() { return AstItem(Tokens.S_OpenSquareBracket, (e) => new AstOperator(e)); }
         // equals_operator : Equals
         public IAst EqualsOperator() { return AstItem(Tokens.O_Equals, (e) => new AstOperator(e)); }
@@ -533,7 +534,6 @@ namespace Humphrey.FrontEnd
                     end = CurrentToken();
                     if (!CloseSquareBracket())
                         return null;
-                    expr.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
                     return expr;
                 }
             }
@@ -1323,8 +1323,9 @@ namespace Humphrey.FrontEnd
 
             var end = CurrentToken();
             if (!CloseCurlyBrace())
-                return null;
-
+            {
+                messages.Log(CompilerErrorKind.Error_ExpectedToken, $"Expected '}}' but got '{end.ToStringValue()}'", end.Location, end.Remainder);
+            }
             var codeBlock = new AstCodeBlock(statements);
             codeBlock.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
             codeBlock.BlockStart = start;

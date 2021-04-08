@@ -366,7 +366,6 @@ namespace Humphrey.FrontEnd.Tests
         [Theory]
         [InlineData("{}","{ }")]
         [InlineData("{return;}","{ return}")]
-        [InlineData("{{{}}",null)]
         [InlineData("return;", "return")]
         [InlineData("a:bit=1;", "a : bit = 1")]
         [InlineData("a=1;", "a = 1")]
@@ -384,7 +383,6 @@ namespace Humphrey.FrontEnd.Tests
         [InlineData("{}","{ }")]
         [InlineData("{{{}}}","{ { { }}}")]
         [InlineData("{{{}return;}}","{ { { }return}}")]
-        [InlineData("{{{}}",null)]
         public void CheckCodeBlock(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();

@@ -218,6 +218,8 @@ namespace Humphrey.FrontEnd
 
         public string ToStringValue(TokenSpan remain)
         {
+            if (encompass==null)
+                return "";
             if (remain.AtEnd)
                 return encompass.Substring(position);
             return encompass.Substring(position, remain.position - position);
@@ -241,6 +243,10 @@ namespace Humphrey.FrontEnd
             if (remain.HasValue)
             {
                 length = remain.Value.position - position;
+            }
+            if (remain.Value.AtEnd)
+            {
+                return "";
             }
 
             // scan backwards to beginning of line from current location
