@@ -12,6 +12,8 @@ namespace Humphrey.FrontEnd.Tests
         [InlineData("Main:()()={ partial. }", "partial", CompilerErrorKind.Error_ExpectedIdentifier, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock),typeof(AstExpressionStatement), typeof(AstBinaryReference), typeof(AstLoadableIdentifier)})]
         [InlineData("Main:()()={ partial.lib }", "lib", CompilerErrorKind.Error_ExpectedToken, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock),typeof(AstExpressionStatement), typeof(AstBinaryReference), typeof(AstLoadableIdentifier), typeof(AstIdentifier)})]
         [InlineData("Main:()()={ partial.lib= }", null, CompilerErrorKind.Error_MustBeExpression, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock), typeof(AstAssignmentStatement), typeof(AstExpressionList), typeof(AstBinaryReference), typeof(AstLoadableIdentifier), typeof(AstIdentifier)})]
+        [InlineData("Main:()()={ partial: }", null, CompilerErrorKind.Error_ExpectedType, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock), typeof(AstLocalDefinition)})]
+        [InlineData("Main:()()={ partial:= }", null, CompilerErrorKind.Error_ExpectedAssignable, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock), typeof(AstLocalDefinition)})]
         public void PartialRecovery(string input, string symbol, CompilerErrorKind expectedError, System.Type[] types)
         {
             var messages = new CompilerMessages(false, false, false);
@@ -60,8 +62,10 @@ namespace Humphrey.FrontEnd.Tests
                 switch (next)
                 {
                     case AstGlobalDefinition astGlobalDefinition:
-
                         pending.Enqueue(astGlobalDefinition.Initialiser);
+                        break;
+                    case AstLocalDefinition astLocalDefinition:
+                        pending.Enqueue(astLocalDefinition.Initialiser);
                         break;
                     case AstCodeBlock astCodeBlock:
                         foreach (var s in astCodeBlock.Statements)

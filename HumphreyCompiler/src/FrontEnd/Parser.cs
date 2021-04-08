@@ -606,15 +606,19 @@ namespace Humphrey.FrontEnd
             SaveTokens();
 
             var localDef = LocalScopeDefinition();
-            if (localDef!=null && SemiColonSyntax())
+            if (localDef != null)
             {
+                if (!SemiColonSyntax())
+                {
+                    messages.Log(CompilerErrorKind.Error_ExpectedToken, "Missing ; at end of expression", localDef.Token.Location, localDef.Token.Remainder);
+                }
                 FlushTokens();
                 return localDef;
             }
             RestoreTokens();
             SaveTokens();
             var assign = Assignment();
-            if (assign!=null)
+            if (assign != null)
             {
                 if (!SemiColonSyntax())
                 {
@@ -626,7 +630,7 @@ namespace Humphrey.FrontEnd
             RestoreTokens();
             SaveTokens();
             var expr = ParseExpression();
-            if (expr!=null)
+            if (expr != null)
             {
                 if (!SemiColonSyntax())
                 {
@@ -1228,7 +1232,7 @@ namespace Humphrey.FrontEnd
 
             typeSpecifier = typeDelegate() as IType;
 
-            TokenSpan end = new TokenSpan();
+            TokenSpan end = start.Remainder;
 
             if (typeSpecifier!=null)
                 end = typeSpecifier.Token.Remainder;
@@ -1239,14 +1243,23 @@ namespace Humphrey.FrontEnd
                 {
                     assignable = assignableDelegate() as IAssignable;
                     if (assignable == null)
-                        return (false, null, null, null, new Result<Tokens>());
+                    {
+                        messages.Log(CompilerErrorKind.Error_ExpectedAssignable, "Right hand side of decleration should be an expression or codeblock", CurrentToken().Location, CurrentToken().Remainder);
+                        return (true, identifier, typeSpecifier, new AstNumber("0"), new Result<Tokens>(start.Value, start.Location, CurrentToken().Remainder));
+                    }
 
                     end = assignable.Token.Remainder;
                 }
             }
 
             if (typeSpecifier==null && assignable==null)
-                return (false, null, null, null, new Result<Tokens>());
+            {
+                // Assume a type definition
+                messages.Log(CompilerErrorKind.Error_ExpectedType, $"Expected a type or =, but got '{CurrentToken().ToStringValue()}'", CurrentToken().Location, CurrentToken().Remainder);
+                var fakeType = new AstBitType();
+                fakeType.Token=CurrentToken();
+                return (true, identifier, fakeType, null, new Result<Tokens>(start.Value, start.Location, end));
+            }
 
             return (true, identifier, typeSpecifier, assignable, new Result<Tokens>(start.Value,start.Location, end));
         }

@@ -167,6 +167,10 @@ namespace Humphrey.FrontEnd
             }
         }
 
+        public AstIdentifier[] Identifiers => identifiers;
+        public IType Type => type;
+        public IAssignable Initialiser => initialiser;
+
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 
