@@ -192,12 +192,25 @@ namespace Humphrey.FrontEnd.Tests
         
         [Theory]
         [InlineData(@"State:{p:bit} KeyStates:[4]State Main : () () = { state:=KeyStates[3].p; }", "state", SemanticPass.IdentifierKind.LocalValue, typeof(AstBitType), typeof(AstBitType))]
+        [InlineData(@"State:{p:bit} KeyStates:[4]State Main : () () = { n:=3; state:=KeyStates[n].p; }", "n", SemanticPass.IdentifierKind.LocalValue, typeof(AstArrayType), typeof(AstArrayType))]
         [InlineData(@"State:{p:bit} KeyStates:*State Main : () () = { state:=KeyStates[3].p; }", "state", SemanticPass.IdentifierKind.LocalValue, typeof(AstBitType), typeof(AstBitType))]
         public void CheckSubscript(string input, string symbol, SemanticPass.IdentifierKind expected, Type t, Type b)
         {
             var result = Build(input, symbol, expected, t, b);
             Assert.True(result);
         }
+
+        [Theory]
+        [InlineData(@"void:{} Handle:void StdHandle:*Handle", "void", SemanticPass.IdentifierKind.StructType, typeof(AstStructureType), typeof(AstStructureType))]
+        [InlineData(@"void:{} Handle:void StdHandle:*Handle", "Handle", SemanticPass.IdentifierKind.StructType, typeof(AstIdentifier), typeof(AstStructureType))]
+        //[InlineData(@"void:{} Handle:void StdHandle:*Handle", "StdHandle", SemanticPass.IdentifierKind.Type, typeof(AstPointerType), typeof(AstPointerType))]
+        public void EmptyStruct(string input, string symbol, SemanticPass.IdentifierKind expected, Type t, Type b)
+        {
+            var result = Build(input, symbol, expected, t, b);
+            Assert.True(result);
+        }
+
+
 
         [Theory]
         [InlineData(@" Main : (a:[8]bit,c:[8]bit)()={ if a==c { a++; } }", "a", SemanticPass.IdentifierKind.FunctionParam, typeof(AstArrayType), typeof(AstArrayType))]

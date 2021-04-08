@@ -22,8 +22,8 @@ namespace Humphrey.FrontEnd
                 _ast = type;
                 _base = baseT;
                 _kind = kind;
-                if (kind == IdentifierKind.Type && type != null)
-                    _kind = type.GetBaseType;
+                if (kind == IdentifierKind.Type && _base != null)
+                    _kind = _base.GetBaseType;
             }
 
             public IType Ast => _ast;

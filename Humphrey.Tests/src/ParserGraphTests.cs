@@ -13,7 +13,7 @@ namespace Humphrey.FrontEnd.Tests
         [InlineData("Main:()()={ partial.lib }", "lib", CompilerErrorKind.Error_ExpectedToken, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock),typeof(AstExpressionStatement), typeof(AstBinaryReference), typeof(AstLoadableIdentifier), typeof(AstIdentifier)})]
         [InlineData("Main:()()={ partial.lib= }", null, CompilerErrorKind.Error_MustBeExpression, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock), typeof(AstAssignmentStatement), typeof(AstExpressionList), typeof(AstBinaryReference), typeof(AstLoadableIdentifier), typeof(AstIdentifier)})]
         [InlineData("Main:()()={ partial: }", null, CompilerErrorKind.Error_ExpectedType, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock), typeof(AstLocalDefinition)})]
-        [InlineData("Main:()()={ partial:= }", null, CompilerErrorKind.Error_ExpectedAssignable, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock), typeof(AstLocalDefinition)})]
+        [InlineData("Main:()()={ partial; { }", null, CompilerErrorKind.Error_ExpectedToken, new [] {typeof(AstGlobalDefinition),typeof(AstCodeBlock),typeof(AstExpressionStatement), typeof(AstLoadableIdentifier), typeof(AstCodeBlock)})]
         public void PartialRecovery(string input, string symbol, CompilerErrorKind expectedError, System.Type[] types)
         {
             var messages = new CompilerMessages(false, false, false);
@@ -62,15 +62,20 @@ namespace Humphrey.FrontEnd.Tests
                 switch (next)
                 {
                     case AstGlobalDefinition astGlobalDefinition:
-                        pending.Enqueue(astGlobalDefinition.Initialiser);
+                        if (astGlobalDefinition.Initialiser!=null)
+                            pending.Enqueue(astGlobalDefinition.Initialiser);
                         break;
                     case AstLocalDefinition astLocalDefinition:
-                        pending.Enqueue(astLocalDefinition.Initialiser);
+                        if (astLocalDefinition.Initialiser!=null)
+                            pending.Enqueue(astLocalDefinition.Initialiser);
                         break;
                     case AstCodeBlock astCodeBlock:
                         foreach (var s in astCodeBlock.Statements)
                         {
-                            pending.Enqueue(s);
+                            foreach (var g in IterateGraph(s))
+                            {
+                                pending.Enqueue(g);
+                            }
                         }
                         break;
                     case AstExpressionStatement astExpressionStatement:
@@ -86,6 +91,8 @@ namespace Humphrey.FrontEnd.Tests
                     case AstLoadableIdentifier astLoadableIdentifier:
                         break;
                     case AstIdentifier astIdentifier:
+                        break;
+                    case AstNumber astNumber:
                         break;
                     case AstAssignmentStatement astAssignmentStatement:
                         foreach (var s in IterateGraph(astAssignmentStatement.ExpressionList))
