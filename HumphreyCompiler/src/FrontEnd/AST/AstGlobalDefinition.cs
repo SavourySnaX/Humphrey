@@ -32,7 +32,9 @@ namespace Humphrey.FrontEnd
                 throw new System.Exception($"Should not occur, types should be resolved as part of semantic pass");
             }
             else 
+            {
                 (ct,ot) = type.CreateOrFetchType(unit);
+            }
 
             if (ct == null)
             {

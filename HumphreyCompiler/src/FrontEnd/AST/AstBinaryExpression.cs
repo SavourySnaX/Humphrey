@@ -278,11 +278,11 @@ namespace Humphrey.FrontEnd
 
             if (lE != null)
             {
-                resolvedLeft = lE.Type;
+                resolvedLeft = lE.Type.ResolveBaseType(pass);
             }
             if (rE != null)
             {
-                resolvedRight = rE.Type;
+                resolvedRight = rE.Type.ResolveBaseType(pass);
             }
 
             if (resolvedLeft.GetType() != resolvedRight.GetType())
