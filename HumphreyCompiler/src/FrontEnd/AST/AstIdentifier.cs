@@ -52,7 +52,12 @@ namespace Humphrey.FrontEnd
 
         public IType ResolveBaseType(SemanticPass pass)
         {
-            return pass.FetchNamedType(this);
+            var resolved = pass.FetchNamedType(this);
+            if (resolved==null)
+            {
+                return this;    // Error should have already been caught
+            }
+            return resolved.ResolveBaseType(pass);
         }
 
         public string Name => name;
@@ -62,6 +67,6 @@ namespace Humphrey.FrontEnd
         private AstMetaData metaData;
         public AstMetaData MetaData { get => metaData; set => metaData = value; }
 
-        public SemanticPass.IdentifierKind GetBaseType => SemanticPass.IdentifierKind.None;
+        public SemanticPass.IdentifierKind GetBaseType => SemanticPass.IdentifierKind.Type;
     }
 }

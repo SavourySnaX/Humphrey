@@ -72,7 +72,12 @@ namespace Humphrey.FrontEnd
 
         public IType ResolveBaseType(SemanticPass pass)
         {
-            return pass.FetchNamedType(this).ResolveBaseType(pass);
+            var resolved = pass.FetchNamedType(this);
+            if (resolved==null)
+            {
+                return this;    // Error should have already been caught
+            }
+            return resolved.ResolveBaseType(pass);
         }
 
         public string Name => name;

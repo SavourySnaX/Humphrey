@@ -95,11 +95,11 @@ namespace Humphrey.Backend
             if (pendingDefinitions.TryGetValue(identifier, out var definition))
             {
                 symbolScopes.SaveScopes();
-                definition.Compile(this);
                 foreach (var ident in definition.Identifiers)
                 {
                     pendingDefinitions.Remove(ident.Dump());
                 }
+                definition.Compile(this);
                 symbolScopes.RestoreScopes();
                 return true;
             }

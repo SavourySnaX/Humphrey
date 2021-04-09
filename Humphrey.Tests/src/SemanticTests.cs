@@ -203,7 +203,7 @@ namespace Humphrey.FrontEnd.Tests
         [Theory]
         [InlineData(@"void:{} Handle:void StdHandle:*Handle", "void", SemanticPass.IdentifierKind.StructType, typeof(AstStructureType), typeof(AstStructureType))]
         [InlineData(@"void:{} Handle:void StdHandle:*Handle", "Handle", SemanticPass.IdentifierKind.StructType, typeof(AstIdentifier), typeof(AstStructureType))]
-        //[InlineData(@"void:{} Handle:void StdHandle:*Handle", "StdHandle", SemanticPass.IdentifierKind.Type, typeof(AstPointerType), typeof(AstPointerType))]
+        [InlineData(@"void:{} Handle:void StdHandle:*Handle", "StdHandle", SemanticPass.IdentifierKind.Type, typeof(AstPointerType), typeof(AstPointerType))]
         public void EmptyStruct(string input, string symbol, SemanticPass.IdentifierKind expected, Type t, Type b)
         {
             var result = Build(input, symbol, expected, t, b);
@@ -353,6 +353,7 @@ namespace Humphrey.FrontEnd.Tests
             var result = Build(input, symbol, expected, t, b);
             Assert.True(result);
         }
+
         [Theory]
         [InlineData(@" void:{} Handle:void StdHandle:*Handle outputHandle:StdHandle=_ Main : ()()={ handle:=outputHandle; }", "handle", SemanticPass.IdentifierKind.LocalValue, typeof(AstIdentifier), typeof(AstPointerType))]
         public void CheckDeepResolve(string input, string symbol, SemanticPass.IdentifierKind expected, Type t, Type b)
@@ -360,6 +361,16 @@ namespace Humphrey.FrontEnd.Tests
             var result = Build(input, symbol, expected, t, b);
             Assert.True(result);
         }
+
+        [Theory]
+        [InlineData(@" UInt16:[16]bit UInt64:[64]bit Enum:UInt16 { B:=5 } Check:(b:UInt64, c:Enum)()={ a:=b*c; } ", "a", SemanticPass.IdentifierKind.LocalValue, typeof(AstIdentifier), typeof(AstArrayType))]
+        public void CheckDeepEnumWithInt(string input, string symbol, SemanticPass.IdentifierKind expected, Type t, Type b)
+        {
+            var result = Build(input, symbol, expected, t, b);
+            Assert.True(result);
+        }
+
+
 
         [Theory]
         [InlineData(@"Main : (a : [32]bit) () = { ptr:=&a; }", "ptr", typeof(AstPointerType), typeof(AstArrayType))]
