@@ -33,7 +33,17 @@ namespace Humphrey.FrontEnd
             }
             else 
             {
-                (ct,ot) = type.CreateOrFetchType(unit);
+                // Potentially self referential structures need slightly different handling as we need to 
+                //forward declare them prior to ensure if it is self referencing it can safely construct
+                if (initialiser == null && type is AstStructureType structureType)
+                {
+                    structureType.CreateOrFetchNamedStruct(unit, identifiers);
+                    return false;
+                }
+                else
+                {
+                    (ct, ot) = type.CreateOrFetchType(unit);
+                }
             }
 
             if (ct == null)

@@ -129,7 +129,7 @@ namespace Humphrey.Backend
             return CreateIntegerType(num, isSigned, location);
         }
 
-        public CompilationType FetchIntegerType(uint numBits, bool isSigned, SourceLocation location)
+        public CompilationIntegerType FetchIntegerType(uint numBits, bool isSigned, SourceLocation location)
         {
             return CreateIntegerType(numBits, isSigned, location);
         }
@@ -155,6 +155,25 @@ namespace Humphrey.Backend
         {
             var symbTabType = type.CopyAs(identifier);
             symbolScopes.AddType(identifier, symbTabType, originalType);
+        }
+
+        public CompilationStructureType CreateNamedStruct(string identifier, SourceLocation location)
+        {
+            var backendType = contextRef.CreateNamedStruct(identifier);
+            return new CompilationStructureType(backendType, debugBuilder, location);
+        }
+
+        public void FinaliseStruct(CompilationStructureType toFinalise, CompilationType[] elements, string[] names)
+        {
+            var types = new LLVMTypeRef[elements.Length];
+            int idx = 0;
+            foreach (var element in elements)
+            {
+                types[idx++] = element == null ? null : element.BackendType;
+            }
+
+            toFinalise.BackendType.StructSetBody(types, true);
+            toFinalise.UpdateNamedStruct(elements, names);
         }
 
         public CompilationStructureType FetchStructType(CompilationType[] elements, string[] names, SourceLocation location)

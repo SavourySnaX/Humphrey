@@ -542,13 +542,21 @@ Main:(a:bit,b:bit)(out:bit)=
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
 
-/*        [Theory]
-        [InlineData(@"temp:[128]bit=0 Struct:{recurse:*Struct} Main:()(out:[8]bit)={l:=&temp as *Struct; if l.recurse==0 { out=0; } else { out=1; }}", "Main", 0)]
+        [Theory]
+        [InlineData(@"temp:[128]bit=0 Struct:{recurse:*Struct} Main:()(out:[8]bit)={l:=&temp as *Struct; if l.recurse==(0 as *Struct) { out=0; } else { out=1; }}", "Main", 0)]
         public void CheckRecursiveStruct(string input, string entryPointName, byte expected)
         {
             Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
         }
-*/
+
+        [Theory]
+        [InlineData(@"Enum:[2]bit {a:=1} Main:()(out:[8]bit)={g:Enum=Enum.a; l:[8]bit=2; out=l+g;}", "Main", 3)]
+        public void CheckImplicitEnumExtension(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
+
+
 
         [Theory]
         [InlineData(@"Main : (a : *[8]bit) (returnValue : [8]bit) = { returnValue=*a; }", "Main", new byte[] { 21, 31 }, 21)]

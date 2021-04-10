@@ -7,19 +7,32 @@ namespace Humphrey.Backend
     {
         CompilationType[] elementTypes;
         string[] elementNames;
+
+        bool preventSameRecursion;
+        public CompilationStructureType(LLVMTypeRef type, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type, debugBuilder, location, ident)
+        {
+            elementTypes = null;
+            elementNames = null;
+            preventSameRecursion = false;
+        }
+
         public CompilationStructureType(LLVMTypeRef type, CompilationType[] elements, string[] names, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type, debugBuilder, location, ident)
+        {
+            elementTypes = elements;
+            elementNames = names;
+            CreateDebugType();
+            preventSameRecursion = false;
+        }
+
+        public void UpdateNamedStruct(CompilationType[] elements, string[] names)
         {
             elementTypes = elements;
             elementNames = names;
             CreateDebugType();
         }
 
-        public override bool Same(CompilationType obj)
+        public bool IsSame(CompilationStructureType check)
         {
-            var check = obj as CompilationStructureType;
-            if (check == null)
-                return false;
-
             if (elementTypes.Length!=check.elementTypes.Length)
                 return false;
             for (int a = 0; a < elementTypes.Length;a++)
@@ -30,6 +43,21 @@ namespace Humphrey.Backend
                     return false;
             }
             return Identifier == check.Identifier;
+        }
+
+        public override bool Same(CompilationType obj)
+        {
+            if (preventSameRecursion)
+                return true;
+
+            var check = obj as CompilationStructureType;
+            if (check == null)
+                return false;
+
+            preventSameRecursion = true;
+            var ret = IsSame(check);
+            preventSameRecursion = false;
+            return ret;
         }
 
         public override CompilationType CopyAs(string identifier)
