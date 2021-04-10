@@ -213,19 +213,12 @@ namespace Humphrey.Backend
             return value;
         }
 
-        public CompilationValue Ext(CompilationValue src, CompilationType toType)
+        public CompilationValue Ext(CompilationValue src, CompilationIntegerType srcType, CompilationIntegerType toType)
         {
-            var srcIntType = src.Type as CompilationIntegerType;
-            var toIntType = toType as CompilationIntegerType;
-
-            if (srcIntType != null && toIntType != null)
-            {
-                if (srcIntType.IsSigned)
-                    return new CompilationValue(builderRef.BuildSExt(src.BackendValue,toType.BackendType), toType, src.FrontendLocation);
-                else
-                    return new CompilationValue(builderRef.BuildZExt(src.BackendValue,toType.BackendType), toType, src.FrontendLocation);
-            }
-            throw new NotImplementedException($"Unhandled type in extension");
+            if (srcType.IsSigned)
+                return new CompilationValue(builderRef.BuildSExt(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
+            else
+                return new CompilationValue(builderRef.BuildZExt(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
         }
 
         public CompilationValue Trunc(CompilationValue src, CompilationType toType)
@@ -250,7 +243,7 @@ namespace Humphrey.Backend
                 if (srcIntType.IntegerWidth == toIntType.IntegerWidth)
                     return src;
                 else if (srcIntType.IntegerWidth > toIntType.IntegerWidth)
-                    return Ext(src, toType);
+                    return Ext(src, srcIntType, toIntType);
                 else
                     return Trunc(src, toType);
             }

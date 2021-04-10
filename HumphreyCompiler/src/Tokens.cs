@@ -164,7 +164,7 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Comment", SemanticKind = "Comment")]
         SingleComment,
 
-        [Token(Category = "Comment", SemanticKind = "Comment")]
+        [Token(Category = "Comment")]
         MultiLineComment
     }
 

@@ -117,7 +117,7 @@ namespace Humphrey.FrontEnd
                 else if (srcIntType.IntegerWidth < destIntType.IntegerWidth)
                 {
                     // For integers, if the the size is strictly less, then the assignment is always allowed (we just upcast the value to the new bitwidth)
-                    return builder.Ext(src, destType);
+                    return builder.Ext(src, srcIntType, destIntType);
                 }
 
                 unit.Messages.Log(CompilerErrorKind.Error_IntegerWidthMismatch, $"Result of expression '{Token.Location.ToStringValue(Token.Remainder)}' of type '{srcIntType.DumpType()}' is larger than {destIntType.DumpType()}!", Token.Location, Token.Remainder);

@@ -12,7 +12,39 @@ namespace Humphrey.FrontEnd
             semanticDone = autoTyped;
         }
     
+        public void CreateOrFetchNamedStruct(CompilationUnit unit, AstIdentifier[] identifiers)
+        {
+            var compTypes = new CompilationStructureType[identifiers.Length];
+            // Create forwarding named structs
+            for (int a = 0; a < identifiers.Length; a++)
+            {
+                var ident = identifiers[a];
+                var ct = unit.CreateNamedStruct(ident.Name, new SourceLocation(Token));
+                unit.CreateNamedType(ident.Name, ct, this);
+                compTypes[a] = ct;
+            }
+
+            // Now create elements
+            (var elementTypes, var names) = CreateElements(unit);
+
+            // Now update our created types with the elements
+            for (int a = 0; a < identifiers.Length;a++)
+            {
+                // Update our symbol too
+                var symbol = unit.FetchNamedType(identifiers[a]).compilationType as CompilationStructureType;
+                symbol.UpdateNamedStruct(elementTypes, names);
+                unit.FinaliseStruct(compTypes[a], elementTypes, names);
+            }
+        }
+
         public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
+        {
+            (var elementTypes, var names) = CreateElements(unit);
+
+            return (unit.FetchStructType(elementTypes, names, new SourceLocation(Token)), this);
+        }
+
+        private (CompilationType[] elementTypes, string[] names) CreateElements(CompilationUnit unit)
         {
             int numElements = 0;
             foreach (var element in definitions)
@@ -20,11 +52,11 @@ namespace Humphrey.FrontEnd
             var elementTypes = new CompilationType[numElements];
             var names = new string[numElements];
             int idx = 0;
-            foreach(var element in definitions)
+            foreach (var element in definitions)
             {
                 for (int a = 0; a < element.NumElements; a++)
                 {
-                    names[idx] = element.Identifiers[a].Dump();
+                    names[idx] = element.Identifiers[a].Name;
                     var current = element.Type.CreateOrFetchType(unit).compilationType;
                     if (current is CompilationFunctionType compilationFunctionType)
                     {
@@ -33,10 +65,9 @@ namespace Humphrey.FrontEnd
                     elementTypes[idx++] = current;
                 }
             }
-
-            return (unit.FetchStructType(elementTypes, names, new SourceLocation(Token)), this);
+            return (elementTypes, names);
         }
-    
+
         public bool IsFunctionType => false;
 
         public string Dump()
