@@ -7,28 +7,32 @@ namespace Humphrey.Backend
     {
         CompilationType[] elementTypes;
         string[] elementNames;
-
+        bool forwardDecleration;
         bool preventSameRecursion;
         public CompilationStructureType(LLVMTypeRef type, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type, debugBuilder, location, ident)
         {
             elementTypes = null;
             elementNames = null;
+            forwardDecleration = true;
             preventSameRecursion = false;
+            CreateDebugType();
         }
 
         public CompilationStructureType(LLVMTypeRef type, CompilationType[] elements, string[] names, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type, debugBuilder, location, ident)
         {
             elementTypes = elements;
             elementNames = names;
-            CreateDebugType();
+            forwardDecleration = false;
             preventSameRecursion = false;
+            CreateDebugType();
         }
 
         public void UpdateNamedStruct(CompilationType[] elements, string[] names)
         {
             elementTypes = elements;
             elementNames = names;
-            CreateDebugType();
+            forwardDecleration = false;
+            UpdateDebugType();
         }
 
         public bool IsSame(CompilationStructureType check)
@@ -62,6 +66,8 @@ namespace Humphrey.Backend
 
         public override CompilationType CopyAs(string identifier)
         {
+            if (forwardDecleration)
+                return new CompilationStructureType(BackendType, DebugBuilder, Location, identifier);
             return new CompilationStructureType(BackendType, elementTypes, elementNames, DebugBuilder, Location, identifier);
         }
 
@@ -138,9 +144,21 @@ namespace Humphrey.Backend
             if (DebugBuilder.Enabled)
             {
                 var name = DumpType();
-                var dbg = DebugBuilder.CreateStructureType(name, this);
-                CreateDebugType(dbg);
+                CompilationDebugType debugType;
+                if (forwardDecleration)
+                    debugType = DebugBuilder.CreateForwardStructureType(name, this);
+                else
+                    debugType = DebugBuilder.CreateStructureType(name, this);
+                SetDebugType(debugType);
             }
+        }
+
+        private void UpdateDebugType()
+        {
+            var name = DumpType();
+            var debugType = DebugBuilder.CreateStructureType(name, this);
+            DebugBuilder.ReplaceForwardStructWithFinal(DebugType, debugType);
+            SetDebugType(debugType);
         }
 
         public override string DumpType()
@@ -149,8 +167,16 @@ namespace Humphrey.Backend
             if (string.IsNullOrEmpty(name))
             {
                 name = "__anonymous_struct_";
-                foreach (var e in elementTypes)
+                var eTs = elementTypes;
+                if (eTs != null)
+                {
+                    foreach (var e in eTs)
                     name += $"{e.DumpType()}_";
+                }
+                else
+                {
+                    name+="frwding";
+                }
             }
             return name;
         }

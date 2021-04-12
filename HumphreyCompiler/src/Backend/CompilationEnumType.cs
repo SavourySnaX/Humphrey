@@ -73,7 +73,7 @@ namespace Humphrey.Backend
             {
                 var name = DumpType();
                 var dbg = DebugBuilder.CreateEnumType(name, this);
-                CreateDebugType(dbg);
+                SetDebugType(dbg);
             }
         }
 

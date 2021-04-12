@@ -175,6 +175,11 @@ namespace Extensions
             DW_ATE_decimal_float = 0x0f,
         };
 
+        public enum LLVMDwarfTag : uint
+        {
+            DW_TAG_structure_type = 0x0013,
+        }
+
         public static LLVMMetadataRef CreateBasicType(this LLVMDIBuilderRef builderRef, string name, UInt64 numBits, LLVMDwarfATEValues type)
         {
             fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
@@ -298,6 +303,24 @@ namespace Extensions
             {
                 return LLVM.DIBuilderCreateMemberType(debugBuilder, scope, (sbyte*)namePtr, (UIntPtr)name.Length, file, line, bitSize, alignBits, offsetBits, flags, type);
             }
+        }
+
+        public static LLVMMetadataRef CreateForwardStruct(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, LLVMMetadataRef file, uint line)
+        {
+            uint runtimeLang = 0;
+            string unique = "";
+            fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
+            {
+                fixed (byte* uniquePtr = Encoding.ASCII.GetBytes(unique))
+                {
+                    return LLVM.DIBuilderCreateReplaceableCompositeType(debugBuilder, (uint)LLVMDwarfTag.DW_TAG_structure_type, (sbyte*)namePtr, (UIntPtr)name.Length, scope, file, line, runtimeLang, 0, 0, LLVMDIFlags.LLVMDIFlagFwdDecl, (sbyte*)uniquePtr, (UIntPtr)unique.Length);
+                }
+            }
+        }
+
+        public static void ReplaceForwardStructWithFinal(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef frwd, LLVMMetadataRef final)
+        {
+            LLVM.MetadataReplaceAllUsesWith(frwd,final);
         }
 
         public static LLVMMetadataRef CreateStruct(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, LLVMMetadataRef file, uint line, UInt64 sizeBits, uint alignBits, LLVMDIFlags flags, LLVMMetadataRef[] elements)

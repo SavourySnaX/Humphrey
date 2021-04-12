@@ -77,7 +77,7 @@ namespace Humphrey.Backend
                     ptypes[idx++] = t.DebugType;
                 var name = DumpType();
                 var dbg = DebugBuilder.CreateFunctionType(name, returnType == null ? null : returnType.DebugType, ptypes, Location);
-                CreateDebugType(dbg);
+                SetDebugType(dbg);
             }
         }
 

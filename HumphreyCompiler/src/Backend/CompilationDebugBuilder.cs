@@ -261,7 +261,25 @@ namespace Humphrey.Backend
             }
             return default;
         }
-        
+
+        public CompilationDebugType CreateForwardStructureType(string name, CompilationStructureType structType)
+        {
+            if (enabled)
+            {
+                var structureType = builderRef.CreateForwardStruct(debugScope, name, CreateDebugFile(structType.Location.File), structType.Location.StartLine);
+                return new CompilationDebugType(name, structureType);
+            }
+            return default;
+        }
+
+        public void ReplaceForwardStructWithFinal(CompilationDebugType frwd, CompilationDebugType final)
+        {
+            if (enabled)
+            {
+                builderRef.ReplaceForwardStructWithFinal(frwd.BackendType, final.BackendType);
+            }
+        }
+
         public CompilationDebugType CreateStructureType(string name, CompilationStructureType structType)
         {
             if (enabled)
