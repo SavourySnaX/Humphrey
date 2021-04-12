@@ -31,7 +31,7 @@ namespace Humphrey.Backend
             {
                 var name = DumpType();
                 var dbg = DebugBuilder.CreatePointerType(name, element.DebugType);
-                CreateDebugType(dbg);
+                SetDebugType(dbg);
             }
         }
 

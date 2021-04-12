@@ -32,7 +32,7 @@ namespace Humphrey.Backend
             {
                 var name = DumpType();
                 var dbg = DebugBuilder.CreateArrayType(name, this);
-                CreateDebugType(dbg);
+                SetDebugType(dbg);
             }
         }
 

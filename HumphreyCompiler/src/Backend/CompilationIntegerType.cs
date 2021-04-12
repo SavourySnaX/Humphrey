@@ -38,7 +38,7 @@ namespace Humphrey.Backend
                 var signed = IsSigned;
                 var name = DumpType();
                 var dbg = DebugBuilder.CreateBasicType(name, numBits, signed ? CompilationDebugBuilder.BasicType.SignedInt : CompilationDebugBuilder.BasicType.UnsignedInt);
-                CreateDebugType(dbg);
+                SetDebugType(dbg);
             }
         }
 

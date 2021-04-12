@@ -20,7 +20,7 @@ namespace Humphrey.Backend
             sourceLocation = location;
         }
 
-        protected void CreateDebugType(CompilationDebugType type)
+        protected void SetDebugType(CompilationDebugType type)
         {
             debugTypeRef = type;
         }
