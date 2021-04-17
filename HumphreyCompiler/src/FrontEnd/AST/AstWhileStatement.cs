@@ -27,6 +27,7 @@ namespace Humphrey.FrontEnd
             // CheckBlock 
             {
                 var checkBuilder = unit.CreateBuilder(function, checkBlock);
+                checkBuilder.LocalBuilder = builder.LocalBuilder;
                 var cond = AstUnaryExpression.EnsureTypeOk(unit, checkBuilder, condition, unit.CreateIntegerType(1, false, new SourceLocation(Token)));
                 checkBuilder.ConditionalBranch(Expression.ResolveExpressionToValue(unit, cond, null), compilationBlock.entry, endBlock);
             }
