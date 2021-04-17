@@ -240,7 +240,8 @@ namespace Humphrey.FrontEnd
                     {
                         if (lst.Elements[0].NumElements == 1)
                         {
-                            resolvedLeft = lst.Elements[0].Type;
+                            left = lst.Elements[0].Type;
+                            resolvedLeft = left.ResolveBaseType(pass);
                             continue;
                         }
                     }
@@ -251,7 +252,8 @@ namespace Humphrey.FrontEnd
                     {
                         if (rst.Elements[0].NumElements == 1)
                         {
-                            resolvedRight = rst.Elements[0].Type;
+                            right = rst.Elements[0].Type;
+                            resolvedRight = right.ResolveBaseType(pass);
                             continue;
                         }
                     }

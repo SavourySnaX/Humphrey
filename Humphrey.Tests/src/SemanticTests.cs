@@ -381,6 +381,16 @@ namespace Humphrey.FrontEnd.Tests
 
 
         [Theory]
+        [InlineData(@" UInt64 : [64]bit GetVal32:()(out:[32]bit)={ out=12; } GetVal64:()(out:UInt64)={ out=22;}  Main:()()={check:=GetVal64() + GetVal32();}}", "check", SemanticPass.IdentifierKind.LocalValue, typeof(AstIdentifier), typeof(AstArrayType))]
+        public void CheckAutoStructResolution(string input, string symbol, SemanticPass.IdentifierKind expected, Type t, Type b)
+        {
+            var result = Build(input, symbol, expected, t, b);
+            Assert.True(result);
+        }
+
+
+
+        [Theory]
         [InlineData(@"Main : (a : [32]bit) () = { ptr:=&a; }", "ptr", typeof(AstPointerType), typeof(AstArrayType))]
         [InlineData(@"Main : () (returnValue : [8]bit) = { bob:=""Hello World""; sue:=bob; } ", "sue", typeof(AstArrayType), typeof(AstArrayType))]
         public void CheckIdentifierTypeNotValue(string input, string symbol, Type baseType, Type elementType)

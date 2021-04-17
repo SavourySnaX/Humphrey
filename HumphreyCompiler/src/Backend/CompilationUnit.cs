@@ -263,7 +263,7 @@ namespace Humphrey.Backend
             return symbolScopes.FetchValue(this, identifier, builder);
         }
 
-        public CompilationValue FetchValue(IIdentifier identifier, CompilationBuilder builder)
+        public CompilationValue FetchValueIfDefined(IIdentifier identifier, CompilationBuilder builder)
         {
             var resolved = FetchValueInternal(identifier, builder);
             if (resolved==null)
@@ -273,11 +273,17 @@ namespace Humphrey.Backend
                     resolved = FetchValueInternal(identifier, builder);
                 }
             }
+
+            return resolved;
+        }
+
+        public CompilationValue FetchValue(IIdentifier identifier, CompilationBuilder builder)
+        {
+            var resolved = FetchValueIfDefined(identifier, builder);
             if (resolved == null)
             {
                 Messages.Log(CompilerErrorKind.Error_UndefinedValue, $"Undefined value '{identifier.Name}'", identifier.Token.Location, identifier.Token.Remainder);
             }
-
             return resolved;
         }
 

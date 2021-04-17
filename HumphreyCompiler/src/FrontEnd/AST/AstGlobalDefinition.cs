@@ -43,7 +43,6 @@ namespace Humphrey.FrontEnd
                 else if (codeBlock != null && type is AstFunctionType astFunctionType && astFunctionType.IsGeneric)
                 {
                     // We should not materialise this function, and instead should deal with it at the call site
-                    astFunctionType.SetGenericInitialiser(codeBlock);
                     return false;
                 }
                 else
@@ -145,8 +144,9 @@ namespace Humphrey.FrontEnd
                     pass.Messages.Log(CompilerErrorKind.Error_UndefinedType, "Cannot infer type from initialiser", Token.Location, Token.Remainder);
                     return;
                 }
+
             }
-                
+
             ot = type.ResolveBaseType(pass);
             foreach (var ident in identifiers)
             {
@@ -166,6 +166,11 @@ namespace Humphrey.FrontEnd
                         pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {ident.Name} already exists", ident.Token.Location, ident.Token.Remainder);
                     }
                     functionType.Semantic(pass, codeBlock);
+
+                    if (functionType.IsGeneric)
+                    {
+                        functionType.SetGenericInitialiser(codeBlock, ident.Name);
+                    }
                 }
                 else if (initialiser == null)
                 {

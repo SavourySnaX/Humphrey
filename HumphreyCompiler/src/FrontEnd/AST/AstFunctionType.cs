@@ -8,6 +8,7 @@ namespace Humphrey.FrontEnd
         private bool semanticDone;
 
         AstCodeBlock genericInitialiser;
+        string genericBaseName;
 
         public AstFunctionType(AstParamList inputs, AstParamList outputs)
         {
@@ -15,12 +16,19 @@ namespace Humphrey.FrontEnd
             outputList = outputs;
             semanticDone = false;
             genericInitialiser = null;
+            genericBaseName = null;
         }
     
-        public void SetGenericInitialiser(AstCodeBlock codeBlock)
+        public void SetGenericInitialiser(AstCodeBlock codeBlock, string baseName)
         {
             if (IsGeneric)
+            {
                 genericInitialiser = codeBlock;
+                if (genericBaseName!=null)
+                    genericBaseName = $"{genericBaseName}_{baseName}";
+                else
+                    genericBaseName = $"___{baseName}"; // TODO - Ban use of leading underscores to reserve them for compiler use
+            }
             else
                 throw new System.InvalidOperationException($"Attempting to set initialiser on non generic function");
         }
@@ -64,6 +72,10 @@ namespace Humphrey.FrontEnd
             if (!IsGeneric)
             {
                 throw new System.InvalidOperationException($"Cannot use this version for non generic functionTypes");
+            }
+            if (IsGeneric && genericInitialiser==null)
+            {
+                throw new System.InvalidOperationException($"genericInitialiser should have been filled during semantic pass");
             }
             BuildFunction(unit, functionType, ident, genericInitialiser);
         }
@@ -224,6 +236,8 @@ namespace Humphrey.FrontEnd
         {
             return this;
         }
+
+        public string GenericBaseName => genericBaseName;
 
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }

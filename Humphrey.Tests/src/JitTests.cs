@@ -563,9 +563,17 @@ SizeOf : (a:_)(size:[64]bit)=
     size=((&ptr[1]) as [64]bit)-((&ptr[0]) as [64]bit);
 }";
 
-        string TestGeneric(string globDef,string testType)
+        string TestGenericBeforeUse(string globDef,string testType)
         {
             return $"{SizeOfGenericFunction} {globDef??""} Main:()(out:[8]bit)={{val:{testType}=_; res:=SizeOf(val); out=res.size as [8]bit; }}";
+        }
+        string TestGenericAfterUse(string globDef,string testType)
+        {
+            return $"{globDef??""} Main:()(out:[8]bit)={{val:{testType}=_; res:=SizeOf(val); out=res.size as [8]bit; }} {SizeOfGenericFunction}";
+        }
+        string TestGenericDoubleUse(string globDef,string testType)
+        {
+            return $"{globDef??""} Main:()(out:[8]bit)={{val:{testType}=_; res:=SizeOf(val) + SizeOf(val); out=res as [8]bit; }} {SizeOfGenericFunction}";
         }
 
         [Theory]
@@ -577,7 +585,9 @@ SizeOf : (a:_)(size:[64]bit)=
         [InlineData("Struct:{bob:[8]bit carol:[8]bit}", "Struct", "Main", 2)]
         public void CheckGenericCall(string glob, string input, string entryPointName, byte expected)
         {
-            Assert.True(InputVoidExpects8BitValue(CompileForTest(TestGeneric(glob, input), entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+            Assert.True(InputVoidExpects8BitValue(CompileForTest(TestGenericBeforeUse(glob, input), entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+            Assert.True(InputVoidExpects8BitValue(CompileForTest(TestGenericAfterUse(glob, input), entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+            Assert.True(InputVoidExpects8BitValue(CompileForTest(TestGenericDoubleUse(glob, input), entryPointName), (byte)(expected*2)), $"Test {entryPointName},{input},{expected*2}");
         }
 
         [Theory]
