@@ -370,7 +370,7 @@ namespace Humphrey.FrontEnd
         public bool OpenSquareBracket() { return Take(Tokens.S_OpenSquareBracket); }
         public bool PeekOpenSquareBracket() { return Peek(Tokens.S_OpenSquareBracket); }
         public bool CloseSquareBracket() { return Take(Tokens.S_CloseSquareBracket); }
-        public bool UnderscoreOperator() { return Take(Tokens.S_Underscore); }
+        public IAst UnderscoreOperator() { return AstItem(Tokens.S_Underscore, (e) => new AstOperator(e)); }
         public bool PointerOperator() { return Take(Tokens.O_Multiply); }
 
         public AstItemDelegate[] UnaryOperators => new AstItemDelegate[] { AddOperator, SubOperator, MultiplyOperator, LogicalNotOperator, BinaryNotOperator, PreIncrementOperator, PreDecrementOperator, AddressOfOperator };
@@ -890,7 +890,7 @@ namespace Humphrey.FrontEnd
         public IExpression UnderscoreExpression()
         {
             var start = CurrentToken();
-            if (!UnderscoreOperator())
+            if (UnderscoreOperator() == null)
                 return null;
 
             var operand = new AstUnderscoreExpression();
@@ -926,10 +926,19 @@ namespace Humphrey.FrontEnd
             if (ColonOperator() == null)
                 return null;
 
-            var typeSpecifier = Type();
-            if (typeSpecifier == null)
+            var genericType = UnderscoreOperator();
+            IType typeSpecifier;
+            if (genericType == null)
+            {
+                typeSpecifier = Type();
+            }
+            else
+            {
+                typeSpecifier = new AstGenericType();
+                typeSpecifier.Token = genericType.Token;
+            }
+            if (typeSpecifier==null)
                 return null;
-
             var paramDefinition = new AstParamDefinition(identifier, typeSpecifier);
             paramDefinition.Token = new Result<Tokens>(identifier.Token.Value, identifier.Token.Location, typeSpecifier.Token.Remainder);
             return paramDefinition;

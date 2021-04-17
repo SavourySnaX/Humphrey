@@ -7,13 +7,40 @@ namespace Humphrey.FrontEnd
         AstParamList outputList;
         private bool semanticDone;
 
+        AstCodeBlock genericInitialiser;
+
         public AstFunctionType(AstParamList inputs, AstParamList outputs)
         {
             inputList = inputs;
             outputList = outputs;
             semanticDone = false;
+            genericInitialiser = null;
         }
     
+        public void SetGenericInitialiser(AstCodeBlock codeBlock)
+        {
+            if (IsGeneric)
+                genericInitialiser = codeBlock;
+            else
+                throw new System.InvalidOperationException($"Attempting to set initialiser on non generic function");
+        }
+
+        public (CompilationFunctionType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit, IType[] inputTypes)
+        {
+            var inputs = inputList.FetchParamList(unit, inputTypes);
+            var outputs = outputList.FetchParamList(unit);
+
+            if (metaData!=null)
+            {
+                if (metaData.Contains("C_CALLING_CONVENTION"))
+                {
+                    // We should treat this function as being an external function and thus needs resolving at link time?
+                    return (unit.CreateExternalCFunctionType(this, inputs, outputs), this);
+                }
+            }
+
+            return (unit.CreateFunctionType(this, inputs, outputs), this);
+        }
         public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
             var inputs = inputList.FetchParamList(unit);
@@ -31,6 +58,16 @@ namespace Humphrey.FrontEnd
             return (unit.CreateFunctionType(this, inputs, outputs), this);
         }
     
+        public void BuildFunction(CompilationUnit unit, CompilationFunctionType functionType, AstIdentifier ident)
+        {
+            // TODO generic output types???
+            if (!IsGeneric)
+            {
+                throw new System.InvalidOperationException($"Cannot use this version for non generic functionTypes");
+            }
+            BuildFunction(unit, functionType, ident, genericInitialiser);
+        }
+
         public void BuildFunction(CompilationUnit unit, CompilationFunctionType functionType, AstIdentifier ident, AstCodeBlock codeBlock)
         {
             var newFunction = unit.CreateFunction(functionType, ident);
@@ -119,7 +156,7 @@ namespace Humphrey.FrontEnd
             var outputs = outputList.Params;
             if (outputs.Length==0)
             {
-                throw new System.NotImplementedException($"TODO - error no outputs from function");
+                return null;
             }
             if (metaData != null)
             {
@@ -177,6 +214,7 @@ namespace Humphrey.FrontEnd
 
         public bool IsFunctionType => true;
 
+        public bool IsGeneric => inputList.HasGenericParameters() || outputList.HasGenericParameters();
         public string Dump()
         {
             return $"({inputList.Dump()}) ({outputList.Dump()})";

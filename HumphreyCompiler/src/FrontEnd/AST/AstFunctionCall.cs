@@ -6,10 +6,14 @@ namespace Humphrey.FrontEnd
     {
         IExpression expr;
         AstExpressionList argumentList;
+        AstFunctionType functionType;   // filled by semantic pass
+        IType[] resolvedInputs;         // filled by semantic pass
         public AstFunctionCall(IExpression expression, AstExpressionList arguments)
         {
             argumentList = arguments;
             expr = expression;
+            functionType = null;
+            resolvedInputs = null;
         }
 
         public bool BuildStatement(CompilationUnit unit, CompilationFunction function, CompilationBuilder builder)
@@ -31,27 +35,59 @@ namespace Humphrey.FrontEnd
 
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            // compute expr (should be a functionpointertype)
-            var function = expr.ProcessExpression(unit, builder) as CompilationValue;
-            if (function==null)
+            if (functionType==null)
             {
-                throw new System.NotImplementedException($"Todo - constant compilation value....");
-            }
-            var ftype = function.Type as CompilationFunctionType;
-            if (ftype==null)
-            {
-                var ptrToFunction = function.Type as CompilationPointerType;
-                if (ptrToFunction==null)
-                    throw new System.NotImplementedException($"Todo - not a function type... pointer to function type?");
-                ftype = ptrToFunction.ElementType as CompilationFunctionType;
-                if (ftype==null)
-                    throw new System.NotImplementedException($"Todo - not a function type... pointer to function type?");
-                // need to swap the type to be functiontype and not pointer, but we don't want to dereference the value
-                function = new CompilationValue(function.BackendValue, ftype, Token);
+                throw new System.InvalidOperationException($"Should have been initialised by semantic pass");
             }
 
+            if (functionType.IsGeneric)
+            {
+                // We need to now materialse the real function -- for now, just create a new function each use... code size be damned
+
+                // we need the parameter kinds to be computed so we know how to materialise the function
+
+                // another todo - we need to build the function at the original scope, but at present we don't have that scope!
+
+                (var ct, var ot) = functionType.CreateOrFetchType(unit, resolvedInputs);
+
+                var ft = ot as AstFunctionType;
+                var name = new AstIdentifier("todoodfisodfoisudf");
+                name.Token = Token;
+                ft.BuildFunction(unit, ct, name);
+                var function = unit.FetchValue(name, builder);
+                var ftype = ct;
+
+                return CallMethod(unit, builder, function, ftype);
+            }
+            else
+            {
+
+                // compute expr (should be a functionpointertype)
+                var function = expr.ProcessExpression(unit, builder) as CompilationValue;
+                if (function == null)
+                {
+                    throw new System.NotImplementedException($"Todo - constant compilation value....");
+                }
+                var ftype = function.Type as CompilationFunctionType;
+                if (ftype == null)
+                {
+                    var ptrToFunction = function.Type as CompilationPointerType;
+                    if (ptrToFunction == null)
+                        throw new System.NotImplementedException($"Todo - not a function type... pointer to function type?");
+                    ftype = ptrToFunction.ElementType as CompilationFunctionType;
+                    if (ftype == null)
+                        throw new System.NotImplementedException($"Todo - not a function type... pointer to function type?");
+                    // need to swap the type to be functiontype and not pointer, but we don't want to dereference the value
+                    function = new CompilationValue(function.BackendValue, ftype, Token);
+                }
+
+                return CallMethod(unit, builder, function, ftype);
+            }
+        }
+
+        private ICompilationValue CallMethod(CompilationUnit unit, CompilationBuilder builder, CompilationValue function, CompilationFunctionType ftype)
+        {
             CompilationValue allocSpace = default;
-
             // create an anonymous struct to hold the outputs of the function..
             var structType = ftype.CreateOutputParameterStruct(unit, ftype.Location);
             if (structType != null) // not void function
@@ -64,7 +100,7 @@ namespace Humphrey.FrontEnd
             var arguments = new CompilationValue[ftype.Parameters.Length];
             if (argumentList.Expressions.Length != ftype.InputCount)
                 throw new System.Exception($"TODO - this is an error, function call doesn't match function arguments");
-            for (uint a = 0; a < argumentList.Expressions.Length;a++)
+            for (uint a = 0; a < argumentList.Expressions.Length; a++)
             {
                 var exprResult = argumentList.Expressions[a].ProcessExpression(unit, builder);
                 var value = Expression.ResolveExpressionToValue(unit, exprResult, ftype.Parameters[a].Type);
@@ -79,10 +115,10 @@ namespace Humphrey.FrontEnd
             }
             // call the function
             var result = builder.Call(function, arguments);
-            if (ftype.FunctionCallingConvention==CompilationFunctionType.CallingConvention.CDecl)
+            if (ftype.FunctionCallingConvention == CompilationFunctionType.CallingConvention.CDecl)
                 return result;
 
-            if (structType==null)
+            if (structType == null)
                 return null;        // undef?
 
             // return the anonymous struct as the ICompilationValue
@@ -91,23 +127,29 @@ namespace Humphrey.FrontEnd
 
         public IType ResolveExpressionType(SemanticPass pass)
         {
+            resolvedInputs = new IType[argumentList.Expressions.Length];
+            for (int a = 0; a < resolvedInputs.Length;a++)
+            {
+                resolvedInputs[a] = argumentList.Expressions[a].ResolveExpressionType(pass);
+            }
             var resolved = expr.ResolveExpressionType(pass);
-            var func = resolved as AstFunctionType;
-            if (func ==null)
+            functionType = resolved as AstFunctionType;
+            if (functionType == null)
             {
                 var baseT = resolved.ResolveBaseType(pass);
-                func = baseT as AstFunctionType;
-                if (func == null)
+                functionType = baseT as AstFunctionType;
+                if (functionType == null)
                 {
                     // undefined symbol
                     throw new System.NotImplementedException($"TODO");
                 }
             }
-            return func.ResolveOutputType(pass);
+            return functionType.ResolveOutputType(pass);
         }
 
         public void Semantic(SemanticPass pass)
         {
+            ResolveExpressionType(pass);    // we need this to handle void input functions
             expr.Semantic(pass);
             foreach (var e in argumentList.Expressions)
             {

@@ -15,11 +15,20 @@ namespace Humphrey.FrontEnd
         {
             return unit.CreateFunctionParameter(type.CreateOrFetchType(unit).compilationType, ident);
         }
+        public CompilationParam FetchParam(CompilationUnit unit, IType inputType)
+        {
+            (type as AstGenericType).SetInstanceType(inputType);
+            
+            return unit.CreateFunctionParameter(inputType.CreateOrFetchType(unit).compilationType, ident);
+        }
+
 
         public string Dump()
         {
             return $"{ident.Dump()} : {type.Dump()}";
         }
+
+        public bool IsGeneric => type is AstGenericType;
 
         public IType Type => type;
         public AstIdentifier Identifier => ident;

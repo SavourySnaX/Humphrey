@@ -12,6 +12,25 @@ namespace Humphrey.FrontEnd
             paramList = parameters;
         }
     
+        public CompilationParam[] FetchParamList(CompilationUnit unit,IType[] inputTypes)
+        {
+            var pList = new CompilationParam[paramList.Length];
+
+            int pIdx = 0;
+            foreach(var param in paramList)
+            {
+                if (param.IsGeneric)
+                 {
+                    pList[pIdx] = (param.FetchParam(unit, inputTypes[pIdx]));
+                    pIdx++;
+                }  
+                else
+                    pList[pIdx++] = (param.FetchParam(unit));
+            }
+
+            return pList;
+        }
+
         public CompilationParam[] FetchParamList(CompilationUnit unit)
         {
             var pList = new CompilationParam[paramList.Length];
@@ -24,6 +43,16 @@ namespace Humphrey.FrontEnd
 
             return pList;
         }
+
+        public bool HasGenericParameters()
+        {
+            foreach (var param in paramList)
+            {
+                if (param.IsGeneric)
+                    return true;
+            }
+            return false;
+        } 
 
         public AstParamDefinition[] Params => paramList;
 

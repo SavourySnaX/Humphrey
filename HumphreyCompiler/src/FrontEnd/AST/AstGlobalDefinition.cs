@@ -40,6 +40,12 @@ namespace Humphrey.FrontEnd
                     structureType.CreateOrFetchNamedStruct(unit, identifiers);
                     return false;
                 }
+                else if (codeBlock != null && type is AstFunctionType astFunctionType && astFunctionType.IsGeneric)
+                {
+                    // We should not materialise this function, and instead should deal with it at the call site
+                    astFunctionType.SetGenericInitialiser(codeBlock);
+                    return false;
+                }
                 else
                 {
                     (ct, ot) = type.CreateOrFetchType(unit);
@@ -155,7 +161,7 @@ namespace Humphrey.FrontEnd
                 }
                 else if (functionType != null && initialiser != null && codeBlock != null)
                 {
-                    if (!pass.AddFunction(ident, type))
+                    if (!pass.AddFunction(ident, functionType))
                     {
                         pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {ident.Name} already exists", ident.Token.Location, ident.Token.Remainder);
                     }

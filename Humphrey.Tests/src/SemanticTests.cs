@@ -370,6 +370,14 @@ namespace Humphrey.FrontEnd.Tests
             Assert.True(result);
         }
 
+        [Theory]
+        [InlineData(@" SizeOf : (a:_)(out:[64]bit)={ ptr:=&a; out=(&ptr[1])-(&ptr[0])}", "a", SemanticPass.IdentifierKind.FunctionParam, typeof(AstGenericType), typeof(AstGenericType))]
+        [InlineData(@" SizeOf : (a:_)(out:[64]bit)={ ptr:=&a; out=(&ptr[1])-(&ptr[0])}", "ptr", SemanticPass.IdentifierKind.LocalValue, typeof(AstPointerType), typeof(AstPointerType))]
+        public void CheckGeneric(string input, string symbol, SemanticPass.IdentifierKind expected, Type t, Type b)
+        {
+            var result = Build(input, symbol, expected, t, b);
+            Assert.True(result);
+        }
 
 
         [Theory]

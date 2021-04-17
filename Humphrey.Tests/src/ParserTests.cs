@@ -297,6 +297,7 @@ namespace Humphrey.FrontEnd.Tests
         [InlineData("()()","() ()")]
         [InlineData("(a:bit)(b:bit,c:bit)","(a : bit) (b : bit , c : bit)")]
         [InlineData("(a:[32]bit)(b:[32]bit,c:[32]bit)","(a : [32] bit) (b : [32] bit , c : [32] bit)")]
+        [InlineData("(a:_)(b:[64]bit)","(a : _) (b : [64] bit)")]
         public void CheckFunctionType(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();

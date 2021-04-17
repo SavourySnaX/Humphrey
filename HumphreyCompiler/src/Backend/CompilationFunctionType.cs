@@ -15,6 +15,7 @@ namespace Humphrey.Backend
         CompilationParam[] parameters;
         CompilationParam returnType;
         private uint outParameterOffset;
+
         public CompilationFunctionType(LLVMTypeRef type, CallingConvention callConvention, CompilationParam realReturnType, CompilationParam[] allParameters, uint outParamOffset, CompilationDebugBuilder debugBuilder, SourceLocation location, string ident = "") : base(type, debugBuilder, location, ident)
         {
             parameters = allParameters;

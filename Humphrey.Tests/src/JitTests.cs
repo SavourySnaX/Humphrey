@@ -556,7 +556,29 @@ Main:(a:bit,b:bit)(out:bit)=
             Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
         }
 
+        readonly string SizeOfGenericFunction=@"
+SizeOf : (a:_)(size:[64]bit)=
+{
+    ptr:=&a; 
+    size=((&ptr[1]) as [64]bit)-((&ptr[0]) as [64]bit);
+}";
 
+        string TestGeneric(string globDef,string testType)
+        {
+            return $"{SizeOfGenericFunction} {globDef??""} Main:()(out:[8]bit)={{val:{testType}=_; res:=SizeOf(val); out=res.size as [8]bit; }}";
+        }
+
+        [Theory]
+        [InlineData(null,"[8]bit", "Main", 1)]
+        [InlineData(null,"[16]bit", "Main", 2)]
+        [InlineData(null,"[24]bit", "Main", 4)]
+        [InlineData(null,"[33]bit", "Main", 8)]
+        [InlineData(null,"{bob:[8]bit carol:[8]bit}", "Main", 2)]
+        [InlineData("Struct:{bob:[8]bit carol:[8]bit}", "Struct", "Main", 2)]
+        public void CheckGenericCall(string glob, string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpects8BitValue(CompileForTest(TestGeneric(glob, input), entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
 
         [Theory]
         [InlineData(@"Main : (a : *[8]bit) (returnValue : [8]bit) = { returnValue=*a; }", "Main", new byte[] { 21, 31 }, 21)]
