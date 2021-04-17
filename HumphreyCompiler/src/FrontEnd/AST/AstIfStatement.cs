@@ -21,7 +21,7 @@ namespace Humphrey.FrontEnd
             builder.SetDebugLocation(new SourceLocation(Token));
 
             // Create blocks for if/end and else
-            var trueBlock = conditionTrue.CreateCodeBlock(unit, function, "if_if");
+            var trueBlock = conditionTrue.CreateCodeBlock(unit, function, builder.LocalBuilder, "if_if");
             var endBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"if_end"));
 
             // Evaluate condition
@@ -45,7 +45,7 @@ namespace Humphrey.FrontEnd
             }
             else
             {
-                var falseBlock = conditionElse.CreateCodeBlock(unit, function, "if_else");
+                var falseBlock = conditionElse.CreateCodeBlock(unit, function, builder.LocalBuilder, "if_else");
 
                 builder.ConditionalBranch(resolved, trueBlock.entry, falseBlock.entry);
             

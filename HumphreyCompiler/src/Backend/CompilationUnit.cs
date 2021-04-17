@@ -452,7 +452,7 @@ namespace Humphrey.Backend
             return globalValue;
         }
 
-        public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationType type, AstIdentifier identifier, ICompilationValue initialiser, Result<Tokens> location)
+        public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationBuilder localBuilder, CompilationType type, AstIdentifier identifier, ICompilationValue initialiser, Result<Tokens> location)
         {
             var ident = identifier.Dump();
             if (symbolScopes.FetchValue(ident)!=null)
@@ -463,7 +463,7 @@ namespace Humphrey.Backend
                 type = CreatePointerType(type, type.Location);
             }
 
-            var local = builder.Alloca(type);
+            var local = localBuilder.Alloca(type);
 
             if (initialiser != null)
             {

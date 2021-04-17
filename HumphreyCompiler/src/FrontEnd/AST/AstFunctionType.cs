@@ -101,7 +101,7 @@ namespace Humphrey.FrontEnd
 
                 // Local copy
                 var type = functionType.Parameters[a].Type;
-                var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, null, functionType.Parameters[a].Token);
+                var local = unit.CreateLocalVariable(unit, localsBuilder, localsBuilder, type, paramIdent, null, functionType.Parameters[a].Token);
                 var cv = new CompilationValue(newFunction.BackendValue.Params[a], type, functionType.Parameters[a].Token);
                 localsBuilder.Store(cv, local.Storage);
 
@@ -121,7 +121,7 @@ namespace Humphrey.FrontEnd
                 var output = new CompilationValue(newFunction.BackendValue.Params[a], outputType, functionType.Parameters[a].Token);
                 var type = functionType.Parameters[a].Type;
                 var paramIdent = functionType.Parameters[a].Identifier;
-                var local = unit.CreateLocalVariable(unit, localsBuilder, type, paramIdent, null, functionType.Parameters[a].Token);
+                var local = unit.CreateLocalVariable(unit, localsBuilder, localsBuilder, type, paramIdent, null, functionType.Parameters[a].Token);
                 local.Storage = new CompilationValueOutputParameter(local.Storage.BackendValue, local.Storage.Type, paramIdent.Dump(), functionType.Parameters[a].Token);
 
                 // Copy temporary storage to output
@@ -140,7 +140,7 @@ namespace Humphrey.FrontEnd
             // single point of return for all functions
             exitBlockBuilder.ReturnVoid();
 
-            var compiledBlock = codeBlock.CreateCodeBlock(unit, newFunction, $"entry_{ident.Dump()}");
+            var compiledBlock = codeBlock.CreateCodeBlock(unit, newFunction, localsBuilder, $"entry_{ident.Dump()}");
             
             // LocalsBuilder needs to jump to compiledBlock
             localsBuilder.Branch(compiledBlock.entry);

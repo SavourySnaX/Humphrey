@@ -643,6 +643,16 @@ SizeOf : (a:_)(size:[64]bit)=
         }
 
         [Theory]
+        [InlineData(@"Main:()(out:[8]bit)= { t:[32]bit=0; while t < 10000 { l:=t; t++; } out=0; } ", "Main", 0)]
+        [InlineData(@"Main:()(out:[8]bit)= { t:[32]bit=0; for t = 0..10000 { l:=t; } out=0; } ", "Main", 0)]
+        [InlineData(@"Bob:()(outA:[4096]bit,outB:[4096]bit)={outA=0; outB=0; } Main:()(out:[8]bit)= { t:[32]bit=0; for t = 0..100000 { Bob(); } out=0; } ", "Main", 0)]
+        public void CheckLocalAllocsInLoop(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
+
+
+        [Theory]
         [InlineData(@"Main : (a : *[8]bit, b:[8]bit) () = { *a=b; }", "Main", new byte[] { 21, 31 }, 12, new byte[] { 12, 31 })]
         [InlineData(@"Main : (a : *[8]bit, b:[8]bit) () = { *a=b; }", "Main", new byte[] { 21, 31 }, 99, new byte[] { 99, 31 })]
         [InlineData(@"Main : (a : *[8]bit, b:[8]bit) () = { a++; *a=b; }", "Main", new byte[] { 21, 31 }, 12, new byte[] { 21, 12 })]

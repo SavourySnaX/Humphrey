@@ -34,7 +34,7 @@ namespace Humphrey.FrontEnd
 
             //Create check_end
             var checkBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"for_check_{identifiers[0].Dump()}"));
-            var compilationBlock = loopBlock.CreateCodeBlock(unit, function, $"for_block_{identifiers[0].Dump()}");
+            var compilationBlock = loopBlock.CreateCodeBlock(unit, function, builder.LocalBuilder, $"for_block_{identifiers[0].Dump()}");
             var iterBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"for_iter_{identifiers[0].Dump()}"));
             var endBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"for_end_{identifiers[0].Dump()}"));
 

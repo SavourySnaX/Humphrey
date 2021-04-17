@@ -106,7 +106,7 @@ namespace Humphrey.FrontEnd
             var structType = ftype.CreateOutputParameterStruct(unit, ftype.Location);
             if (structType != null) // not void function
             {
-                allocSpace = builder.Alloca(structType);
+                allocSpace = builder.LocalBuilder.Alloca(structType);
                 // we might want to always set this for alloca...
                 allocSpace.Storage = new CompilationValue(allocSpace.BackendValue, unit.CreatePointerType(structType, new SourceLocation(argumentList.Token)), argumentList.Token);
             }

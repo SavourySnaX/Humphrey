@@ -12,6 +12,8 @@ namespace Humphrey.Backend
         CompilationFunction function;
         CompilationBlock currentBlock;
 
+        CompilationBuilder localsBuilder;
+
         public enum CompareKind
         {
             EQ,
@@ -372,6 +374,11 @@ namespace Humphrey.Backend
             }
         }
 
+        public CompilationBuilder LocalBuilder 
+        {
+            get => localsBuilder;
+            set => localsBuilder = value;
+        }
         public LLVMBuilderRef BackendValue => builderRef;
         public CompilationFunction Function => function;
         public CompilationBlock CurrentBlock => currentBlock;

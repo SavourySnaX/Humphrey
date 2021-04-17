@@ -12,12 +12,13 @@ namespace Humphrey.FrontEnd
             statementList = statements;
         }
     
-        public (CompilationBlock entry, CompilationBlock exit) CreateCodeBlock(CompilationUnit unit, CompilationFunction function, string blockName)
+        public (CompilationBlock entry, CompilationBlock exit) CreateCodeBlock(CompilationUnit unit, CompilationFunction function, CompilationBuilder locals, string blockName)
         {
             unit.PushScope("", unit.CreateDebugScope(new SourceLocation(Token)));
             var newBB = new CompilationBlock(function.BackendValue.AppendBasicBlock(blockName));
 
             var builder = unit.CreateBuilder(function, newBB);
+            builder.LocalBuilder = locals;
 
             foreach (var s in statementList)
             {
