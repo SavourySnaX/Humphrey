@@ -113,7 +113,7 @@ namespace Humphrey.FrontEnd
             var arguments = new CompilationValue[ftype.Parameters.Length];
             for (uint a = 0; a < inputs.Length;a++)
             {
-                arguments[a] = inputs[a];
+                arguments[a] = AstUnaryExpression.EnsureTypeOk(unit, builder, inputs[a], ftype.Parameters[a].Type, inputs[a].FrontendLocation);
             }
             // and the anonymous struct positions to the outputs
             uint outArgIdx = ftype.OutParamOffset;

@@ -252,26 +252,34 @@ namespace Humphrey.Backend
 
         public CompilationValue Cast(CompilationValue src, CompilationType toType)
         {
-            if (src.Type is CompilationIntegerType sit && toType is CompilationIntegerType tt)
+            var sType = src.Type;
+            var dType = toType;
+
+            if (sType is CompilationEnumType set)
+                sType = set.ElementType;
+            if (dType is CompilationEnumType det)
+                dType = det.ElementType;
+
+            if (sType is CompilationIntegerType sit && dType is CompilationIntegerType tt)
             {
                 if (sit.IntegerWidth > tt.IntegerWidth)
-                    return new CompilationValue(builderRef.BuildTrunc(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
+                    return new CompilationValue(builderRef.BuildTrunc(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
                 else
                 {
                     if (tt.IsSigned)
-                        return new CompilationValue(builderRef.BuildSExt(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
+                        return new CompilationValue(builderRef.BuildSExt(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
                     else
-                        return new CompilationValue(builderRef.BuildZExt(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
+                        return new CompilationValue(builderRef.BuildZExt(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
                 }
             }
-            if (toType is CompilationFunctionType cft)
-                toType = unit.CreatePointerType(cft,cft.Location);                 
-            if (src.Type is CompilationPointerType && toType is CompilationIntegerType)
-                return new CompilationValue(builderRef.BuildPtrToInt(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
-            if (src.Type is CompilationIntegerType && toType is CompilationPointerType)
-                return new CompilationValue(builderRef.BuildIntToPtr(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
+            if (dType is CompilationFunctionType cft)
+                dType = unit.CreatePointerType(cft,cft.Location);                 
+            if (sType is CompilationPointerType && dType is CompilationIntegerType)
+                return new CompilationValue(builderRef.BuildPtrToInt(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
+            if (sType is CompilationIntegerType && dType is CompilationPointerType)
+                return new CompilationValue(builderRef.BuildIntToPtr(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
 
-            return new CompilationValue(builderRef.BuildBitCast(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
+            return new CompilationValue(builderRef.BuildBitCast(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
         }
         
         public CompilationValue Compare(CompareKind compareKind, CompilationValue left, CompilationValue right)

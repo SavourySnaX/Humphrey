@@ -35,6 +35,19 @@ namespace Humphrey.FrontEnd
 
             if (valueLeft.Type.Same(typeRight))
                 return valueLeft;
+            
+            while (true)
+            {
+                if (valueLeft.Type is CompilationStructureType scst)
+                {
+                    if (scst.Fields.Length == 1)
+                    {
+                        valueLeft = scst.LoadElement(unit, builder, valueLeft, scst.Fields[0]);
+                        continue;
+                    }
+                }
+                break;
+            }
 
             return builder.Cast(valueLeft, typeRight);
         }

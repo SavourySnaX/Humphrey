@@ -26,7 +26,7 @@ namespace Humphrey.FrontEnd
 
             // Evaluate condition
             // TODO need to validate we have a true/false result type 
-            var condTest = condition.ProcessExpression(unit, builder);
+            var condTest = AstUnaryExpression.EnsureTypeOk(unit, builder, condition, unit.CreateIntegerType(1, false, new SourceLocation(Token)));
             var resolved = Expression.ResolveExpressionToValue(unit, condTest, null);
 
             // Insert branch at end of trueBlock

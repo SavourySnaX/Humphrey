@@ -358,6 +358,7 @@ namespace Humphrey.Backend.Tests
         [InlineData(@"Bob:(a:bit,b:bit)(out:bit)={out=a+b;}Main:(a:bit,b:bit)(out:bit)={out=Bob(a,b).out;}", "Main", 0, 0, 0)]
         [InlineData(@"Bob:(a:bit,b:bit)(out:bit)={out=a+b;}Main:(a:bit,b:bit)(out:bit)={out=Bob(a,b).out;}", "Main", 0, 1, 1)]
         [InlineData(@"Bob:(a:bit,b:bit)(out:bit)={out=a+b;}Main:(a:bit,b:bit)(out:bit)={out=Bob(a,b).out;}", "Main", 1, 0, 1)]
+        [InlineData(@"Bob:(a:bit,b:bit)(out:bit)={out=a+b;}Main:(a:bit,b:bit)(out:bit)={out=Bob(Bob(a,b),b).out;}", "Main", 1, 0, 1)]
         public void CheckSimpleFunctionCall(string input, string entryPointName, byte ival1, byte ival2, byte expected)
         {
             Assert.True(InputBitBitExpectsBitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
@@ -443,6 +444,7 @@ Main:(a:bit,b:bit)(out:bit)=
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a==99 {out=12;} else {out=b;}}", "Main", 6, 22, 22)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a==99 {out=12; return;} else {out=b;}}", "Main", 6, 22, 22)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if a==99 {out=12; } else {out=b; return;}}", "Main", 6, 22, 22)]
+        [InlineData(@"CondCheck:(a:[8]bit)(t:bit)={ t=a==99; } Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if CondCheck(a) {out=12; } else {out=b; return;}}", "Main", 6, 22, 22)]
         public void CheckIfElse(string input, string entryPointName, byte ival1, byte ival2, byte expected)
         {
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
@@ -453,6 +455,7 @@ Main:(a:bit,b:bit)(out:bit)=
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={ out=b; while a==99 { out=12; return; }}", "Main", 12, 22, 22)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={ res:[8]bit=0; while a>0 { res=res+b; a=a-1; } out=res; }", "Main", 5, 1, 5)]
         [InlineData(@"Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={ res:[8]bit=0; while a>0 { res=res+b; a=a-1; } out=res; }", "Main", 5, 2, 10)]
+        [InlineData(@"CondCheck:(a:[8]bit)(t:bit)={ t=a==99; } Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={ out=b; while CondCheck(a) { out=12; return; }}", "Main", 99, 22, 12)]
         public void CheckWhile(string input, string entryPointName, byte ival1, byte ival2, byte expected)
         {
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
@@ -493,6 +496,7 @@ Main:(a:bit,b:bit)(out:bit)=
         [InlineData(@"value1:[64]bit=99 value2:=99 as *[8]bit Main:()(out:bit)={ out=value1==(value2 as [64]bit);}", "Main", 1)]
         [InlineData(@"PointerAsInt:(in:*[8]bit)(out:[64]bit)={out=in as [64]bit;} Main:()(out:bit)={ val:[64]bit=99; out=PointerAsInt(val as *[8]bit)==val;}", "Main", 1)]
         [InlineData(@"PointerAsInt:(in:*[8]bit)(out:[64]bit)={out=in as [64]bit;} Main:()(out:bit)={ val:[64]bit=99; out=val==PointerAsInt(val as *[8]bit);}", "Main", 1)]
+        [InlineData(@"value1:[64]bit=99 Value:()(out:[64]bit)={ out=99;} Main:()(out:bit)={ value2:=Value() as *[8]bit; out=value1==(value2 as [64]bit);}", "Main", 1)]
         public void CheckPtrIntCast(string input, string entryPointName, byte expected)
         {
             Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
@@ -500,6 +504,7 @@ Main:(a:bit,b:bit)(out:bit)=
 
         [Theory]
         [InlineData(@"value1:[32]bit=99 value2:[64]bit=99 Main:()(out:bit)={ out=value1==(value2 as [32]bit);}", "Main", 1)]
+        [InlineData(@"Enum:[4]bit{a:=0} val:[64]bit=0 Main:()(out:bit)= { out = 0 == (val as Enum); }", "Main", 1)]
         public void CheckIntTruncatingCast(string input, string entryPointName, byte expected)
         {
             Assert.True(InputVoidExpectsBitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
