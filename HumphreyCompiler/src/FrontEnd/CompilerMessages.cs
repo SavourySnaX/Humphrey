@@ -21,6 +21,8 @@ namespace Humphrey.FrontEnd
         Error_MustBeExpression = Error | ParseError | 0x09,
         Error_ExpectedIdentifier = Error | ParseError | 0x0A,
         Error_ExpectedType = Error | ParseError | 0x0B,
+        Error_StructMemberDoesNotExist = Error | ParseError | 0x0C,
+        Error_UndefinedFunction = Error | ParseError | 0x0D,
 
         // Compilation block
         Error_MissingOutputAssignment = Error | CompileError | 0x01,

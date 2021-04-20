@@ -165,8 +165,8 @@ namespace Humphrey.FrontEnd
                 functionType = baseT as AstFunctionType;
                 if (functionType == null)
                 {
-                    // undefined symbol
-                    throw new System.NotImplementedException($"TODO");
+                    pass.Messages.Log(CompilerErrorKind.Error_UndefinedFunction, $"Cannot determine result type from function call", Token.Location, Token.Remainder);
+                    return new AstBitType();
                 }
             }
             return functionType.ResolveOutputType(pass);
