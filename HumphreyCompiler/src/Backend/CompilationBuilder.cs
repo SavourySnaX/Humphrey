@@ -133,13 +133,18 @@ namespace Humphrey.Backend
 
         public CompilationValue LogicalShiftLeft(CompilationValue left, CompilationValue right)
         {
-            var leftInt = left.Type as CompilationIntegerType;
-            var rightInt = right.Type as CompilationIntegerType;
+            var leftIntType = left.Type as CompilationIntegerType;
+            var rightIntType = right.Type as CompilationIntegerType;
 
-            if (leftInt != null && rightInt != null)
+            if (left.Type is CompilationEnumType lcet)
+                leftIntType = lcet.ElementType as CompilationIntegerType;
+            if (right.Type is CompilationEnumType rcet)
+                rightIntType = rcet.ElementType as CompilationIntegerType;
+
+            if (leftIntType != null && rightIntType != null)
             {
-                var cNumBits = new CompilationConstantIntegerKind(new AstNumber($"{leftInt.IntegerWidth}"));
-                var numBits = unit.CreateConstant(cNumBits, leftInt.IntegerWidth, false, new SourceLocation(left.FrontendLocation));
+                var cNumBits = new CompilationConstantIntegerKind(new AstNumber($"{leftIntType.IntegerWidth}"));
+                var numBits = unit.CreateConstant(cNumBits, leftIntType.IntegerWidth, false, new SourceLocation(left.FrontendLocation));
                 var shiftAmount = URem(right, numBits);
                 return ShiftLeft(left, shiftAmount);
             }

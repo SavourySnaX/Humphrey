@@ -30,7 +30,7 @@ namespace Humphrey.FrontEnd
                 return constantValue;
             }
             else
-                return builder.LogicalNot(value as CompilationValue);
+                return builder.LogicalNot(AstUnaryExpression.EnsureTypeOk(unit, builder, value, unit.CreateIntegerType(1, false, new SourceLocation(Token)), Token));
         }
 
         public IType ResolveExpressionType(SemanticPass pass)
