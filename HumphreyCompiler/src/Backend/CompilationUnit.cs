@@ -509,9 +509,16 @@ namespace Humphrey.Backend
             return true;
         }
 
-        public bool EmitToFile(string filename)
+        public bool EmitToFile(string filename, bool pic, bool kernel)
         {
-            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
+            LLVMRelocMode reloc = LLVMRelocMode.LLVMRelocDefault;
+            if (pic)
+                reloc = LLVMRelocMode.LLVMRelocPIC;
+            LLVMCodeModel model = LLVMCodeModel.LLVMCodeModelDefault;
+            if (kernel)
+                model = LLVMCodeModel.LLVMCodeModelKernel;
+
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
 
             moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
@@ -563,9 +570,16 @@ namespace Humphrey.Backend
             return default;
         }
 
-        public bool DumpDisassembly()
+        public bool DumpDisassembly(bool pic, bool kernel)
         {
-            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, LLVMRelocMode.LLVMRelocDefault, LLVMCodeModel.LLVMCodeModelDefault);
+            LLVMRelocMode reloc = LLVMRelocMode.LLVMRelocDefault;
+            if (pic)
+                reloc = LLVMRelocMode.LLVMRelocPIC;
+            LLVMCodeModel model = LLVMCodeModel.LLVMCodeModelDefault;
+            if (kernel)
+                model = LLVMCodeModel.LLVMCodeModelKernel;
+
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
 
             moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
             moduleRef.Target = LLVMTargetRef.DefaultTriple;

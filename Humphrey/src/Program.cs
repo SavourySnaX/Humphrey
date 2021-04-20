@@ -29,6 +29,8 @@ namespace Humphrey.Experiments
             public bool emitLLVM;
             public bool optimisations;
             public bool debugInfo;
+            public bool pic;
+            public bool kernelCodeModel;
         }
 
         static Options options;
@@ -44,6 +46,8 @@ namespace Humphrey.Experiments
             options.emitLLVM = false;
             options.optimisations = true;
             options.debugInfo = false;
+            options.pic = false;
+            options.kernelCodeModel = false;
         }
 
         static void ShowOptions()
@@ -64,6 +68,8 @@ namespace Humphrey.Experiments
             Console.WriteLine($"--emitLLVM[=<bool>]          Enable/Disable emitting llvm object/asm (Default: {options.emitLLVM})");
             Console.WriteLine($"--optimisations[=<bool>]     Enable/Disable optimisations (Default: {options.optimisations})");
             Console.WriteLine($"--debugInfo[=<bool>]         Enable/Disable debug information (Default: {options.debugInfo})");
+            Console.WriteLine($"--pic[=<bool>]               Compile for position independant code (Default: {options.pic})");
+            Console.WriteLine($"--kernel[=<bool>]            Compile for higher half kernel code model (Default: {options.kernelCodeModel})");
             Console.WriteLine();
         }
 
@@ -110,6 +116,8 @@ namespace Humphrey.Experiments
             ["--emitLLVM"] = (s, split) => ParseBoolOption(s, split, out options.emitLLVM),
             ["--optimisations"] = (s, split) => ParseBoolOption(s, split, out options.optimisations),
             ["--debugInfo"] = (s, split) => ParseBoolOption(s, split, out options.debugInfo),
+            ["--pic"] = (s, split) => ParseBoolOption(s, split, out options.pic),
+            ["--kernel"] = (s, split) => ParseBoolOption(s, split, out options.kernelCodeModel),
         };
 
         static bool ParseOptions(string[] args)
@@ -182,14 +190,14 @@ namespace Humphrey.Experiments
                                 if (options.emitLLVM)
                                     cu.EmitToBitCodeFile(options.outputFileName);
                                 else
-                                    cu.EmitToFile(options.outputFileName);
+                                    cu.EmitToFile(options.outputFileName,options.pic,options.kernelCodeModel);
                             }
                             else
                             {
                                 if (options.emitLLVM)
                                     Console.WriteLine(cu.Dump());
                                 else
-                                    cu.DumpDisassembly();
+                                    cu.DumpDisassembly(options.pic,options.kernelCodeModel);
                             }
                         }
                     }
