@@ -13,7 +13,11 @@ namespace Humphrey.Backend
     {
         string targetTriple;
 
-        Scope symbolScopes;
+        CommonSymbolTable root;
+        CommonSymbolTable currentScope;
+        Stack<LLVMMetadataRef> debugScopeStack;
+        LLVMMetadataRef rootDebugScope;
+
         LLVMContextRef contextRef;
         LLVMModuleRef moduleRef;
         LLVMTargetDataRef targetDataRef;
@@ -29,7 +33,7 @@ namespace Humphrey.Backend
 
         bool optimisations;
 
-        public CompilationUnit(string sourceFileNameAndPath, IGlobalDefinition[] definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
+        public CompilationUnit(string sourceFileNameAndPath, CommonSymbolTable rootFromSemmantic, IGlobalDefinition[] definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
         {
             optimisations = !disableOptimisations;
 
@@ -47,15 +51,16 @@ namespace Humphrey.Backend
             LLVM.InitializeX86AsmParser();
             LLVM.InitializeX86AsmPrinter();
 
+            root = rootFromSemmantic;
+            debugScopeStack=new Stack<LLVMMetadataRef>();
 
             var moduleName = System.IO.Path.GetFileNameWithoutExtension(sourceFileNameAndPath);
-            contextRef = CreateContext();// FetchGlobalContext();
+            contextRef = CreateContext();
             moduleRef = contextRef.CreateModuleWithName(moduleName);
             
             debugBuilder = new CompilationDebugBuilder(debugInfo, this, sourceFileNameAndPath, CompilerVersion, targetTriple.Contains("msvc"));
-
-            symbolScopes = new Scope(this);
-            symbolScopes.PushScope(moduleName, debugBuilder.RootScope);
+            rootDebugScope = debugBuilder.RootScope;
+            PushScope(root, rootDebugScope);
 
             pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
             foreach (var def in definitions)
@@ -94,13 +99,13 @@ namespace Humphrey.Backend
         {
             if (pendingDefinitions.TryGetValue(identifier, out var definition))
             {
-                symbolScopes.SaveScopes();
+                var savedScope = PushScope(root, rootDebugScope);
                 foreach (var ident in definition.Identifiers)
                 {
                     pendingDefinitions.Remove(ident.Dump());
                 }
                 definition.Compile(this);
-                symbolScopes.RestoreScopes();
+                PopScope(savedScope);
                 return true;
             }
             return false;
@@ -136,25 +141,35 @@ namespace Humphrey.Backend
 
         public (CompilationType compilationType, IType originalType) FetchNamedType(IIdentifier identifier)
         {
-            var res = symbolScopes.FetchNamedType(identifier);
-            if (res.originalType == null)
+            var entry = currentScope.FetchType(identifier.Name);
+            if (entry == null)
             {
-                if (CompileMissing(identifier.Name))
-                {
-                    res = symbolScopes.FetchNamedType(identifier);
-                }
+                throw new System.NotSupportedException($"{identifier.Name} not found in current scope");
             }
-            if (res.originalType==null)
+
+            if (entry.Type == null)
             {
-                Messages.Log(CompilerErrorKind.Error_UndefinedType, $"Type '{identifier.Name}' is not found in the current scope.", identifier.Token.Location, identifier.Token.Remainder);
+                CompileMissing(identifier.Name);
+                entry= currentScope.FetchType(identifier.Name);
             }
-            return res;
+
+            return (entry.Type, entry.AstType);
         }
 
         public void CreateNamedType(string identifier, CompilationType type, IType originalType)
         {
+            var entry = currentScope.FetchType(identifier);
+            if (entry == null)
+            {
+                throw new System.NotSupportedException($"{identifier} not found in current scope");
+            }
+
+            if (entry.Type != null)
+            {
+                throw new System.NotSupportedException($"{identifier} compilationType already defined");
+            }
             var symbTabType = type.CopyAs(identifier);
-            symbolScopes.AddType(identifier, symbTabType, originalType);
+            entry.SetCommpilationType(symbTabType);
         }
 
         public CompilationStructureType CreateNamedStruct(string identifier, SourceLocation location)
@@ -258,23 +273,72 @@ namespace Humphrey.Backend
             return new CompilationFunctionType(compilationFunctionType, CompilationFunctionType.CallingConvention.CDecl, realReturn, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
         }
 
-        public CompilationValue FetchValueInternal(IIdentifier identifier, CompilationBuilder builder)
-        {
-            return symbolScopes.FetchValue(this, identifier, builder);
-        }
-
         public CompilationValue FetchValueIfDefined(IIdentifier identifier, CompilationBuilder builder)
         {
-            var resolved = FetchValueInternal(identifier, builder);
-            if (resolved==null)
+            var entry = FetchCompilationValue(identifier.Name, builder);
+            return entry;
+        }
+
+        CompilationValue FetchCompilationValue(string identifier, CompilationBuilder builder)
+        {
+            // Check for value
+            var entry = currentScope.FetchValue(identifier);
+            if (entry != null)
             {
-                if (CompileMissing(identifier.Name))
+                if (entry.Value == null)
                 {
-                    resolved = FetchValueInternal(identifier, builder);
+                    if (CompileMissing(identifier))
+                    {
+                        entry = currentScope.FetchValue(identifier);
+                    }
                 }
+                if (entry.Value == null)
+                    return null;
+                var value = entry.Value;
+                return builder.Load(value);
             }
 
-            return resolved;
+            // Check for function - i guess we can construct this on the fly?
+            entry = currentScope.FetchFunction(identifier);
+            if (entry != null )
+            {
+                if (entry.Function == null)
+                {
+                    if (CompileMissing(identifier))
+                    {
+                        entry = currentScope.FetchFunction(identifier);
+                    }
+                }
+                if (entry.Function == null)
+                    return null;
+                var function = entry.Function;
+                return new CompilationValue(function.BackendValue, function.FunctionType, function.FunctionType.FrontendLocation);
+            }
+
+            // Check for named type (an enum is actually a value type) - might be better done at definition actually
+            entry = currentScope.FetchType(identifier);
+            if (entry != null)
+            {
+                if (entry.Type == null)
+                {
+                    if (CompileMissing(identifier))
+                    {
+                        entry = currentScope.FetchType(identifier);
+                    }
+                }
+                // Catch external functions/function types 
+                if (entry.Function!=null)
+                {
+                    var function=entry.Function;
+                    return new CompilationValue(function.BackendValue, function.FunctionType, function.FunctionType.FrontendLocation);
+                }
+                if (entry.Type == null)
+                    return null;
+                var nType = entry.Type;
+                return CreateUndef(nType);
+            }
+
+            return null;
         }
 
         public CompilationValue FetchValue(IIdentifier identifier, CompilationBuilder builder)
@@ -287,25 +351,23 @@ namespace Humphrey.Backend
             return resolved;
         }
 
-        private CompilationValue FetchLocationInternal(string identifier, CompilationBuilder builder)
-        {
-            return symbolScopes.FetchLocation(identifier, builder);
-        }
-
         public CompilationValue FetchLocation(string identifier, CompilationBuilder builder)
         {
-            var resolved = FetchLocationInternal(identifier, builder);
-            if (resolved==null)
+            var entry = currentScope.FetchValue(identifier);
+            if (entry == null)
+            {
+                throw new System.NotSupportedException($"{identifier} not found in current scope");
+            }
+
+            if (entry.Value == null)
             {
                 if (CompileMissing(identifier))
                 {
-                    resolved = FetchLocationInternal(identifier, builder);
+                    entry = currentScope.FetchValue(identifier);
                 }
             }
-            if (resolved == null)
-                throw new Exception($"Failed to find identifier {identifier}");
 
-            return resolved;
+            return entry.Value.Storage;
         }
 
         public CompilationBuilder CreateBuilder(CompilationFunction function, CompilationBlock bb)
@@ -367,19 +429,44 @@ namespace Humphrey.Backend
             return new CompilationValue(type.BackendType.GetConstNull(), type, type.FrontendLocation);
         }
 
+        public (CompilationFunction function, CommonSymbolTable symbolTable) BeginCreateGenericFunction(CompilationFunctionType type, AstIdentifier identifier)
+        {
+            // Generic specialisations are compile time named, so we must pre
+            //declare them as the semantic pass does not generate specialisations
+
+            // Declare the specialisation in the root for now
+            var savedScope = PushScope(root, rootDebugScope);
+
+            string functionName = identifier.Name;
+            var predefinedValue = new CommonSymbolTableEntry(null,null);
+            currentScope.AddFunction(functionName, predefinedValue);
+            var function = CreateFunction(type, identifier, functionName, predefinedValue);
+            return (function, savedScope);
+        }
+
+        public void EndCreateGenericFunction(CommonSymbolTable symbolTable)
+        {
+            PopScope(symbolTable);
+        }
+
         public CompilationFunction CreateFunction(CompilationFunctionType type, AstIdentifier identifier)
         {
-            string functionName = identifier.Dump();
+            string functionName = identifier.Name;
 
-            if (symbolScopes.FetchFunction(functionName)!=null)
-                throw new Exception($"function {functionName} already exists!");
+            var predefinedValue = currentScope.FetchFunction(functionName);
+            if (predefinedValue == null)
+                throw new Exception($"function {functionName} is missing from symbol table!");
 
+            return CreateFunction(type, identifier, functionName, predefinedValue);
+        }
+
+        private CompilationFunction CreateFunction(CompilationFunctionType type, AstIdentifier identifier, string functionName, CommonSymbolTableEntry predefinedValue)
+        {
             var func = moduleRef.AddFunction(functionName, type.BackendType);
 
             var cfunc = new CompilationFunction(func, type);
 
-            if (!symbolScopes.AddFunction(functionName, cfunc))
-                throw new Exception($"function {identifier} failed to add symbol!");
+            predefinedValue.SetCommpilationFunction(cfunc);
 
             var debugFunction = debugBuilder.CreateDebugFunction(functionName, new SourceLocation(identifier.Token), type);
 
@@ -387,48 +474,46 @@ namespace Humphrey.Backend
 
             return cfunc;
         }
+
         public CompilationFunction CreateExternalCFunction(CompilationFunctionType type, AstIdentifier identifier)
         {
             string functionName = identifier.Name;
 
-            if (symbolScopes.FetchFunction(functionName)!=null)
-                throw new Exception($"function {functionName} already exists!");
+            var predefinedValue = currentScope.FetchType(functionName);
+            if (predefinedValue == null)
+                throw new Exception($"function {functionName} is missing from symbol table!");
 
             var func = moduleRef.AddFunction(functionName, type.BackendType);
             func.Linkage = LLVMLinkage.LLVMExternalLinkage;
 
             var cfunc = new CompilationFunction(func, type);
 
-            if (!symbolScopes.AddFunction(functionName, cfunc))
-                throw new Exception($"function {identifier} failed to add symbol!");
+            predefinedValue.SetCommpilationFunction(cfunc);
 
             return cfunc;
         }
 
-
-        public void PushScope(string identifier, LLVMMetadataRef debugScope)
+        public CommonSymbolTable PushScope(CommonSymbolTable newScope, LLVMMetadataRef debugScope)
         {
-            symbolScopes.PushScope(identifier, debugScope);
+            debugScopeStack.Push(debugScope);
+            var oldScope = currentScope;
+            currentScope = newScope;
+            return oldScope;
         }
 
-        public void PopScope()
+        public void PopScope(CommonSymbolTable newScope)
         {
-            symbolScopes.PopScope();
-        }
-
-        public void AddValue(string identifier, CompilationValue value)
-        {
-            if (!symbolScopes.AddValue(identifier, value))
-            {
-                throw new Exception($"TODO duplicate definition error");
-            }
+            currentScope = newScope;
+            debugScopeStack.Pop();
         }
 
         public CompilationValue CreateGlobalVariable(CompilationType type, AstIdentifier identifier, SourceLocation location, ICompilationConstantValue initialiser = null)
         {
-            var ident = identifier.Dump();
-            if (symbolScopes.FetchValue(ident)!=null)
-                throw new Exception($"global value {identifier} already exists!");
+            var ident = identifier.Name;
+
+            var predefinedValue = currentScope.FetchValue(ident);
+            if (predefinedValue == null)
+                throw new Exception($"global value {identifier} is missing in symbol table!");
 
             if (type is CompilationFunctionType)
             {
@@ -446,17 +531,18 @@ namespace Humphrey.Backend
             var globalValue = new CompilationValue(global, type, identifier.Token);
             globalValue.Storage = new CompilationValue(global, CreatePointerType(type, location), identifier.Token);
 
-            if (!symbolScopes.AddValue(ident, globalValue))
-                throw new Exception($"global {identifier} failed to add symbol!");
+            predefinedValue.SetCommpilationValue(globalValue);
 
             return globalValue;
         }
 
         public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationBuilder localBuilder, CompilationType type, AstIdentifier identifier, ICompilationValue initialiser, Result<Tokens> location)
         {
-            var ident = identifier.Dump();
-            if (symbolScopes.FetchValue(ident)!=null)
-                throw new Exception($"local value {identifier} already exists!");
+            var ident = identifier.Name;
+
+            var predefinedValue = currentScope.FetchValue(ident);
+            if (predefinedValue == null)
+                throw new Exception($"local value {identifier} is missing in symbol table!");
 
             if (type is CompilationFunctionType)
             {
@@ -472,8 +558,7 @@ namespace Humphrey.Backend
             }
             local.Storage = new CompilationValue(local.BackendValue, CreatePointerType(type, new SourceLocation(location)), identifier.Token);
 
-            if (!symbolScopes.AddValue(ident, local))
-                throw new Exception($"local {identifier} failed to add symbol!");
+            predefinedValue.SetCommpilationValue(local);
 
             return local;
         }
@@ -500,7 +585,7 @@ namespace Humphrey.Backend
                 throw new System.Exception($"Failed to create jit");
             }
 
-            return ee.GetPointerToGlobal(symbolScopes.FetchFunction(identifier).BackendValue);
+            return ee.GetPointerToGlobal(root.FetchFunction(identifier).Function.BackendValue);
         }
 
         public bool EmitToBitCodeFile(string filename)
@@ -552,7 +637,7 @@ namespace Humphrey.Backend
         public LLVMMetadataRef CreateDebugLocationMeta(SourceLocation location)
         {
             // We don't bother with the column for source locations as we are only doing per statement line location information anyway
-            return moduleRef.Context.CreateDebugLocation(location.StartLine, 0/*location.StartColumn*/, symbolScopes.CurrentDebugScope, default(LLVMMetadataRef));
+            return moduleRef.Context.CreateDebugLocation(location.StartLine, 0/*location.StartColumn*/, debugScopeStack.Peek(), default(LLVMMetadataRef));
         }
 
         public LLVMValueRef CreateDebugLocation(SourceLocation location)
@@ -565,7 +650,7 @@ namespace Humphrey.Backend
         {
             if (debugBuilder.Enabled)
             {
-                return debugBuilder.CreateParameterVariable(name, symbolScopes.CurrentDebugScope, location, argNo, debugType.BackendType);
+                return debugBuilder.CreateParameterVariable(name, debugScopeStack.Peek(), location, argNo, debugType.BackendType);
             }
             return default;
         }
@@ -626,7 +711,7 @@ namespace Humphrey.Backend
 
         public LLVMMetadataRef CreateDebugScope(SourceLocation location)
         {
-            return debugBuilder.CreateLexicalScope(symbolScopes.CurrentDebugScope, location);
+            return debugBuilder.CreateLexicalScope(debugScopeStack.Peek(), location);
         }
 
         public LLVMMetadataRef GetScope(CompilationFunction function)
@@ -641,12 +726,12 @@ namespace Humphrey.Backend
 
         public LLVMMetadataRef CreateAutoVariable(string name, SourceLocation location, CompilationDebugType type)
         {
-            return debugBuilder.CreateAutoVariable(name, symbolScopes.CurrentDebugScope, location, type);
+            return debugBuilder.CreateAutoVariable(name, debugScopeStack.Peek(), location, type);
         }
 
         public LLVMMetadataRef CreateGlobalVariableExpression(string name, SourceLocation location, CompilationDebugType type)
         {
-            return debugBuilder.CreateGlobalVarable(name, symbolScopes.CurrentDebugScope, location, type);
+            return debugBuilder.CreateGlobalVarable(name, debugScopeStack.Peek(), location, type);
         }
 
         public LLVMModuleRef Module => moduleRef;

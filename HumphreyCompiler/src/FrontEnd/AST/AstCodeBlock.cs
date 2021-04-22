@@ -4,7 +4,7 @@ using Humphrey.Backend;
 
 namespace Humphrey.FrontEnd
 {
-    public class AstCodeBlock : IAssignable, IStatement
+    public class AstCodeBlock : IAssignable, IStatement, ISymbolScope
     {
         IStatement[] statementList;
         public AstCodeBlock(IStatement[] statements)
@@ -14,7 +14,7 @@ namespace Humphrey.FrontEnd
     
         public (CompilationBlock entry, CompilationBlock exit) CreateCodeBlock(CompilationUnit unit, CompilationFunction function, CompilationBuilder locals, string blockName)
         {
-            unit.PushScope("", unit.CreateDebugScope(new SourceLocation(Token)));
+            var oldScope = unit.PushScope(symbolTable, unit.CreateDebugScope(new SourceLocation(Token)));
             var newBB = new CompilationBlock(function.BackendValue.AppendBasicBlock(blockName));
 
             var builder = unit.CreateBuilder(function, newBB);
@@ -25,7 +25,7 @@ namespace Humphrey.FrontEnd
                 s.BuildStatement(unit, function, builder);
             }
 
-            unit.PopScope();
+            unit.PopScope(oldScope);
             return (newBB, builder.CurrentBlock);
         }
     
@@ -50,7 +50,7 @@ namespace Humphrey.FrontEnd
 
         public void Semantic(SemanticPass pass)
         {
-            pass.PushScope("");
+            symbolTable = pass.PushScope();
             foreach (var statement in statementList)
             {
                 statement.Semantic(pass);
@@ -65,6 +65,9 @@ namespace Humphrey.FrontEnd
         public Result<Tokens> BlockEnd;
 
         public IStatement[] Statements => statementList;
+
+        private CommonSymbolTable symbolTable;
+        public CommonSymbolTable SymbolTable => symbolTable;
     }
 }
 

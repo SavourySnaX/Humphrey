@@ -86,7 +86,7 @@ namespace Humphrey.Tests
                     semantic.RunPass(parsed);
                     if (!messages.HasErrors)
                     {
-                        var unit = new HumphreyCompiler(messages).Compile(parsed, "test", "x86_64", false, false);
+                        var unit = new HumphreyCompiler(messages).Compile(semantic.RootSymbolTable, parsed, "test", "x86_64", false, false);
                     }
                 }
             }

@@ -1,7 +1,7 @@
 using Humphrey.Backend;
 namespace Humphrey.FrontEnd
 {
-    public class AstFunctionType : IType
+    public class AstFunctionType : IType, ISymbolScope /*Used for input and output symbols currently*/
     {
         AstParamList inputList;
         AstParamList outputList;
@@ -77,14 +77,20 @@ namespace Humphrey.FrontEnd
             {
                 throw new System.InvalidOperationException($"genericInitialiser should have been filled during semantic pass");
             }
-            BuildFunction(unit, functionType, ident, genericInitialiser);
+            var newFunction = unit.BeginCreateGenericFunction(functionType, ident);
+            BuildFunction(unit, functionType, ident, genericInitialiser, newFunction.function);
+            unit.EndCreateGenericFunction(newFunction.symbolTable);
         }
 
         public void BuildFunction(CompilationUnit unit, CompilationFunctionType functionType, AstIdentifier ident, AstCodeBlock codeBlock)
         {
             var newFunction = unit.CreateFunction(functionType, ident);
+            BuildFunction(unit, functionType, ident, codeBlock, newFunction);
+        }
 
-            unit.PushScope("", unit.GetScope(newFunction));
+        private void BuildFunction(CompilationUnit unit, CompilationFunctionType functionType, AstIdentifier ident, AstCodeBlock codeBlock, CompilationFunction newFunction)
+        {
+            var oldScope = unit.PushScope(symbolTable, unit.GetScope(newFunction));
 
             var localsBlock = new CompilationBlock(newFunction.BackendValue.AppendBasicBlock($"inputs_{ident.Dump()}"));
             var localsBuilder = unit.CreateBuilder(newFunction, localsBlock);
@@ -160,7 +166,7 @@ namespace Humphrey.FrontEnd
                 }
             }
 
-            unit.PopScope();
+            unit.PopScope(oldScope);
         }
 
         public IType ResolveOutputType(SemanticPass pass)
@@ -200,7 +206,7 @@ namespace Humphrey.FrontEnd
         
         public void Semantic(SemanticPass pass, AstCodeBlock codeBlock)
         {
-            pass.PushScope("");
+            symbolTable = pass.PushScope();
 
             foreach (var input in inputList.Params)
             {
@@ -239,6 +245,7 @@ namespace Humphrey.FrontEnd
 
         public string GenericBaseName => genericBaseName;
 
+        public AstParamList Inputs => inputList;
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 
@@ -246,6 +253,9 @@ namespace Humphrey.FrontEnd
         public AstMetaData MetaData { get => metaData; set => metaData = value; }
 
         public SemanticPass.IdentifierKind GetBaseType => SemanticPass.IdentifierKind.Function;
+
+        private CommonSymbolTable symbolTable;
+        public CommonSymbolTable SymbolTable => symbolTable;
     }
 }
 

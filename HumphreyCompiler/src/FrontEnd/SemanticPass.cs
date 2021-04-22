@@ -5,7 +5,10 @@ namespace Humphrey.FrontEnd
 {
     public class SemanticPass
     {
-        SemanticScope symbolScopes;
+        Stack<CommonSymbolTable> symbolStack;
+        CommonSymbolTable root;
+        CommonSymbolTable currentScope;
+
         ICompilerMessages messages;
         Dictionary<string, IGlobalDefinition> pendingDefinitions;
 
@@ -51,8 +54,9 @@ namespace Humphrey.FrontEnd
             if (messages==null)
                 messages = new CompilerMessages(true, true, false);
             var moduleName = System.IO.Path.GetFileNameWithoutExtension(sourceFileNameAndPath);
-            symbolScopes = new SemanticScope();
-            symbolScopes.PushScope(moduleName);
+            symbolStack = new Stack<CommonSymbolTable>();
+            root = new CommonSymbolTable(null);
+            currentScope = root;
             semanticInfo = new Dictionary<Result<Tokens>, SemanticInfo>();
         }
 
@@ -82,53 +86,50 @@ namespace Humphrey.FrontEnd
 
         private IType FetchAnyType(IIdentifier identifier)
         {
-            var type = symbolScopes.FetchValue(identifier.Name);
-            if (type != null)
-                return type;
-            type = symbolScopes.FetchType(identifier.Name);
-            if (type != null)
-                return type;
-            type = symbolScopes.FetchFunction(identifier.Name);
-            return type;
+            var entry = currentScope.FetchAny(identifier.Name);
+            return entry?.AstType;
         }
 
         public IType ResolveValueType(IIdentifier identifier)
         {
-            var res = symbolScopes.FetchValue(identifier.Name);
-            if (res==null)
+            var entry = currentScope.FetchValue(identifier.Name);
+            if (entry==null)
             {
                 Missing(identifier.Name);
-                res = symbolScopes.FetchValue(identifier.Name);
+                entry = currentScope.FetchValue(identifier.Name);
             }
-            return res;
+            return entry?.AstType;
         }
 
         public IType FetchNamedType(IIdentifier identifier)
         {
-            var res = FetchAnyType(identifier);
-            if (res == null)
+            var type = FetchAnyType(identifier);
+            if (type == null)
             {
                 Missing(identifier.Name);
-                res = FetchAnyType(identifier);
+                type = FetchAnyType(identifier);
             }
-            if (res== null)
+            if (type== null)
             {
                 Messages.Log(CompilerErrorKind.Error_UndefinedType, $"Type '{identifier.Name}' is not found in the current scope.", identifier.Token.Location, identifier.Token.Remainder);
             }
-            return res;
+            return type;
         }
 
         private void Missing(string identifier)
         {
             if (pendingDefinitions.TryGetValue(identifier, out var definition))
             {
-                symbolScopes.SaveScopes();
+                // Need to return to the root symbol scope here
+                symbolStack.Push(currentScope);
+                currentScope=root;
                 foreach (var ident in definition.Identifiers)
                 {
                     pendingDefinitions.Remove(ident.Dump());
                 }
                 definition.Semantic(this);
-                symbolScopes.RestoreScopes();
+                currentScope= symbolStack.Peek();
+                symbolStack.Pop();
             }
         }
 
@@ -136,7 +137,7 @@ namespace Humphrey.FrontEnd
         {
             var baseT = type.ResolveBaseType(this);
             var s = new SemanticPass.SemanticInfo(type, baseT, SemanticPass.IdentifierKind.Function);
-            var ok = symbolScopes.AddFunction(identifier.Name, type, s);
+            var ok = currentScope.AddFunction(identifier.Name, new CommonSymbolTableEntry(type, s));
             if (ok)
             {
                 semanticInfo.Add(identifier.Token, s);
@@ -148,7 +149,7 @@ namespace Humphrey.FrontEnd
         {
             var baseT = type.ResolveBaseType(this);
             var s = new SemanticPass.SemanticInfo(type, baseT, SemanticPass.IdentifierKind.Type);
-            var ok = symbolScopes.AddType(identifier.Name, type, s);
+            var ok = currentScope.AddType(identifier.Name, new CommonSymbolTableEntry(type, s));
             if (ok)
             {
                 semanticInfo.Add(identifier.Token, s);
@@ -160,7 +161,7 @@ namespace Humphrey.FrontEnd
         {
             var baseT = type.ResolveBaseType(this);
             var s = new SemanticPass.SemanticInfo(type, baseT, kind);
-            var ok = symbolScopes.AddValue(identifier.Name, type, s);
+            var ok = currentScope.AddValue(identifier.Name, new CommonSymbolTableEntry(type, s));
             if (ok && addSemanticInfo)  // addSemanticInfo is bodge to ensure function pointer delegate types work
             {
                 semanticInfo.Add(identifier.Token, s);
@@ -170,15 +171,15 @@ namespace Humphrey.FrontEnd
 
         public bool AddSemanticLocation(IIdentifier identifier, Result<Tokens> token)
         {
-            var t = symbolScopes.FetchAny(identifier.Name);
-            if (t.type == null)
+            var entry = currentScope.FetchAny(identifier.Name);
+            if (entry == null)
             {
                 Missing(identifier.Name);
-                t = symbolScopes.FetchAny(identifier.Name);
-                if (t.type==null)
+                entry = currentScope.FetchAny(identifier.Name);
+                if (entry == null)
                     return false;
             }
-            semanticInfo.Add(token, t.info);
+            semanticInfo.Add(token, entry.SemanticInfo);
             return true;
         }
 
@@ -200,16 +201,18 @@ namespace Humphrey.FrontEnd
             return semanticInfo.TryGetValue(token, out info);
         }
 
-        public void PushScope(string scope)
+        public CommonSymbolTable PushScope()
         {
-            symbolScopes.PushScope(scope);
+            currentScope = new CommonSymbolTable(currentScope);
+            return currentScope;
         }
 
         public void PopScope()
         {
-            symbolScopes.PopScope();
+            currentScope = currentScope.Parent;
         }
 
         public ICompilerMessages Messages => messages;
+        public CommonSymbolTable RootSymbolTable => root;
     }
 }
