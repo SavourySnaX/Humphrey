@@ -507,7 +507,7 @@ namespace Humphrey.Backend
             debugScopeStack.Pop();
         }
 
-        public CompilationValue CreateGlobalVariable(CompilationType type, AstIdentifier identifier, SourceLocation location, ICompilationConstantValue initialiser = null)
+        public (CompilationValue cv, CompilationType ct) CreateGlobalVariable(CompilationType type, AstIdentifier identifier, SourceLocation location, ICompilationConstantValue initialiser = null)
         {
             var ident = identifier.Name;
 
@@ -533,10 +533,10 @@ namespace Humphrey.Backend
 
             predefinedValue.SetCommpilationValue(globalValue);
 
-            return globalValue;
+            return (globalValue,type);
         }
 
-        public CompilationValue CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationBuilder localBuilder, CompilationType type, AstIdentifier identifier, ICompilationValue initialiser, Result<Tokens> location)
+        public (CompilationValue cv, CompilationType ct) CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationBuilder localBuilder, CompilationType type, AstIdentifier identifier, ICompilationValue initialiser, Result<Tokens> location)
         {
             var ident = identifier.Name;
 
@@ -560,7 +560,7 @@ namespace Humphrey.Backend
 
             predefinedValue.SetCommpilationValue(local);
 
-            return local;
+            return (local, type);
         }
 
         public CompilationParam CreateFunctionParameter(CompilationType type, AstIdentifier identifier)

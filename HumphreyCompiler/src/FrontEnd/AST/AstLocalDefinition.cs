@@ -61,11 +61,11 @@ namespace Humphrey.FrontEnd
                 else
                 {
                     var variableName = ident.Name;
-                    var newLocal = unit.CreateLocalVariable(unit, builder, builder.LocalBuilder, ct, ident, exprValue, ident.Token);
+                    var (newLocal, adjustType) = unit.CreateLocalVariable(unit, builder, builder.LocalBuilder, ct, ident, exprValue, ident.Token);
                     var sourceLocation = new SourceLocation(ident.Token);
 
                     // Debug information
-                    var localDbg = unit.CreateAutoVariable(variableName, sourceLocation, ct.DebugType);
+                    var localDbg = unit.CreateAutoVariable(variableName, sourceLocation, adjustType.DebugType);
                     unit.InsertDeclareAtEnd(newLocal.Storage, localDbg, sourceLocation, builder.CurrentBlock);
                 }
             }

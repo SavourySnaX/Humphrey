@@ -86,10 +86,10 @@ namespace Humphrey.FrontEnd
                 {
                     var varName = ident.Dump();
                     var location = new SourceLocation(Token);
-                    var newGlobal = unit.CreateGlobalVariable(ct, ident, location, exprValue);
+                    var (newGlobal,adjustType) = unit.CreateGlobalVariable(ct, ident, location, exprValue);
 
                     // Debug information
-                    var gve = unit.CreateGlobalVariableExpression(varName, location, ct.DebugType);
+                    var gve = unit.CreateGlobalVariableExpression(varName, location, adjustType.DebugType);
                     newGlobal.BackendValue.SetGlobalMetadata(LLVMSharp.Interop.LLVMMetadataKind.LLVMMDStringMetadataKind, gve);
                 }
             }

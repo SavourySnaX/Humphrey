@@ -107,7 +107,7 @@ namespace Humphrey.FrontEnd
 
                 // Local copy
                 var type = functionType.Parameters[a].Type;
-                var local = unit.CreateLocalVariable(unit, localsBuilder, localsBuilder, type, paramIdent, null, functionType.Parameters[a].Token);
+                var local = unit.CreateLocalVariable(unit, localsBuilder, localsBuilder, type, paramIdent, null, functionType.Parameters[a].Token).cv;
                 var cv = new CompilationValue(newFunction.BackendValue.Params[a], type, functionType.Parameters[a].Token);
                 localsBuilder.Store(cv, local.Storage);
 
@@ -127,7 +127,7 @@ namespace Humphrey.FrontEnd
                 var output = new CompilationValue(newFunction.BackendValue.Params[a], outputType, functionType.Parameters[a].Token);
                 var type = functionType.Parameters[a].Type;
                 var paramIdent = functionType.Parameters[a].Identifier;
-                var local = unit.CreateLocalVariable(unit, localsBuilder, localsBuilder, type, paramIdent, null, functionType.Parameters[a].Token);
+                var local = unit.CreateLocalVariable(unit, localsBuilder, localsBuilder, type, paramIdent, null, functionType.Parameters[a].Token).cv;
                 local.Storage = new CompilationValueOutputParameter(local.Storage.BackendValue, local.Storage.Type, paramIdent.Dump(), functionType.Parameters[a].Token);
 
                 // Copy temporary storage to output
