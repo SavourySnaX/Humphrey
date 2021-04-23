@@ -197,15 +197,26 @@ namespace Humphrey.Backend
 
         public void LogicalShiftLeft(CompilationConstantIntegerKind rhs)
         {
-            var kind = ComputeKind();
             var tConstant = rhs.constant;
-            while (tConstant<0)
-                tConstant += kind.numBits;
-            tConstant = tConstant % kind.numBits;
-            while (tConstant > BigInteger.Zero)
+            if (tConstant>=0)
             {
-                constant = constant << 1;
-                tConstant -= 1;
+                while (tConstant > 0)
+                {
+                    constant <<= 1;
+                    tConstant--;
+                }
+            }
+            else
+            {
+                var kind = ComputeKind();
+                while (tConstant < 0)
+                    tConstant += kind.numBits;
+                tConstant = tConstant % kind.numBits;
+                while (tConstant > BigInteger.Zero)
+                {
+                    constant = constant << 1;
+                    tConstant -= 1;
+                }
             }
         }
 

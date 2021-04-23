@@ -629,6 +629,14 @@ SizeOf : (a:_)(size:[64]bit)=
         {
             Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
         }
+        
+        [Theory]
+        [InlineData(@" Flags:[64]bit { a:=1<<0 b:=1<<1 c:=1<<2 d:=1<<3} Return:(dc:*[8]bit,in:[8]bit)(out:[8]bit)={ out=in; }  Main:()(out:[8]bit)= { dd:[8]bit=_; out=Return(&dd,(~(Flags.b|Flags.c)) as [8]bit); } ", "Main", 0xF9)]
+        public void CheckEnumFlagExpression(string input, string entryPointName, byte expected)
+        {
+            Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
+        }
+
 
         [Theory]
         [InlineData(@"structure:{a:[8]bit b:[8]bit} Main:()(out:[8]bit)= { t:structure=0; out=t.a+t.b; } ", "Main", 0)]
@@ -1041,7 +1049,7 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
             Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival, expected), $"Test {entryPointName},{input},{ival},{expected}");
         }
 
-        // LogicalShiftLeft is    val << ((unsigned)amount % (numBits in val))
+        // LogicalShiftLeft for constants :  val << amount (where amount>=0) ||  val << ((unsigned)amount % (numBits in val)) if -ve
         [Theory]
         [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<0) & 0b11111111; }", "Main", 0b11011001)]
         [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<1) & 0b11111111; }", "Main", 0b10110010)]
@@ -1049,13 +1057,14 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
         [InlineData(@"Main : () (out : [8]bit) = { out=(-2<<1) & 0b11111111; }", "Main", 0b11111100)]
         [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<6) & 0b11111111; }", "Main", 0b01000000)]
         [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<7) & 0b11111111; }", "Main", 0b10000000)]
-        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<9) & 0b11111111; }", "Main", 0b10110010)]
+        [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<9) & 0b11111111; }", "Main", 0b00000000)]
         [InlineData(@"Main : () (out : [8]bit) = { out=(0b11011001<<(-1)) & 0b11111111; }", "Main", 0b10000000)]
         public void CheckLogicalShiftLeftConst(string input, string entryPointName, byte expected)
         {
             Assert.True(InputVoidExpects8BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input},{expected}");
         }
 
+        // LogicalShiftLeft is always :   val << ((unsigned)amount % (numBits in val))
         [Theory]
         [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a<<0; }", "Main", 0b11011001, 0b11011001)]
         [InlineData(@"Main : (a:[8]bit) (out : [8]bit) = { out=a<<1; }", "Main", 0b11011001, 0b10110010)]
