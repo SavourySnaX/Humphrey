@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.IO;
+using LibGit2Sharp;
 
 namespace Humphrey.Backend.Tests
 {
@@ -124,6 +125,11 @@ MemorySizeOf:(type:_)(size:UInt64)=
             return new FileSystemPackageManager(Path.Combine(Path.GetDirectoryName(currentFolder),"FileSystemNamespaceTestRoot"));
         }
 
+        private IPackageManager GetPackageManagerForGitTest([CallerFilePath] string currentFolder="")
+        {
+            return new GitPackageManager(Repository.Discover(Directory.GetCurrentDirectory()), "b74f95ac7e5b8a39acf9d83a0ef24e59760196b4");
+        }
+
         private IPackageManager GetPackageManagerForDefault([CallerFilePath] string currentFolder="")
         {
             var t = new IPackageManager[1];
@@ -137,6 +143,7 @@ MemorySizeOf:(type:_)(size:UInt64)=
         //[InlineData("using System/Types Main:()(returnValue:UInt8)={returnValue=0;} ")]
         public void CheckNamespaceTest(string input, byte result)
         {
+            BuildForTest(input, result, GetPackageManagerForGitTest());
             BuildForTest(input, result, GetPackageManagerForTests());
             BuildForTest(input, result, GetPackageManagerForFileSystemTests());
             BuildForTest(input, result, GetPackageManagerForDefault());
