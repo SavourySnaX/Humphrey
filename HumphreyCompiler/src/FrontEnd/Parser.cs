@@ -155,8 +155,10 @@ namespace Humphrey.FrontEnd
             return list.ToArray();
         }
         
+        public delegate bool SeperatorDelegate();
+
         // + (1 or more)
-        protected T[] CommaSeperatedItemList<T>(AstItemDelegate kind) where T : class
+        protected T[] SeperatatedItemList<T>(AstItemDelegate kind, SeperatorDelegate seperator) where T : class
         {
             var list = new List<T>();
 
@@ -165,7 +167,7 @@ namespace Humphrey.FrontEnd
                 return null;
             list.Add(item);
 
-            while (CommaSyntax())
+            while (seperator())
             {
                 item = kind() as T;
                 if (item == null)
@@ -270,20 +272,35 @@ namespace Humphrey.FrontEnd
         public AstNumber Number() { return AstItem(Tokens.Number, (e) => new AstNumber(e)) as AstNumber; }
         public AstString StringLiteral() { return AstItem(Tokens.String, (e)=>new AstString(e)) as AstString; }
 
-        // identifier : Identifier
+        // identifier : Identifier  (must be standalone ie not namespaced/referencing)
         public AstIdentifier Identifier() { return AstItem(Tokens.Identifier, (e) => new AstIdentifier(e)) as AstIdentifier; }
         // anonymous : _
         public AstAnonymousIdentifier AnonymousIdentifier() { return AstItem(Tokens.S_Underscore, (e) => new AstAnonymousIdentifier()) as AstAnonymousIdentifier; }
         // identifier : Identifier
         public bool PeekIdentifier() { return Peek(Tokens.Identifier); }
-        // loadable_identifier : Identifier
-        public AstLoadableIdentifier LoadableIdentifier() { return AstItem(Tokens.Identifier, (e) => new AstLoadableIdentifier(e)) as AstLoadableIdentifier; }
+        // loadable_identifier : [Identifier::*] Identifier
+        public ILoadValue LoadableIdentifier() { return NamespaceOrIdentifier<AstLoadableIdentifier>(LoadableIdentifierItem) as ILoadValue; }
+        // type_identifier : [Identifier::*] Identifier
+        public IIdentifier LoadableIdentifierItem() { return AstItem(Tokens.Identifier, (e) => new AstLoadableIdentifier(e)) as AstLoadableIdentifier; }
+        public IIdentifier IdentifierItem() { return AstItem(Tokens.Identifier, (e) => new AstIdentifier(e)) as AstIdentifier; }
+        public IIdentifier TypeIdentifier() { return NamespaceOrIdentifier<AstIdentifier>(IdentifierItem); }
+
+        public IIdentifier NamespaceOrIdentifier<T>(AstItemDelegate item) where T : class, IIdentifier
+        {
+            var items = SeperatatedItemList<T>(item, NamespaceSyntax);
+            if (items == null)
+                return null;
+            if (items.Length == 1)
+                return items[0];
+
+            return new AstNamespaceIdentifier(items);
+        }
 
         // number_list : Number*
         public IAst[] NumberList() { return ItemList(Number); }
 
         // identifer_list : Identifier*        
-        public AstIdentifier[] IdentifierList() { return CommaSeperatedItemList<AstIdentifier>(Identifier); }
+        public AstIdentifier[] IdentifierList() { return SeperatatedItemList<AstIdentifier>(Identifier, CommaSyntax); }
 
         // bit_keyword : bit
         public AstBitType BitKeyword() { return AstItem(Tokens.KW_Bit, (e) => new AstBitType()) as AstBitType; }
@@ -358,6 +375,7 @@ namespace Humphrey.FrontEnd
         public IAst ColonOperator() { return AstItem(Tokens.O_Colon, (e) => new AstOperator(e)); }
         public bool PeekColonOperator() { return Peek(Tokens.O_Colon); }
         public bool CommaSyntax() { return Take(Tokens.S_Comma); }
+        public bool NamespaceSyntax() { return Take(Tokens.S_ColonColon); }
         public bool PeekCommaSyntax() { return Peek(Tokens.S_Comma); }
         public bool SemiColonSyntax() { return Take(Tokens.S_SemiColon); }
         public bool OpenParanthesis() { return Take(Tokens.S_OpenParanthesis); }
@@ -380,9 +398,9 @@ namespace Humphrey.FrontEnd
                 LogicalAndOperator, LogicalOrOperator, BinaryAndOperator, BinaryOrOperator, BinaryXorOperator,
                 LogicalShiftLeftOperator, LogicalShiftRightOperator, ArithmeticShiftRightOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
-        public AstItemDelegate[] BaseTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, FunctionType, StructType};
+        public AstItemDelegate[] BaseTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, TypeIdentifier, FunctionType, StructType};
         public AstItemDelegate[] Types => new AstItemDelegate[] { BaseTypeOrEnumType };
-        public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Identifier, StructType };
+        public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, TypeIdentifier, StructType };
         public AstItemDelegate[] IdentifierOrAnonymous => new AstItemDelegate[] { Identifier, AnonymousIdentifier };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
         public AstItemDelegate[] Statements => new AstItemDelegate[] { ReturnStatement, ForStatement, IfStatement, WhileStatement, CouldBeLocalScopeDefinitionOrAssignmentOrExpression };
@@ -818,7 +836,7 @@ namespace Humphrey.FrontEnd
             if (ForKeyword() == null)
                 return null;
 
-            var identifierList = CommaSeperatedItemList<AstLoadableIdentifier>(LoadableIdentifier);
+            var identifierList = SeperatatedItemList<AstLoadableIdentifier>(LoadableIdentifier, CommaSyntax);
             if (identifierList == null)
                 return null;
 
@@ -826,7 +844,7 @@ namespace Humphrey.FrontEnd
                 return null;
 
             // Todo we should allow ranges or expressions (e.g. for x = mycollection )
-            var rangeList = CommaSeperatedItemList<AstRange>(Range);
+            var rangeList = SeperatatedItemList<AstRange>(Range, CommaSyntax);
             if (rangeList == null)
                 return null;
 
@@ -948,14 +966,14 @@ namespace Humphrey.FrontEnd
         //                       | param_definition , param_defitinition_list
         public AstParamDefinition[] ParamDefinitionList()
         {
-            return CommaSeperatedItemList<AstParamDefinition>(ParamDefinition);
+            return SeperatatedItemList<AstParamDefinition>(ParamDefinition, CommaSyntax);
         }
 
         // expression_list : expr
         //                 | expr , expression_list
         public AstExpressionList ExpressionList()
         {
-            var exprList = CommaSeperatedItemList<IExpression>(ParseExpression);
+            var exprList = SeperatatedItemList<IExpression>(ParseExpression, CommaSyntax);
             if (exprList == null)
                 return null;
             var list = new AstExpressionList(exprList);
@@ -1228,7 +1246,7 @@ namespace Humphrey.FrontEnd
         {
             var start = CurrentToken();
             
-            var identifier = CommaSeperatedItemList<T>(identifierDelegate);
+            var identifier = SeperatatedItemList<T>(identifierDelegate, CommaSyntax);
             if (identifier == null)
             {
                 return (false, null, null, null, new Result<Tokens>());

@@ -423,7 +423,7 @@ namespace Humphrey.FrontEnd.Tests
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens, messages);
             var parsed = parser.File();
-            var semantic = new SemanticPass("test", messages);
+            var semantic = new SemanticPass(null, messages);
             semantic.RunPass(parsed);
             return (semantic,tokens);
         }

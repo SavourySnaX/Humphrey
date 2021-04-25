@@ -1,0 +1,15 @@
+Int8  : [-8]bit
+Int16 : [-16]bit
+Int32 : [-32]bit
+Int64 : [-64]bit
+
+UInt8  : [8]bit
+UInt16 : [16]bit
+UInt32 : [32]bit
+UInt64 : [64]bit
+
+MemorySizeOf:(type:_)(size:UInt64)=
+{
+    ptr:=&type;
+    size = ((&ptr[1]) as UInt64)-((&ptr[0]) as UInt64);
+}

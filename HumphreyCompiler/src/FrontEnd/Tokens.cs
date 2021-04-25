@@ -155,6 +155,9 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Syntax", Example = ",")]
         S_Comma,
 
+        [Token(Category = "Syntax", Example = "::")]
+        S_ColonColon,
+
         [Token(Category = "Syntax", Example = "_")]
         S_Underscore,
 
@@ -409,6 +412,7 @@ namespace Humphrey.FrontEnd
         readonly Dictionary<(char, char), Tokens> _dualOperators = new Dictionary<(char, char), Tokens>
         {
             [('.', '.')] = Tokens.O_DotDot,
+            [(':', ':')] = Tokens.S_ColonColon,
             [('=', '=')] = Tokens.O_EqualsEquals,
             [('+', '+')] = Tokens.O_PlusPlus,
             [('-', '-')] = Tokens.O_MinusMinus,
