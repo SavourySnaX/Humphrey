@@ -70,7 +70,7 @@ namespace Humphrey.FrontEnd
                     }
                     else
                     {
-                        unit.CreateNamedType(ident.Dump(), ct, ot);
+                        unit.CreateNamedType(ident.Name, ct, ot);
                     }
                 }
                 else if (functionType != null && initialiser != null && codeBlock != null)
@@ -80,11 +80,11 @@ namespace Humphrey.FrontEnd
                 }
                 else if (initialiser == null)
                 {
-                    unit.CreateNamedType(ident.Dump(), ct, ot);
+                    unit.CreateNamedType(ident.Name, ct, ot);
                 }
                 else
                 {
-                    var varName = ident.Dump();
+                    var varName = ident.Name;
                     var location = new SourceLocation(Token);
                     var (newGlobal,adjustType) = unit.CreateGlobalVariable(ct, ident, location, exprValue);
 

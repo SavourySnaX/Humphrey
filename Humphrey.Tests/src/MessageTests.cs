@@ -82,11 +82,11 @@ namespace Humphrey.Tests
                 var parsed = parser.File();
                 if (!messages.HasErrors)
                 {
-                    var semantic = new SemanticPass("test", messages);
+                    var semantic = new SemanticPass(null, messages);
                     semantic.RunPass(parsed);
                     if (!messages.HasErrors)
                     {
-                        var unit = new HumphreyCompiler(messages).Compile(semantic.RootSymbolTable, parsed, "test", "x86_64", false, false);
+                        var unit = new HumphreyCompiler(messages).Compile(semantic.RootSymbolTable, null, parsed, "test", "x86_64", false, false);
                     }
                 }
             }

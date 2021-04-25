@@ -45,6 +45,7 @@ namespace Humphrey.FrontEnd.Tests
         [InlineData(":", Tokens.O_Colon)]
         [InlineData(".", Tokens.O_Dot)]
         [InlineData("..", Tokens.O_DotDot)]
+        [InlineData("::", Tokens.S_ColonColon)]
         [InlineData("==", Tokens.O_EqualsEquals)]
         [InlineData("++", Tokens.O_PlusPlus)]
         [InlineData("--", Tokens.O_MinusMinus)]

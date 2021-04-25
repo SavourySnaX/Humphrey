@@ -14,6 +14,8 @@ namespace Humphrey.FrontEnd
 
         Dictionary<Result<Tokens>, SemanticInfo> semanticInfo;
 
+        IPackageLevel packageRoot;
+
         public class SemanticInfo
         {
             private IType _ast;
@@ -48,15 +50,15 @@ namespace Humphrey.FrontEnd
             LocalValue
         }
 
-        public SemanticPass(string sourceFileNameAndPath, ICompilerMessages overrideDefaultMessages = null)
+        public SemanticPass(IPackageLevel level, ICompilerMessages overrideDefaultMessages = null)
         {
             messages = overrideDefaultMessages;
             if (messages==null)
                 messages = new CompilerMessages(true, true, false);
-            var moduleName = System.IO.Path.GetFileNameWithoutExtension(sourceFileNameAndPath);
             symbolStack = new Stack<CommonSymbolTable>();
             root = new CommonSymbolTable(null);
             currentScope = root;
+            packageRoot = level;
             semanticInfo = new Dictionary<Result<Tokens>, SemanticInfo>();
         }
 
@@ -205,6 +207,51 @@ namespace Humphrey.FrontEnd
         {
             currentScope = new CommonSymbolTable(currentScope);
             return currentScope;
+        }
+
+        public (CommonSymbolTable recoverTo, CommonSymbolTable root) PushNamespace(IIdentifier[] scope)
+        {
+            var oldScope = currentScope;
+            var cScope = currentScope;
+            var cLevel = packageRoot;
+
+            foreach (var s in scope)
+            {
+                var result = cScope.FetchNamespace(s.Name);
+                if (result == null)
+                {
+                    var entry = cLevel.FetchEntry(s.Name);
+                    if (entry==null)
+                    {
+                        throw new System.Exception($"TODO - error unknown namespace");
+                    }
+                    if (entry is IPackageEntry packageEntry)
+                    {
+                        // this would be a file, and thus should be compiled i think...
+                        var t = new HumphreyTokeniser(messages);
+                        var p = new HumphreyParser(t.Tokenize(packageEntry.Contents), messages);
+                        var globals = p.File();
+                        var sp = new SemanticPass(entry, messages);
+                        sp.RunPass(globals);
+                        cScope.AddNamespace(s.Name, entry, sp.RootSymbolTable, globals);
+                        result = cScope.FetchNamespace(s.Name);
+                    }
+                    else
+                    {
+                        cScope.AddNamespace(s.Name, cLevel);
+                        result = cScope.FetchNamespace(s.Name);
+                    }
+                    cLevel = entry;
+                }
+                cScope = result;
+            }
+            currentScope = cScope;
+            return (oldScope, currentScope);
+        }
+
+        public void PopNamespace(CommonSymbolTable recoverTo)
+        {
+            currentScope = recoverTo;
         }
 
         public void PopScope()

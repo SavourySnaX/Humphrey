@@ -13,7 +13,9 @@ namespace Humphrey.Backend
     {
         string targetTriple;
 
+        IPackageManager packageManager;
         CommonSymbolTable root;
+        CommonSymbolTable currentNamespace;
         CommonSymbolTable currentScope;
         Stack<LLVMMetadataRef> debugScopeStack;
         LLVMMetadataRef rootDebugScope;
@@ -26,14 +28,12 @@ namespace Humphrey.Backend
 
         CompilationDebugBuilder debugBuilder;
 
-        Dictionary<string, IGlobalDefinition> pendingDefinitions;
-
         Version VersionNumber => new Version(1, 0);
         string CompilerVersion => $"Humphrey Compiler - V{VersionNumber}";
 
         bool optimisations;
 
-        public CompilationUnit(string sourceFileNameAndPath, CommonSymbolTable rootFromSemmantic, IGlobalDefinition[] definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
+        public CompilationUnit(string sourceFileNameAndPath, CommonSymbolTable rootFromSemmantic, IPackageManager manager, IGlobalDefinition[] definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
         {
             optimisations = !disableOptimisations;
 
@@ -52,6 +52,7 @@ namespace Humphrey.Backend
             LLVM.InitializeX86AsmPrinter();
 
             root = rootFromSemmantic;
+            packageManager = manager;
             debugScopeStack=new Stack<LLVMMetadataRef>();
 
             var moduleName = System.IO.Path.GetFileNameWithoutExtension(sourceFileNameAndPath);
@@ -62,12 +63,13 @@ namespace Humphrey.Backend
             rootDebugScope = debugBuilder.RootScope;
             PushScope(root, rootDebugScope);
 
-            pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
+            currentNamespace = root;
+            currentNamespace.pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
             foreach (var def in definitions)
             {
                 foreach (var ident in def.Identifiers)
                 {
-                    pendingDefinitions.Add(ident.Dump(), def);
+                    currentNamespace.pendingDefinitions.Add(ident.Dump(), def);
                 }
             }
 
@@ -86,9 +88,9 @@ namespace Humphrey.Backend
 
         public void Compile()
         {
-            while (pendingDefinitions.Count!=0)
+            while (currentNamespace.pendingDefinitions.Count!=0)
             {
-                var enumerator = pendingDefinitions.Keys.GetEnumerator();
+                var enumerator = currentNamespace.pendingDefinitions.Keys.GetEnumerator();
                 enumerator.MoveNext();
                 CompileMissing(enumerator.Current);
             }
@@ -97,12 +99,12 @@ namespace Humphrey.Backend
         }
         public bool CompileMissing(string identifier)
         {
-            if (pendingDefinitions.TryGetValue(identifier, out var definition))
+            if (currentNamespace.pendingDefinitions.TryGetValue(identifier, out var definition))
             {
-                var savedScope = PushScope(root, rootDebugScope);
+                var savedScope = PushScope(currentNamespace, rootDebugScope);
                 foreach (var ident in definition.Identifiers)
                 {
-                    pendingDefinitions.Remove(ident.Dump());
+                    currentNamespace.pendingDefinitions.Remove(ident.Dump());
                 }
                 definition.Compile(this);
                 PopScope(savedScope);
@@ -491,6 +493,20 @@ namespace Humphrey.Backend
             predefinedValue.SetCommpilationFunction(cfunc);
 
             return cfunc;
+        }
+
+        // Used for namespaces.. but we probably need a proper debug scope for this
+        public (CommonSymbolTable oldScope, CommonSymbolTable oldNamespace) PushNamespaceScope(CommonSymbolTable newScope)
+        {
+            var oldNamespace = currentNamespace;
+            currentNamespace = newScope;
+            return (PushScope(newScope, debugScopeStack.Peek()), oldNamespace);
+        }
+
+        public void PopNamespaceScope((CommonSymbolTable oldScope, CommonSymbolTable oldNamespace) dc)
+        {
+            currentNamespace = dc.oldNamespace;
+            PopScope(dc.oldScope);
         }
 
         public CommonSymbolTable PushScope(CommonSymbolTable newScope, LLVMMetadataRef debugScope)

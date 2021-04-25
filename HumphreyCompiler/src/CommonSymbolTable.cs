@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Humphrey.FrontEnd;
 
 namespace Humphrey
 {
@@ -7,6 +8,9 @@ namespace Humphrey
         private readonly Dictionary<string, CommonSymbolTableEntry> _typeTable;
         private readonly Dictionary<string, CommonSymbolTableEntry> _functionTable;
         private readonly Dictionary<string, CommonSymbolTableEntry> _valueTable;
+        private readonly Dictionary<string, (CommonSymbolTable symbols, IPackageLevel packageLevel)> _namespaceTable;
+
+        public Dictionary<string, IGlobalDefinition> pendingDefinitions;
 
         private CommonSymbolTable _parent;
 
@@ -15,7 +19,9 @@ namespace Humphrey
             _typeTable = new Dictionary<string, CommonSymbolTableEntry>();
             _functionTable = new Dictionary<string, CommonSymbolTableEntry>();
             _valueTable = new Dictionary<string, CommonSymbolTableEntry>();
+            _namespaceTable = new Dictionary<string, (CommonSymbolTable symbols, IPackageLevel packageLevel)>();
             _parent = parent;
+            pendingDefinitions = null;
         }
 
         public CommonSymbolTableEntry FetchType(string identifier)
@@ -38,6 +44,46 @@ namespace Humphrey
                 return false;
             _typeTable.Add(identifier, entry);
             return true;
+        }
+
+        public bool AddNamespace(string identifier, IPackageLevel level)
+        {
+            return AddNamespace(identifier, level, new CommonSymbolTable(null), null);
+        }
+
+        public bool AddNamespace(string identifier, IPackageLevel level, CommonSymbolTable entry, IGlobalDefinition[] pending)
+        {
+            if (FetchNamespace(identifier)!=null)
+                return false;
+
+            var global = this;
+            while (global._parent!=null)
+            {
+                global = global._parent;
+            }
+            // We always add the namespace to the root of the symbol table... I think
+            if (pending != null)
+            {
+                entry.pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
+                foreach (var def in pending)
+                {
+                    foreach (var ident in def.Identifiers)
+                    {
+                        entry.pendingDefinitions.Add(ident.Dump(), def);
+                    }
+                }
+            }
+            global._namespaceTable.Add(identifier, (entry, level));
+            return true;
+        }
+
+        public CommonSymbolTable FetchNamespace(string identifier)
+        {
+            if (_namespaceTable.TryGetValue(identifier, out var result))
+                return result.symbols;
+            if (_parent!=null)
+                return Parent.FetchNamespace(identifier);
+            return null;
         }
 
         public CommonSymbolTableEntry FetchFunction(string identifier)

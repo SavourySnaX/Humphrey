@@ -149,6 +149,17 @@ namespace Humphrey.FrontEnd.Tests
             var parser = new HumphreyParser(tokens);
             CheckAst(input, parser.ParseExpression(), expected);
         }
+        
+        [Theory]
+        [InlineData("System::Types::wat", "System::Types::wat")]
+        [InlineData("System::Types::wat+bob", "+ System::Types::wat bob")]
+        public void CheckExpressionNamespace(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.ParseExpression(), expected);
+        }
 
         [Theory]
         [InlineData("\"blah\"", "\"blah\"")]

@@ -164,6 +164,11 @@ namespace Humphrey.Experiments
                 return;
             }
 
+            // Todo Package Manager
+            var list = new List<IPackageManager>();
+            list.Add(new FileSystemPackageManager(Path.GetDirectoryName(options.inputFiles[0])));
+            var packageManager = new DefaultPackageManager(list.ToArray());
+
             var messages = new CompilerMessages(options.debugLog, options.infoLog, options.warningsAsErrors);
 
             var tokeniser = new HumphreyTokeniser(messages);
@@ -176,12 +181,12 @@ namespace Humphrey.Experiments
 
                 if (!messages.HasErrors)
                 {
-                    var semantic = new SemanticPass(options.inputFiles[0], messages);
+                    var semantic = new SemanticPass(packageManager, messages);
                     semantic.RunPass(parse);
                     if (!messages.HasErrors)
                     {
                         var compiler = new HumphreyCompiler(messages);
-                        var cu = compiler.Compile(semantic.RootSymbolTable, parse, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo);
+                        var cu = compiler.Compile(semantic.RootSymbolTable, packageManager, parse, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo);
 
                         if (!messages.HasErrors)
                         {
