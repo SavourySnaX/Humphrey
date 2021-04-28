@@ -293,8 +293,8 @@ namespace Humphrey.FrontEnd
                     return left;
                 if (resolvedRight.GetType()==typeof(AstArrayType) && resolvedLeft.GetType()==typeof(AstBitType))
                     return right;
-                    
-                throw new System.NotImplementedException($"Type mismatch in binary expression... really need int ast type");
+
+                pass.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Type mismatch : '{left.Token.Value}' != '{right.Token.Value}", token.Location, token.Remainder);
             }
 
             return left;
