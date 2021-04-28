@@ -8,6 +8,16 @@ UInt16 : [16]bit
 UInt32 : [32]bit
 UInt64 : [64]bit
 
+InIsOutUInt8:(in:UInt8)(out:UInt8)=
+{
+    out=in;
+}
+
+AllOnesUInt64:()(out:UInt64)=
+{
+    out=-1;
+}
+
 MemorySizeOf:(type:_)(size:UInt64)=
 {
     ptr:=&type;

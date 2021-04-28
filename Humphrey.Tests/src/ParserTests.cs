@@ -162,6 +162,19 @@ namespace Humphrey.FrontEnd.Tests
         }
 
         [Theory]
+        [InlineData("using System", "using System")]
+        [InlineData("using System::Types", "using System::Types")]
+        [InlineData("using System::Types as Goldfish", "using System::Types as Goldfish")]
+        public void CheckUsingNamespace(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.Using(), expected);
+        }
+
+
+        [Theory]
         [InlineData("\"blah\"", "\"blah\"")]
         [InlineData("\"\"", "\"\"")]
         [InlineData("\"執筆\"", "\"執筆\"")]

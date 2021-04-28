@@ -88,6 +88,7 @@ namespace Humphrey.FrontEnd.Tests
         [Theory]
         [InlineData("return", Tokens.KW_Return)]
         [InlineData("bit", Tokens.KW_Bit)]
+        [InlineData("using", Tokens.KW_Using)]
         [InlineData("for", Tokens.KW_For)]
         [InlineData("if", Tokens.KW_If)]
         [InlineData("else", Tokens.KW_Else)]

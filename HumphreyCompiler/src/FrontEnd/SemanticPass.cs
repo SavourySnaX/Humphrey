@@ -14,7 +14,8 @@ namespace Humphrey.FrontEnd
 
         Dictionary<Result<Tokens>, SemanticInfo> semanticInfo;
 
-        IPackageLevel packageRoot;
+        IPackageManager currentManager; 
+        IPackageLevel packageRoot;          // level could match managerRoot but doesn't have to
 
         public class SemanticInfo
         {
@@ -50,7 +51,18 @@ namespace Humphrey.FrontEnd
             LocalValue
         }
 
-        public SemanticPass(IPackageLevel level, ICompilerMessages overrideDefaultMessages = null)
+        public SemanticPass(IPackageManager manager, ICompilerMessages overrideDefaultMessages = null)
+        {
+            var root = manager?.FetchRoot;
+            ConstructSemanticPass(manager, root, overrideDefaultMessages);
+        }
+
+        protected SemanticPass(IPackageManager manager, IPackageLevel level, ICompilerMessages overrideDefaultMessages = null)
+        {
+            ConstructSemanticPass(manager, level, overrideDefaultMessages);
+        }
+
+        protected void ConstructSemanticPass(IPackageManager manager, IPackageLevel level, ICompilerMessages overrideDefaultMessages = null)
         {
             messages = overrideDefaultMessages;
             if (messages==null)
@@ -58,6 +70,7 @@ namespace Humphrey.FrontEnd
             symbolStack = new Stack<CommonSymbolTable>();
             root = new CommonSymbolTable(null);
             currentScope = root;
+            currentManager = manager;
             packageRoot = level;
             semanticInfo = new Dictionary<Result<Tokens>, SemanticInfo>();
         }
@@ -67,14 +80,22 @@ namespace Humphrey.FrontEnd
             pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
             foreach (var def in globals)
             {
-                foreach (var ident in def.Identifiers)
+                // Process using statements first, then the rest
+                if (def is AstUsingNamespace usingNamespace)
                 {
-                    if (pendingDefinitions.ContainsKey(ident.Name))
+                    usingNamespace.Semantic(this);
+                }
+                else
+                {
+                    foreach (var ident in def.Identifiers)
                     {
-                        Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {ident.Name} already exists", ident.Token.Location, ident.Token.Remainder);
-                        continue;
+                        if (pendingDefinitions.ContainsKey(ident.Name))
+                        {
+                            Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {ident.Name} already exists", ident.Token.Location, ident.Token.Remainder);
+                            continue;
+                        }
+                        pendingDefinitions.Add(ident.Name, def);
                     }
-                    pendingDefinitions.Add(ident.Name, def);
                 }
             }
 
@@ -209,6 +230,46 @@ namespace Humphrey.FrontEnd
             return currentScope;
         }
 
+        public IGlobalDefinition[] ImportNamespace(IIdentifier[] scope)
+        {
+            // For now, pulls ALL in 
+            // so locate the correct package point to start pulling in
+            var cLevel = currentManager.FetchRoot;  // Always import from global root
+            foreach (var s in scope)
+            {
+                cLevel = cLevel.FetchEntry(s.Name);
+                if (cLevel == null)
+                {
+                    //TODO error
+                    return null;
+                }
+            }
+            if (cLevel == null)
+            {
+                //TODO error
+                return null;
+            }
+
+            // At this point we either have a level (and thus a list of named entries)
+            //or we have an Entry, in which case we import the entry
+            if (cLevel is IPackageEntry packageEntry)
+            {
+                // this would be a file, and thus should be compiled i think...
+                var t = new HumphreyTokeniser(messages);
+                var p = new HumphreyParser(t.Tokenize(packageEntry.Contents), messages);
+                var globals = p.File();
+                var sp = new SemanticPass(currentManager,cLevel, messages);
+                sp.RunPass(globals);
+
+                RootSymbolTable.MergeSymbolTable(sp.RootSymbolTable);
+                return globals;
+            }
+            else
+            {
+                throw new System.NotImplementedException($"TODO");
+            }
+        }
+
         public (CommonSymbolTable recoverTo, CommonSymbolTable root) PushNamespace(IIdentifier[] scope)
         {
             var oldScope = currentScope;
@@ -231,7 +292,7 @@ namespace Humphrey.FrontEnd
                         var t = new HumphreyTokeniser(messages);
                         var p = new HumphreyParser(t.Tokenize(packageEntry.Contents), messages);
                         var globals = p.File();
-                        var sp = new SemanticPass(entry, messages);
+                        var sp = new SemanticPass(currentManager,entry, messages);
                         sp.RunPass(globals);
                         cScope.AddNamespace(s.Name, entry, sp.RootSymbolTable, globals);
                         result = cScope.FetchNamespace(s.Name);
