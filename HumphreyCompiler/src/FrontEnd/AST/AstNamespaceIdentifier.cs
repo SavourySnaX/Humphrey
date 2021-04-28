@@ -6,14 +6,16 @@ namespace Humphrey.FrontEnd
     public class AstNamespaceIdentifier : IExpression,IType,ILoadValue,IStorable, IIdentifier, ISymbolScope
     {
         IIdentifier[] names;
+        IIdentifier[] fullPath;
         CommonSymbolTable symbolTable;  // end, ie the table that contains final
         IIdentifier final;
-        private bool semanticDone;
+        //private bool semanticDone;
         public AstNamespaceIdentifier(IIdentifier[] items)
         {
+            fullPath = items;
             names = items[0..^1];
             final = items[^1];
-            semanticDone = false;
+            //semanticDone = false;
         }
     
         public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
@@ -44,9 +46,22 @@ namespace Humphrey.FrontEnd
             throw new System.NotImplementedException($"Todo implement constant expression processing for constant values");
         }
 
+        public (CommonSymbolTable, CommonSymbolTable) PushNamespace(CompilationUnit unit)
+        {
+            return unit.PushNamespaceScope(symbolTable);
+        }
+
+        public void PopNamespace(CompilationUnit unit, (CommonSymbolTable,CommonSymbolTable) recoverTo)
+        {
+            unit.PopNamespaceScope(recoverTo);
+        }
+
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            return unit.FetchValue(this, builder);
+            var recoverTo = unit.PushNamespaceScope(symbolTable);
+            var result = unit.FetchValue(this, builder);
+            unit.PopNamespaceScope(recoverTo);
+            return result;
         }
 
         public void ProcessExpressionForStore(CompilationUnit unit, CompilationBuilder builder, IExpression value)
@@ -78,7 +93,7 @@ namespace Humphrey.FrontEnd
 
         public void Semantic(SemanticPass pass)
         {
-            return; // To revisit
+            ResolveBaseType(pass);
             /*
             if (!semanticDone)
             {
@@ -117,6 +132,7 @@ namespace Humphrey.FrontEnd
         public SemanticPass.IdentifierKind GetBaseType => SemanticPass.IdentifierKind.None;
 
         public CommonSymbolTable SymbolTable => symbolTable;
+        public IIdentifier[] FullPath => fullPath;
     }
 }
 

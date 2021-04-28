@@ -47,7 +47,12 @@ namespace Humphrey.FrontEnd
                 // we need the parameter kinds to be computed so we know how to materialise the function
                 // another todo - we need to build the function at the original scope, but at present we don't have that scope!
 
+                var namespaced = expr as AstNamespaceIdentifier;
+
+                var recoverTo = namespaced?.PushNamespace(unit);
                 (var ct, var ot) = functionType.CreateOrFetchType(unit, resolvedInputs);
+                namespaced?.PopNamespace(unit, recoverTo.Value);
+
                 var ft = ot as AstFunctionType;
 
                 var inputs = ComputeInputValues(unit, builder, ct);

@@ -133,5 +133,21 @@ namespace Humphrey
 
         public CommonSymbolTable Parent => _parent;
 
+        internal void MergeSymbolTable(CommonSymbolTable rootSymbolTable)
+        {
+            // Do types
+            foreach (var e in rootSymbolTable._typeTable)
+            {
+                AddType(e.Key, e.Value);
+            }
+            foreach (var e in rootSymbolTable._functionTable)
+            {
+                AddFunction(e.Key, e.Value);
+            }
+            foreach (var e in rootSymbolTable._valueTable)
+            {
+                AddValue(e.Key, e.Value);
+            }
+        }
     }
 }

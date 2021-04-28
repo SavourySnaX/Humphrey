@@ -167,6 +167,8 @@ namespace Humphrey.Experiments
             // Todo Package Manager
             var list = new List<IPackageManager>();
             list.Add(new FileSystemPackageManager(Path.GetDirectoryName(options.inputFiles[0])));
+            // temp until i command lines
+            list.Add(new GitPackageManager("C:\\work\\humphrey.system\\.git", "main"));
             var packageManager = new DefaultPackageManager(list.ToArray());
 
             var messages = new CompilerMessages(options.debugLog, options.infoLog, options.warningsAsErrors);

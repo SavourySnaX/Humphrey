@@ -65,15 +65,22 @@ namespace Humphrey.Backend
 
             currentNamespace = root;
             currentNamespace.pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
+            targetDataRef = moduleRef.GetDataLayout();
+
             foreach (var def in definitions)
             {
-                foreach (var ident in def.Identifiers)
+                if (def is AstUsingNamespace usingNamespace)
                 {
-                    currentNamespace.pendingDefinitions.Add(ident.Dump(), def);
+                    usingNamespace.Compile(this);
+                }
+                else
+                {
+                    foreach (var ident in def.Identifiers)
+                    {
+                        currentNamespace.pendingDefinitions.Add(ident.Dump(), def);
+                    }
                 }
             }
-
-            targetDataRef = moduleRef.GetDataLayout();
         }
 
         public UInt64 GetTypeSizeInBits(CompilationType type)

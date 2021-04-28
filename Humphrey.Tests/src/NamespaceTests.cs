@@ -107,6 +107,16 @@ UInt16 : [16]bit
 UInt32 : [32]bit
 UInt64 : [64]bit
 
+InIsOutUInt8:(in:UInt8)(out:UInt8)=
+{
+    out=in;
+}
+
+AllOnesUInt64:()(out:UInt64)=
+{
+    out=-1;
+}
+
 MemorySizeOf:(type:_)(size:UInt64)=
 {
     ptr:=&type;
@@ -127,7 +137,7 @@ MemorySizeOf:(type:_)(size:UInt64)=
 
         private IPackageManager GetPackageManagerForGitTest([CallerFilePath] string currentFolder="")
         {
-            return new GitPackageManager(Repository.Discover(Directory.GetCurrentDirectory()), "b74f95ac7e5b8a39acf9d83a0ef24e59760196b4");
+            return new GitPackageManager(Repository.Discover(Directory.GetCurrentDirectory()), "7d22c3da73526b0f28cbddfc8460dc77559cc9d7");
         }
 
         private IPackageManager GetPackageManagerForDefault([CallerFilePath] string currentFolder="")
@@ -138,15 +148,41 @@ MemorySizeOf:(type:_)(size:UInt64)=
         }
 
         [Theory]
+        // direct reference
         [InlineData("Main:()(returnValue:System::Types::UInt8)={returnValue=0x93;} ", 0x93)]
-        //[InlineData("using System Main:()(returnValue:Types.UInt8)={returnValue=0;} ")]
-        //[InlineData("using System/Types Main:()(returnValue:UInt8)={returnValue=0;} ")]
+        [InlineData("Main:()(returnValue:System::Types::UInt8)={returnValue=(System::Types::AllOnesUInt64() as System::Types::UInt8);} ", 0xFF)]
+        [InlineData("Main:()(returnValue:System::Types::UInt8)={returnValue=System::Types::InIsOutUInt8(12);} ", 12)]
+        [InlineData("Main:()(returnValue:System::Types::UInt8)={returnValue=System::Types::InIsOutUInt8(12 as System::Types::UInt8);} ", 12)]
+        [InlineData("Main:()(returnValue:System::Types::UInt8)={returnValue=System::Types::MemorySizeOf(returnValue) as System::Types::UInt8;} ", 0x1)]
+        // using
+        [InlineData("using System::Types Main:()(returnValue:UInt8)={returnValue=0x93;} ", 0x93)]
+        [InlineData("using System::Types Main:()(returnValue:UInt8)={returnValue=(AllOnesUInt64() as UInt8);} ", 0xFF)]
+        [InlineData("using System::Types Main:()(returnValue:UInt8)={returnValue=InIsOutUInt8(12);} ", 12)]
+        [InlineData("using System::Types Main:()(returnValue:UInt8)={returnValue=InIsOutUInt8(12 as UInt8);} ", 12)]
+        [InlineData("using System::Types Main:()(returnValue:UInt8)={returnValue=MemorySizeOf(returnValue) as UInt8;} ", 0x1)]
+        // using and direct reference
+        [InlineData("using System::Types Main:()(returnValue:System::Types::UInt8)={returnValue=0x93;} ", 0x93)]
+        [InlineData("using System::Types Main:()(returnValue:System::Types::UInt8)={returnValue=(AllOnesUInt64() as UInt8);} ", 0xFF)]
+        [InlineData("using System::Types Main:()(returnValue:System::Types::UInt8)={returnValue=InIsOutUInt8(12);} ", 12)]
+        [InlineData("using System::Types Main:()(returnValue:System::Types::UInt8)={returnValue=InIsOutUInt8(12 as UInt8);} ", 12)]
+        [InlineData("using System::Types Main:()(returnValue:System::Types::UInt8)={returnValue=MemorySizeOf(returnValue) as UInt8;} ", 0x1)]
         public void CheckNamespaceTest(string input, byte result)
         {
-            BuildForTest(input, result, GetPackageManagerForGitTest());
             BuildForTest(input, result, GetPackageManagerForTests());
             BuildForTest(input, result, GetPackageManagerForFileSystemTests());
             BuildForTest(input, result, GetPackageManagerForDefault());
+            BuildForTest(input, result, GetPackageManagerForGitTest());
+        }
+
+
+        [Theory]
+        [InlineData("using System::Types using Test1 Main:()(returnValue:UInt8)={returnValue=FunctionInTest1();} ", 0x42)]
+        public void CheckMultiFile(string input, byte result)
+        {
+            var p = new TestPackageManager();
+            p.AddAnEntry("System/Types.humphrey", SystemTypes);
+            p.AddAnEntry("Test1.humphrey", "using System::Types FunctionInTest1:()(out:UInt8)={ out = 0x42; }");
+            BuildForTest(input, result, p);
         }
         
         private void BuildForTest(string input, byte expected, IPackageManager manager)
@@ -156,7 +192,7 @@ MemorySizeOf:(type:_)(size:UInt64)=
             var tokens = tokenise.Tokenize(input);
             var parser = new HumphreyParser(tokens, messages);
             var parsed = parser.File();
-            var semantic = new SemanticPass(manager.FetchRoot, messages);
+            var semantic = new SemanticPass(manager, messages);
             semantic.RunPass(parsed);
             var compiler = new HumphreyCompiler(messages);
             var unit = compiler.Compile(semantic.RootSymbolTable, manager, parsed, "test", "x86_64", false, true);

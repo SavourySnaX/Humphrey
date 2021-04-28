@@ -33,6 +33,9 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Keyword", Example = "bit", SemanticKind = "Type")]
         KW_Bit,
 
+        [Token(Category = "Keyword", Example = "using", SemanticKind = "Keyword")]
+        KW_Using,
+
         [Token(Category = "Keyword", Example = "for", SemanticKind = "Keyword")]
         KW_For,
 
@@ -439,6 +442,7 @@ namespace Humphrey.FrontEnd
             ["if"] = Tokens.KW_If,
             ["else"] = Tokens.KW_Else,
             ["while"] = Tokens.KW_While,
+            ["using"] = Tokens.KW_Using,
         };
 
         protected static Result<char> SkipWhiteSpace(TokenSpan span)

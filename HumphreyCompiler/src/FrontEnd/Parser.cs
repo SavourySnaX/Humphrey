@@ -293,7 +293,9 @@ namespace Humphrey.FrontEnd
             if (items.Length == 1)
                 return items[0];
 
-            return new AstNamespaceIdentifier(items);
+            var range = new AstNamespaceIdentifier(items);
+            range.Token = new Result<Tokens>(items[0].Token.Value, items[0].Token.Location, items[^1].Token.Remainder);
+            return range;
         }
 
         // number_list : Number*
@@ -309,6 +311,7 @@ namespace Humphrey.FrontEnd
         public IAst IfKeyword() { return AstItem(Tokens.KW_If, (e) => new AstKeyword(e)); }
         public IAst ElseKeyword() { return AstItem(Tokens.KW_Else, (e) => new AstKeyword(e)); }
         public IAst WhileKeyword() { return AstItem(Tokens.KW_While, (e) => new AstKeyword(e)); }
+        public IAst UsingKeyword() { return AstItem(Tokens.KW_Using, (e) => new AstKeyword(e)); }
 
         // predec : --
         public IAst PreDecrementOperator() { return AstItem(Tokens.O_MinusMinus, (e) => new AstOperator(e)); }
@@ -408,7 +411,7 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] StructDefinitions => new AstItemDelegate[] { StructElementDefinition };
         public AstItemDelegate[] EnumDefinitions => new AstItemDelegate[] { EnumElementDefinition };
         public AstItemDelegate[] LocalDefinition => new AstItemDelegate[] { LocalScopeDefinition };
-        public AstItemDelegate[] GlobalDefinition => new AstItemDelegate[] { GlobalScopeDefinition };
+        public AstItemDelegate[] GlobalDefinition => new AstItemDelegate[] { Using, GlobalScopeDefinition };
 
         // terminal : Number | IdentifierTerminal | BracketedExpression
         public AstItemDelegate[] Terminal => new AstItemDelegate[] { Number, StringLiteral, IdentifierTerminal, BracketedExpression };
@@ -771,6 +774,33 @@ namespace Humphrey.FrontEnd
             var range = new AstRange(inclusiveBegin, exclusiveEnd);
             range.Token = new Result<Tokens>(inclusiveBegin.Token.Value, inclusiveBegin.Token.Location, exclusiveEnd.Token.Remainder);
             return range;
+        }
+
+        [ExpectedParseError("GlobalDefinition")]
+        public AstUsingNamespace Using()
+        {
+            var start = CurrentToken();
+            if (UsingKeyword() == null)
+                return null;
+
+            var usingName = TypeIdentifier();
+            if (usingName == null)
+                return null;
+
+            var end = CurrentToken();
+            AstIdentifier newName = null;
+            if (AsOperator()!=null)
+            {
+                newName = Identifier();
+                if (newName==null)
+                    return null;
+
+                end = CurrentToken();
+            }
+
+            var usingNamespace = new AstUsingNamespace(usingName, newName);
+            usingNamespace.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
+            return usingNamespace;
         }
 
         public AstWhileStatement WhileStatement()
