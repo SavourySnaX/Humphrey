@@ -121,7 +121,7 @@ namespace Humphrey.FrontEnd
             return resolveBase;
         }
 
-        public string Name => final.Name;//throw new System.NotImplementedException($"");
+        public string Name => final.Name;
 
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }

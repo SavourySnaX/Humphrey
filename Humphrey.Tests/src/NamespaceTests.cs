@@ -195,7 +195,7 @@ MemorySizeOf:(type:_)(size:UInt64)=
             var semantic = new SemanticPass(manager, messages);
             semantic.RunPass(parsed);
             var compiler = new HumphreyCompiler(messages);
-            var unit = compiler.Compile(semantic.RootSymbolTable, manager, parsed, "test", "x86_64", false, true);
+            var unit = compiler.Compile(semantic, "test", "x86_64", false, true);
 
             if (messages.HasErrors)
             {

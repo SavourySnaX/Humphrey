@@ -1304,7 +1304,7 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
             var semantic = new SemanticPass(null, messages);
             semantic.RunPass(parsed);
             var compiler = new HumphreyCompiler(messages);
-            var unit = compiler.Compile(semantic.RootSymbolTable, null, parsed, "test", "x86_64", false, true);
+            var unit = compiler.Compile(semantic, "test", "x86_64", false, true);
 
             if (messages.HasErrors)
             {

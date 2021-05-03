@@ -56,12 +56,6 @@ namespace Humphrey
             if (FetchNamespace(identifier)!=null)
                 return false;
 
-            var global = this;
-            while (global._parent!=null)
-            {
-                global = global._parent;
-            }
-            // We always add the namespace to the root of the symbol table... I think
             if (pending != null)
             {
                 entry.pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
@@ -73,7 +67,7 @@ namespace Humphrey
                     }
                 }
             }
-            global._namespaceTable.Add(identifier, (entry, level));
+            _namespaceTable.Add(identifier, (entry, level));
             return true;
         }
 

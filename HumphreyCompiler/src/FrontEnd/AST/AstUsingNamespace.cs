@@ -16,11 +16,6 @@ namespace Humphrey.FrontEnd
 
         public bool Compile(CompilationUnit unit)
         {
-            foreach (var e in toCompile)
-            {
-                e.Compile(unit);
-            }
-
             return true;
         }
 
@@ -35,14 +30,14 @@ namespace Humphrey.FrontEnd
         {
             if (_toInclude is AstIdentifier identifier)
             {
-                toCompile = pass.ImportNamespace(new IIdentifier[] {identifier});
-                return;
+                pass.ImportNamespace(new IIdentifier[] {identifier});
             }
-            var namesp = _toInclude as AstNamespaceIdentifier;
-            toCompile = pass.ImportNamespace(namesp.FullPath);
+            else
+            {
+                var namesp = _toInclude as AstNamespaceIdentifier;
+                pass.ImportNamespace(namesp.FullPath);
+            }
         }
-
-        private IGlobalDefinition[] toCompile;
 
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }

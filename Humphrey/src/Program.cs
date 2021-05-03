@@ -188,7 +188,7 @@ namespace Humphrey.Experiments
                     if (!messages.HasErrors)
                     {
                         var compiler = new HumphreyCompiler(messages);
-                        var cu = compiler.Compile(semantic.RootSymbolTable, packageManager, parse, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo);
+                        var cu = compiler.Compile(semantic, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo);
 
                         if (!messages.HasErrors)
                         {

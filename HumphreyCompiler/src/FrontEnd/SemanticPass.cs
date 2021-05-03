@@ -11,6 +11,7 @@ namespace Humphrey.FrontEnd
 
         ICompilerMessages messages;
         Dictionary<string, IGlobalDefinition> pendingDefinitions;
+        List<IGlobalDefinition> pendingCompile;
 
         Dictionary<Result<Tokens>, SemanticInfo> semanticInfo;
 
@@ -73,11 +74,13 @@ namespace Humphrey.FrontEnd
             currentManager = manager;
             packageRoot = level;
             semanticInfo = new Dictionary<Result<Tokens>, SemanticInfo>();
+            pendingCompile = new List<IGlobalDefinition>();
+            pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
         }
 
-        public void RunPass(IGlobalDefinition[] globals)
+        public void AddToPending(IGlobalDefinition[] globals)
         {
-            pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
+            pendingCompile.AddRange(globals);
             foreach (var def in globals)
             {
                 // Process using statements first, then the rest
@@ -98,7 +101,11 @@ namespace Humphrey.FrontEnd
                     }
                 }
             }
+        }
 
+        public void RunPass(IGlobalDefinition[] globals)
+        {
+            AddToPending(globals);
             while (pendingDefinitions.Count!=0)
             {
                 var enumerator = pendingDefinitions.Keys.GetEnumerator();
@@ -230,7 +237,7 @@ namespace Humphrey.FrontEnd
             return currentScope;
         }
 
-        public IGlobalDefinition[] ImportNamespace(IIdentifier[] scope)
+        public void ImportNamespace(IIdentifier[] scope)
         {
             // For now, pulls ALL in 
             // so locate the correct package point to start pulling in
@@ -240,29 +247,23 @@ namespace Humphrey.FrontEnd
                 cLevel = cLevel.FetchEntry(s.Name);
                 if (cLevel == null)
                 {
-                    //TODO error
-                    return null;
+                    throw new System.Exception($"TODO error unknown namespace");
                 }
             }
             if (cLevel == null)
             {
-                //TODO error
-                return null;
+                throw new System.Exception($"TODO error unknown namespace");
             }
 
             // At this point we either have a level (and thus a list of named entries)
             //or we have an Entry, in which case we import the entry
             if (cLevel is IPackageEntry packageEntry)
             {
-                // this would be a file, and thus should be compiled i think...
+                var newScope = PushScope();
                 var t = new HumphreyTokeniser(messages);
                 var p = new HumphreyParser(t.Tokenize(packageEntry.Contents), messages);
                 var globals = p.File();
-                var sp = new SemanticPass(currentManager,cLevel, messages);
-                sp.RunPass(globals);
-
-                RootSymbolTable.MergeSymbolTable(sp.RootSymbolTable);
-                return globals;
+                AddToPending(globals);
             }
             else
             {
@@ -320,6 +321,8 @@ namespace Humphrey.FrontEnd
             currentScope = currentScope.Parent;
         }
 
+        public IPackageManager Manager => currentManager;
+        public IEnumerable<IGlobalDefinition> ToCompile => pendingCompile;
         public ICompilerMessages Messages => messages;
         public CommonSymbolTable RootSymbolTable => root;
     }
