@@ -12,9 +12,9 @@ namespace Humphrey.FrontEnd
                 messages = new CompilerMessages(true, true, false);
         }
 
-        public CompilationUnit Compile(CommonSymbolTable symbols, IPackageManager manager, IGlobalDefinition[] definitions, string sourceFileNameAndPath , string targetTriple, bool disableOptimisations, bool debugInfo)
+        public CompilationUnit Compile(SemanticPass pass, string sourceFileNameAndPath , string targetTriple, bool disableOptimisations, bool debugInfo)
         {
-            var unit = new CompilationUnit(sourceFileNameAndPath, symbols, manager, definitions, targetTriple, disableOptimisations, debugInfo, messages);
+            var unit = new CompilationUnit(sourceFileNameAndPath, pass.RootSymbolTable, pass.Manager, pass.ToCompile, targetTriple, disableOptimisations, debugInfo, messages);
             try
             {
                 unit.Compile();
