@@ -176,7 +176,7 @@ MemorySizeOf:(type:_)(size:UInt64)=
 
 
         [Theory]
-        [InlineData("using System::Types using Test1 Main:()(returnValue:UInt8)={returnValue=FunctionInTest1();} ", 0x42)]
+        [InlineData("#!using System::Types!# using Test1 Main:()(returnValue:UInt8)={returnValue=FunctionInTest1();} ", 0x42)]
         public void CheckMultiFile(string input, byte result)
         {
             var p = new TestPackageManager();

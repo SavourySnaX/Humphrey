@@ -77,7 +77,7 @@ namespace Humphrey.Backend
                 {
                     foreach (var ident in def.Identifiers)
                     {
-                        currentNamespace.pendingDefinitions.Add(ident.Dump(), def);
+                        currentNamespace.pendingDefinitions.Add(ident.Name, def);
                     }
                 }
             }
