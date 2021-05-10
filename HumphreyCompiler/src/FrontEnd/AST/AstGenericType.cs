@@ -4,20 +4,26 @@ namespace Humphrey.FrontEnd
     public class AstGenericType : IType
     {
         private IType belongsTo;
+        CommonSymbolTable symbolTable;
+
         public AstGenericType()
         {
             belongsTo=null;
         }
 
-        public void SetInstanceType(IType type)
+        public void SetInstanceType(IType type, CommonSymbolTable currentScope)
         {
             belongsTo = type;
+            symbolTable=currentScope;
         }
 
         public (CompilationType compilationType, IType originalType) CreateOrFetchType(CompilationUnit unit)
         {
             // TODO LINK THE TYPE BACK TO THE FUNCTION PARAMETER, so we can actually resolve ourselves
-            return belongsTo.CreateOrFetchType(unit);
+            var oldScope = unit.PushScope(symbolTable, unit.DebugScope);
+            var result = belongsTo.CreateOrFetchType(unit);
+            unit.PopScope(oldScope);
+            return result;
         }
 
         public string Dump()

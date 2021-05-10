@@ -14,7 +14,7 @@ namespace Humphrey.FrontEnd
 
         public CompilationUnit Compile(SemanticPass pass, string sourceFileNameAndPath , string targetTriple, bool disableOptimisations, bool debugInfo)
         {
-            var unit = new CompilationUnit(sourceFileNameAndPath, pass.RootSymbolTable, pass.Manager, pass.ToCompile, targetTriple, disableOptimisations, debugInfo, messages);
+            var unit = new CompilationUnit(sourceFileNameAndPath, pass.RootSymbolTable, pass.ImportedNamespaces, pass.Manager, pass.ToCompile, targetTriple, disableOptimisations, debugInfo, messages);
             try
             {
                 unit.Compile();

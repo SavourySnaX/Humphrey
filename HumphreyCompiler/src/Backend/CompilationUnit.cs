@@ -33,7 +33,7 @@ namespace Humphrey.Backend
 
         bool optimisations;
 
-        public CompilationUnit(string sourceFileNameAndPath, CommonSymbolTable rootFromSemmantic, IPackageManager manager, IEnumerable<IGlobalDefinition> definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
+        public CompilationUnit(string sourceFileNameAndPath, CommonSymbolTable rootFromSemmantic, IEnumerable<CommonSymbolTable> extraNamespaces, IPackageManager manager, IEnumerable<IGlobalDefinition> definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
         {
             optimisations = !disableOptimisations;
 
@@ -69,16 +69,21 @@ namespace Humphrey.Backend
 
             foreach (var def in definitions)
             {
-                if (def is AstUsingNamespace usingNamespace)
-                {
-                    usingNamespace.Compile(this);
-                }
-                else
+                if (!(def is AstUsingNamespace))
                 {
                     foreach (var ident in def.Identifiers)
                     {
                         currentNamespace.pendingDefinitions.Add(ident.Name, def);
                     }
+                }
+            }
+
+            foreach (var extra in extraNamespaces)
+            {
+                root.MergeSymbolTable(extra);
+                foreach (var kv in extra.pendingDefinitions)
+                {
+                    currentNamespace.pendingDefinitions.Add(kv.Key, kv.Value);
                 }
             }
         }
@@ -521,6 +526,7 @@ namespace Humphrey.Backend
             debugScopeStack.Push(debugScope);
             var oldScope = currentScope;
             currentScope = newScope;
+            currentScope.PatchScope(root);
             return oldScope;
         }
 
@@ -756,6 +762,9 @@ namespace Humphrey.Backend
         {
             return debugBuilder.CreateGlobalVarable(name, debugScopeStack.Peek(), location, type);
         }
+
+        public CommonSymbolTable CurrentScope => currentScope;
+        public LLVMMetadataRef DebugScope => debugScopeStack.Peek();
 
         public LLVMModuleRef Module => moduleRef;
         public CompilerMessages Messages => messages;

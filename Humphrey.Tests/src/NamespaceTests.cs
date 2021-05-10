@@ -176,7 +176,7 @@ MemorySizeOf:(type:_)(size:UInt64)=
 
 
         [Theory]
-        [InlineData("#!using System::Types!# using Test1 Main:()(returnValue:UInt8)={returnValue=FunctionInTest1();} ", 0x42)]
+        [InlineData("using System::Types using Test1 Main:()(returnValue:UInt8)={returnValue=FunctionInTest1();} ", 0x42)]
         public void CheckMultiFile(string input, byte result)
         {
             var p = new TestPackageManager();
@@ -195,7 +195,11 @@ MemorySizeOf:(type:_)(size:UInt64)=
             var semantic = new SemanticPass(manager, messages);
             semantic.RunPass(parsed);
             var compiler = new HumphreyCompiler(messages);
-            var unit = compiler.Compile(semantic, "test", "x86_64", false, true);
+            CompilationUnit unit=null;
+            if (!messages.HasErrors)
+            {
+                unit = compiler.Compile(semantic, "test", "x86_64", false, true);
+            }
 
             if (messages.HasErrors)
             {
