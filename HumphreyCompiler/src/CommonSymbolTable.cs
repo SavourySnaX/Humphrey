@@ -143,5 +143,20 @@ namespace Humphrey
                 AddValue(e.Key, e.Value);
             }
         }
+
+        internal void PatchScope(CommonSymbolTable root)
+        {
+            if (root == this)
+                return;
+            var scope = this;
+            while (scope.Parent != null)
+            {
+                if (scope.Parent == root)
+                    return;
+                scope = scope.Parent;
+            }
+            // If we reach here, glue the symbol tables together
+            scope._parent = root;
+        }
     }
 }

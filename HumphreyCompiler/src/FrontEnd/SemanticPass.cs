@@ -11,6 +11,7 @@ namespace Humphrey.FrontEnd
 
         ICompilerMessages messages;
         Dictionary<string, IGlobalDefinition> pendingDefinitions;
+        List<CommonSymbolTable> importedNamespaces;
         List<IGlobalDefinition> pendingCompile;
 
         Dictionary<Result<Tokens>, SemanticInfo> semanticInfo;
@@ -76,19 +77,25 @@ namespace Humphrey.FrontEnd
             semanticInfo = new Dictionary<Result<Tokens>, SemanticInfo>();
             pendingCompile = new List<IGlobalDefinition>();
             pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
+            importedNamespaces = new List<CommonSymbolTable>();
         }
 
         public void AddToPending(IGlobalDefinition[] globals)
         {
             pendingCompile.AddRange(globals);
+            // Process using statements first, then the rest
             foreach (var def in globals)
             {
-                // Process using statements first, then the rest
                 if (def is AstUsingNamespace usingNamespace)
                 {
                     usingNamespace.Semantic(this);
                 }
-                else
+            }
+            root.pendingDefinitions=new Dictionary<string, IGlobalDefinition>();
+
+            foreach (var def in globals)
+            {
+                if (!(def is AstUsingNamespace))
                 {
                     foreach (var ident in def.Identifiers)
                     {
@@ -98,6 +105,7 @@ namespace Humphrey.FrontEnd
                             continue;
                         }
                         pendingDefinitions.Add(ident.Name, def);
+                        root.pendingDefinitions.Add(ident.Name, def);
                     }
                 }
             }
@@ -125,6 +133,15 @@ namespace Humphrey.FrontEnd
             var entry = currentScope.FetchValue(identifier.Name);
             if (entry==null)
             {
+                // Need to look in our imported namespaces too
+                foreach (var symbol in importedNamespaces)
+                {
+                    entry = symbol.FetchValue(identifier.Name);
+                    if (entry !=null)
+                    {
+                        return entry?.AstType;
+                    }
+                }
                 Missing(identifier.Name);
                 entry = currentScope.FetchValue(identifier.Name);
             }
@@ -136,6 +153,15 @@ namespace Humphrey.FrontEnd
             var type = FetchAnyType(identifier);
             if (type == null)
             {
+                // Need to look in our imported namespaces too
+                foreach (var symbol in importedNamespaces)
+                {
+                    type = symbol.FetchAny(identifier.Name)?.AstType;
+                    if (type !=null)
+                    {
+                        return type;
+                    }
+                }
                 Missing(identifier.Name);
                 type = FetchAnyType(identifier);
             }
@@ -204,6 +230,16 @@ namespace Humphrey.FrontEnd
             var entry = currentScope.FetchAny(identifier.Name);
             if (entry == null)
             {
+                // Need to look in our imported namespaces too
+                foreach (var symbol in importedNamespaces)
+                {
+                    entry = symbol.FetchAny(identifier.Name);
+                    if (entry !=null)
+                    {
+                        semanticInfo.Add(token, entry.SemanticInfo);
+                        return true;
+                    }
+                }
                 Missing(identifier.Name);
                 entry = currentScope.FetchAny(identifier.Name);
                 if (entry == null)
@@ -263,7 +299,15 @@ namespace Humphrey.FrontEnd
                 var t = new HumphreyTokeniser(messages);
                 var p = new HumphreyParser(t.Tokenize(packageEntry.Contents), messages);
                 var globals = p.File();
-                AddToPending(globals);
+                var sp = new SemanticPass(currentManager, cLevel, messages);
+                sp.RunPass(globals);
+                // Add sp.Root to symbol table, so that lookup of missing symbols can continue...
+                /*foreach (var pending in globals)
+                {
+                    sp.pendingDefinitions.Add(pending.)
+
+                }*/
+                importedNamespaces.Add(sp.root);
             }
             else
             {
@@ -323,6 +367,7 @@ namespace Humphrey.FrontEnd
 
         public IPackageManager Manager => currentManager;
         public IEnumerable<IGlobalDefinition> ToCompile => pendingCompile;
+        public IEnumerable<CommonSymbolTable> ImportedNamespaces => importedNamespaces;
         public ICompilerMessages Messages => messages;
         public CommonSymbolTable RootSymbolTable => root;
     }
