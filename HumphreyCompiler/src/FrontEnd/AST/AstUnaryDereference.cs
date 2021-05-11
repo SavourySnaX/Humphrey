@@ -69,11 +69,7 @@ namespace Humphrey.FrontEnd
         {
             var resolved = expr.ResolveExpressionType(pass);
             var ptr = resolved.ResolveBaseType(pass) as AstPointerType;
-            if (ptr==null)
-            {
-                throw new System.NotImplementedException($"TODO");
-            }
-            return ptr.ElementType;
+            return ptr?.ElementType;
         }
 
         public void Semantic(SemanticPass pass)
