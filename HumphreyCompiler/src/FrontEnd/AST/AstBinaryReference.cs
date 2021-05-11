@@ -115,7 +115,7 @@ namespace Humphrey.FrontEnd
                         }
                     }
                 }
-                throw new System.NotImplementedException($"error struct element not found");
+                pass.Messages.Log(CompilerErrorKind.Error_StructMemberDoesNotExist, $"LHS structure does not contain a member '{rhs.Name}'", rhs.Token.Location, rhs.Token.Remainder);
             }
 
             pass.Messages.Log(CompilerErrorKind.Error_UndefinedType, $"Cannot determine result type from expression", Token.Location, Token.Remainder);
