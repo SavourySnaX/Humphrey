@@ -283,6 +283,8 @@ namespace Humphrey.Backend
                 dType = unit.CreatePointerType(cft,cft.Location);                 
             if (sType is CompilationPointerType && dType is CompilationIntegerType)
                 return new CompilationValue(builderRef.BuildPtrToInt(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
+            if (sType is CompilationFunctionType && dType is CompilationIntegerType)
+                return new CompilationValue(builderRef.BuildPtrToInt(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
             if (sType is CompilationIntegerType && dType is CompilationPointerType)
                 return new CompilationValue(builderRef.BuildIntToPtr(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
 
