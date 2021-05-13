@@ -139,9 +139,13 @@ namespace Humphrey.FrontEnd
                     var location = new SourceLocation(Token);
                     var (newGlobal,adjustType) = unit.CreateGlobalVariable(ct, ident, location, exprValue);
 
+
                     // Debug information
-                    var gve = unit.CreateGlobalVariableExpression(varName, location, adjustType.DebugType);
-                    newGlobal.BackendValue.SetGlobalMetadata(LLVMSharp.Interop.LLVMMetadataKind.LLVMMDStringMetadataKind, gve);
+                    if (unit.DebugInfoEnabled)
+                    {
+                        var gve = unit.CreateGlobalVariableExpression(varName, location, adjustType.DebugType);
+                        newGlobal.BackendValue.SetGlobalMetadata(LLVMSharp.Interop.LLVMMetadataKind.LLVMMDStringMetadataKind, gve);
+                    }
                 }
             }
 
