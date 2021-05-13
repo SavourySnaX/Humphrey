@@ -482,10 +482,12 @@ namespace Humphrey.Backend
 
             predefinedValue.SetCommpilationFunction(cfunc);
 
-            var debugFunction = debugBuilder.CreateDebugFunction(functionName, new SourceLocation(identifier.Token), type);
+            if (DebugInfoEnabled)
+            {
+                var debugFunction = debugBuilder.CreateDebugFunction(functionName, new SourceLocation(identifier.Token), type);
 
-            cfunc.BackendValue.SetSubprogram(debugFunction);
-
+                cfunc.BackendValue.SetSubprogram(debugFunction);
+            }
             return cfunc;
         }
 
