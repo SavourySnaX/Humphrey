@@ -737,7 +737,12 @@ namespace Humphrey.Backend
 
         public void AddNamedMetadata(string key, string value)
         {
-            moduleRef.AddNamedMetadataWithStringValue(contextRef, key, value);
+            moduleRef.AddNamedMetadataOperand(key,LLVMValueRef.CreateMDNode(new[] { moduleRef.Context.GetMDString(value) }));
+        }
+
+        public LLVMBasicBlockRef AppendNewBasicBlockToFunction(CompilationFunction function, string basicBlockName)
+        {
+            return contextRef.AppendBasicBlock(function.BackendValue, basicBlockName);
         }
 
         public LLVMMetadataRef CreateDebugScope(SourceLocation location)
