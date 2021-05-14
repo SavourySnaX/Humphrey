@@ -107,9 +107,9 @@ namespace Extensions
         {
             return LLVM.ArrayType(elementType, numElements);
         }
-        public static LLVMTypeRef CreateIntType(uint numBits)
+        public static LLVMTypeRef CreateIntType(LLVMContextRef context, uint numBits)
         {
-            return LLVM.IntType(numBits);
+            return LLVM.IntTypeInContext(context, numBits);
         }
 
         public static LLVMValueRef FetchIntrinsic(LLVMModuleRef moduleRef, string intrinsicName, LLVMTypeRef[] paramTypes)
