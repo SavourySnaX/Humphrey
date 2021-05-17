@@ -215,11 +215,11 @@ namespace Humphrey.FrontEnd
 
                 if (leftIntType.IntegerWidth < rightIntType.IntegerWidth)
                 {
-                    return (builder.Ext(left, leftIntType, rightIntType), right);
+                    return (builder.Ext(left, rightIntType), right);
                 }
                 if (rightIntType.IntegerWidth < leftIntType.IntegerWidth)
                 {
-                    return (left, builder.Ext(right, rightIntType, leftIntType));
+                    return (left, builder.Ext(right, leftIntType));
                 }
 
                 throw new NotImplementedException($"TODO - Integer Bit width does not match");
