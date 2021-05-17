@@ -196,7 +196,7 @@ namespace Humphrey.Backend
             if (enabled)
             {
                 var isVisibleExternally = true;
-                LLVMMetadataRef expr = null;
+                LLVMMetadataRef expr = builderRef.CreateEmptyExpression();
                 LLVMMetadataRef decl = null;
                 var alignBits = 0u;
                 return builderRef.CreateGlobalVariable(scope, name, AsciiSafeName(name), CreateDebugFile(location.File), location.StartLine, type.BackendType, isVisibleExternally, expr, decl, alignBits);
