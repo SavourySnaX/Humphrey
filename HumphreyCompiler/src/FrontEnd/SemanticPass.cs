@@ -1,5 +1,6 @@
 
 using System.Collections.Generic;
+using System.Text;
 
 namespace Humphrey.FrontEnd
 {
@@ -12,6 +13,7 @@ namespace Humphrey.FrontEnd
         ICompilerMessages messages;
         Dictionary<string, IGlobalDefinition> pendingDefinitions;
         List<CommonSymbolTable> importedNamespaces;
+        Dictionary<string,CommonSymbolTable> allImportedNamespaces;
         List<IGlobalDefinition> pendingCompile;
 
         Dictionary<Result<Tokens>, SemanticInfo> semanticInfo;
@@ -56,15 +58,19 @@ namespace Humphrey.FrontEnd
         public SemanticPass(IPackageManager manager, ICompilerMessages overrideDefaultMessages = null)
         {
             var root = manager?.FetchRoot;
-            ConstructSemanticPass(manager, root, overrideDefaultMessages);
+            ConstructSemanticPass(manager, root, new Dictionary<string, CommonSymbolTable>(), overrideDefaultMessages);
         }
 
         protected SemanticPass(IPackageManager manager, IPackageLevel level, ICompilerMessages overrideDefaultMessages = null)
         {
-            ConstructSemanticPass(manager, level, overrideDefaultMessages);
+            ConstructSemanticPass(manager, level, new Dictionary<string, CommonSymbolTable>(), overrideDefaultMessages);
+        }
+        protected SemanticPass(IPackageManager manager, IPackageLevel level, Dictionary<string,CommonSymbolTable> allImported, ICompilerMessages overrideDefaultMessages = null)
+        {
+            ConstructSemanticPass(manager, level, allImported, overrideDefaultMessages);
         }
 
-        protected void ConstructSemanticPass(IPackageManager manager, IPackageLevel level, ICompilerMessages overrideDefaultMessages = null)
+        protected void ConstructSemanticPass(IPackageManager manager, IPackageLevel level, Dictionary<string,CommonSymbolTable> allImports, ICompilerMessages overrideDefaultMessages = null)
         {
             messages = overrideDefaultMessages;
             if (messages==null)
@@ -78,6 +84,7 @@ namespace Humphrey.FrontEnd
             pendingCompile = new List<IGlobalDefinition>();
             pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
             importedNamespaces = new List<CommonSymbolTable>();
+            allImportedNamespaces = allImports;
         }
 
         public void AddToPending(IGlobalDefinition[] globals)
@@ -275,11 +282,18 @@ namespace Humphrey.FrontEnd
 
         public void ImportNamespace(IIdentifier[] scope)
         {
+            var scopeName = new StringBuilder();
             // For now, pulls ALL in 
             // so locate the correct package point to start pulling in
             var cLevel = currentManager.FetchRoot;  // Always import from global root
             foreach (var s in scope)
             {
+                if (scopeName.Length>0)
+                {
+                    scopeName.Append(".");
+                }
+                scopeName.Append(s.Name);
+
                 cLevel = cLevel.FetchEntry(s.Name);
                 if (cLevel == null)
                 {
@@ -295,18 +309,18 @@ namespace Humphrey.FrontEnd
             //or we have an Entry, in which case we import the entry
             if (cLevel is IPackageEntry packageEntry)
             {
+                var scopeNameString = scopeName.ToString();
                 var newScope = PushScope();
                 var t = new HumphreyTokeniser(messages);
                 var p = new HumphreyParser(t.Tokenize(packageEntry.Contents), messages);
                 var globals = p.File();
-                var sp = new SemanticPass(currentManager, cLevel, messages);
+                var sp = new SemanticPass(currentManager, cLevel, allImportedNamespaces, messages);
                 sp.RunPass(globals);
-                // Add sp.Root to symbol table, so that lookup of missing symbols can continue...
-                /*foreach (var pending in globals)
-                {
-                    sp.pendingDefinitions.Add(pending.)
 
-                }*/
+                if (!allImportedNamespaces.ContainsKey(scopeNameString))
+                {
+                    allImportedNamespaces.Add(scopeName.ToString(), sp.root);
+                }
                 importedNamespaces.Add(sp.root);
             }
             else
@@ -367,7 +381,7 @@ namespace Humphrey.FrontEnd
 
         public IPackageManager Manager => currentManager;
         public IEnumerable<IGlobalDefinition> ToCompile => pendingCompile;
-        public IEnumerable<CommonSymbolTable> ImportedNamespaces => importedNamespaces;
+        public IEnumerable<CommonSymbolTable> ImportedNamespaces => allImportedNamespaces.Values;
         public ICompilerMessages Messages => messages;
         public CommonSymbolTable RootSymbolTable => root;
     }

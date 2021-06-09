@@ -61,6 +61,7 @@ namespace Humphrey.FrontEnd
         {
             lhs.Semantic(pass);
             rhs.Semantic(pass);
+            rhs = rhs.ResolveBaseType(pass);
         }
 
         private Result<Tokens> _token;
