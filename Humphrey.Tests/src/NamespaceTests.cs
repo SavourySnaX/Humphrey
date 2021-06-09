@@ -185,6 +185,28 @@ MemorySizeOf:(type:_)(size:UInt64)=
             BuildForTest(input, result, p);
         }
         
+        [Theory]
+        [InlineData("using Test1 Main:()(returnValue:[8]bit)={ returnValue=0x42;} ", 0x42)]
+        public void CheckDeepFile(string input, byte result)
+        {
+            var p = new TestPackageManager();
+            p.AddAnEntry("System/Types.humphrey", SystemTypes);
+            p.AddAnEntry("Test1.humphrey", "using Test2 StructInTest1:{ptr:*StructInTest2}");
+            p.AddAnEntry("Test2.humphrey", "StructInTest2:{val:[64]bit}");
+            BuildForTest(input, result, p);
+        }
+        
+        [Theory]
+        [InlineData("using System::Types using Test1 Main:()(returnValue:UInt8)={ returnValue=0x42;} ", 0x42)]
+        public void CheckDuplicates(string input, byte result)
+        {
+            var p = new TestPackageManager();
+            p.AddAnEntry("System/Types.humphrey", SystemTypes);
+            p.AddAnEntry("Test1.humphrey", "using Test2 StructInTest1:{ptr:*StructInTest2}");
+            p.AddAnEntry("Test2.humphrey", "using System::Types StructInTest2:{val:UInt64}");
+            BuildForTest(input, result, p);
+        }
+
         private void BuildForTest(string input, byte expected, IPackageManager manager)
         {
             var messages = new CompilerMessages(true, true, false);
