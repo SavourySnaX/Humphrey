@@ -31,7 +31,8 @@ namespace Humphrey.Backend.Tests
             }
 
             public string Contents => _contents;
-        }
+			public string Path => "";
+		}
         public class TestPackageLevel : IPackageLevel
         {
             private IPackageLevel _parent;

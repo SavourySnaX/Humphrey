@@ -3,6 +3,7 @@ namespace Humphrey
 {
     public interface IPackageEntry
     {
-        string Contents { get; }
+        string Path { get; }
+		string Contents { get; }
     }
 }

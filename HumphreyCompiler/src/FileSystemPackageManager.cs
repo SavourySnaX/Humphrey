@@ -11,18 +11,21 @@ namespace Humphrey
         protected class FileSystemEntry : IPackageEntry, IPackageLevel
         {
             string _contents;
+			string _path;
 
-            public FileSystemEntry(FileInfo file)
+			public FileSystemEntry(FileInfo file)
             {
                 using (var s = file.OpenText())
                 {
                     _contents = s.ReadToEnd();
-                }
+					_path = file.FullName;
+				}
             }
 
             public string Contents => _contents;
+			public string Path => _path;
 
-            public IPackageLevel FetchEntry(string name)
+			public IPackageLevel FetchEntry(string name)
             {
                 return null;
             }
