@@ -117,8 +117,9 @@ namespace Humphrey.Backend
                 }
             }
 
-            throw new System.NotImplementedException($"TODO - Non integer types in promotion?");
-        }
+            unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Attempting to assign a value '{constant}' to type '{destType.DumpType()}.'", frontendLocation.Location, frontendLocation.Remainder);
+			return unit.CreateUndef(destType);
+		}
 
         public void Negate()
         {
