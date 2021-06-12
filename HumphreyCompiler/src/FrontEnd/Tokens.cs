@@ -839,9 +839,9 @@ namespace Humphrey.FrontEnd
             return ConvertNumber(number) != null;
         }
 
-        public IEnumerable<Result<Tokens>> Tokenize(string input)
+        public IEnumerable<Result<Tokens>> Tokenize(string input, string path="")
         {
-            return Tokenize(new TokenSpan("", input));
+			return Tokenize(new TokenSpan(path, input));
         }
 
         public IEnumerable<Result<Tokens>> TokenizeFromFile(string filename)

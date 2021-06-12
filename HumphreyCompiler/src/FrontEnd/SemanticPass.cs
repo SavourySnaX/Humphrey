@@ -312,7 +312,7 @@ namespace Humphrey.FrontEnd
                 var scopeNameString = scopeName.ToString();
                 var newScope = PushScope();
                 var t = new HumphreyTokeniser(messages);
-                var p = new HumphreyParser(t.Tokenize(packageEntry.Contents), messages);
+                var p = new HumphreyParser(t.Tokenize(packageEntry.Contents, packageEntry.Path), messages);
                 var globals = p.File();
                 var sp = new SemanticPass(currentManager, cLevel, allImportedNamespaces, messages);
                 sp.RunPass(globals);
@@ -349,7 +349,7 @@ namespace Humphrey.FrontEnd
                     {
                         // this would be a file, and thus should be compiled i think...
                         var t = new HumphreyTokeniser(messages);
-                        var p = new HumphreyParser(t.Tokenize(packageEntry.Contents), messages);
+                        var p = new HumphreyParser(t.Tokenize(packageEntry.Contents, packageEntry.Path), messages);
                         var globals = p.File();
                         var sp = new SemanticPass(currentManager,entry, messages);
                         sp.RunPass(globals);

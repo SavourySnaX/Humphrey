@@ -16,8 +16,9 @@ namespace Humphrey
             }
 
             public string Contents => _contents;
+			public string Path => "";
 
-            public IPackageLevel FetchEntry(string name)
+			public IPackageLevel FetchEntry(string name)
             {
                 return null;
             }
