@@ -22,12 +22,12 @@ namespace Humphrey.FrontEnd
             throw new System.NotImplementedException($"ProcessConstantExpression for reference operator is not implemented");
         }
 
-        public CompilationValue CommonProcessEnum(CompilationEnumType enumType, CompilationUnit unit, CompilationBuilder builder)
+        public (CompilationValue cv, CompilationAliasType alias) CommonProcessEnum(CompilationEnumType enumType, CompilationUnit unit, CompilationBuilder builder)
         {
-            return enumType.LoadElement(unit, builder, rhs.Dump());
+            return (enumType.LoadElement(unit, builder, rhs.Name), null);
         }
 
-        public CompilationValue CommonProcessExpression(CompilationUnit unit, CompilationBuilder builder)
+        public (CompilationValue cv, CompilationAliasType alias) CommonProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             var rlhs = lhs.ProcessExpression(unit, builder);
 
@@ -55,32 +55,63 @@ namespace Humphrey.FrontEnd
                     type = pointerType.ElementType as CompilationStructureType;
                     pointerToValue = vlhs;
                 }
-                else
+            }
+
+            if (type != null)
+            {
+                var store = type.AddressElement(unit, builder, pointerToValue, rhs.Dump());
+                var loaded = new CompilationValue(builder.Load(store).BackendValue, (store.Type as CompilationPointerType).ElementType, Token);
+                loaded.Storage = store;
+
+                return (loaded, null);
+            }
+
+            var aliasType = vlhs.Type as CompilationAliasType;
+            if (aliasType == null)
+            {
+                var pointerType = vlhs.Type as CompilationPointerType;
+                if (pointerType!=null && pointerType.ElementType is CompilationAliasType)
                 {
-                    // Compilation error... cannot fetch field from a non structure type 
-                    throw new System.NotImplementedException($"Attempt to reference a structure member of a non structure type!");
+                    aliasType = pointerType.ElementType as CompilationAliasType;
+                    pointerToValue = vlhs;
                 }
             }
 
-            var store = type.AddressElement(unit, builder, pointerToValue, rhs.Dump());
-            var loaded = new CompilationValue(builder.Load(store).BackendValue, (store.Type as CompilationPointerType).ElementType, Token);
-            loaded.Storage = store;
+            if (aliasType!=null)
+            {
+                // Load base value, mask element, shift down, returning as the type
+                var store = vlhs.Storage;
+                var loaded = new CompilationValue(builder.Load(store).BackendValue, (store.Type as CompilationPointerType).ElementType, Token);
+                loaded.Storage = store;
+                return (loaded,aliasType);
+            }
 
-            return loaded;
+            // Compilation error... cannot fetch field from a non field based type 
+            throw new System.NotImplementedException($"Attempt to reference a structure member of a non structure type!");
         }
         
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
-            return CommonProcessExpression(unit, builder);
+            var res = CommonProcessExpression(unit, builder);
+            if (res.alias!=null)
+            {
+                return res.alias.LoadElement(unit,builder, res.cv, rhs.Name);
+            }
+            return res.cv;
         }
 
         public void ProcessExpressionForStore(CompilationUnit unit, CompilationBuilder builder, IExpression value)
         {
             var dst = CommonProcessExpression(unit, builder);
+            if (dst.alias!=null)
+            {
+                dst.alias.StoreElement(unit, builder, dst.cv, value, rhs.Name );
+                return;
+            }
 
-            var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, value, dst.Type);
+            var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, value, dst.cv.Type);
 
-            builder.Store(storeValue, dst.Storage);
+            builder.Store(storeValue, dst.cv.Storage);
         }
 
         public IType ResolveExpressionType(SemanticPass pass)
@@ -117,6 +148,32 @@ namespace Humphrey.FrontEnd
                 }
                 pass.Messages.Log(CompilerErrorKind.Error_StructMemberDoesNotExist, $"LHS structure does not contain a member '{rhs.Name}'", rhs.Token.Location, rhs.Token.Remainder);
             }
+
+            var aliasType = baseResolved as AstAliasType;
+            if (aliasType == null)
+            {
+                var pointerType = baseResolved as AstPointerType;
+                if (pointerType!=null)
+                {
+                    aliasType = pointerType.ElementType.ResolveBaseType(pass) as AstAliasType;
+                }
+            }
+
+            if (aliasType != null)
+            {
+                foreach (var e in aliasType.Elements)
+                {
+                    foreach (var i in e.Identifiers)
+                    {
+                        if (rhs.Name == i.Name)
+                        {
+                            return e.Type;
+                        }
+                    }
+                }
+                pass.Messages.Log(CompilerErrorKind.Error_StructMemberDoesNotExist, $"LHS alias does not contain a member '{rhs.Name}'", rhs.Token.Location, rhs.Token.Remainder);
+            }
+
 
             pass.Messages.Log(CompilerErrorKind.Error_UndefinedType, $"Cannot determine result type from expression", Token.Location, Token.Remainder);
             return new AstBitType();
@@ -160,6 +217,36 @@ namespace Humphrey.FrontEnd
                 pass.Messages.Log(CompilerErrorKind.Error_StructMemberDoesNotExist, $"LHS structure does not contain a member '{rhs.Name}'", rhs.Token.Location, rhs.Token.Remainder);
                 return;
             }
+
+            var aliasType = baseResolved as AstAliasType;
+            if (aliasType == null)
+            {
+                var pointerType = baseResolved as AstPointerType;
+                if (pointerType!=null)
+                {
+                    aliasType = pointerType.ElementType.ResolveBaseType(pass) as AstAliasType;
+                }
+            }
+
+            if (aliasType!= null)
+            {
+                foreach (var e in aliasType.Elements)
+                {
+                    foreach (var i in e.Identifiers)
+                    {
+                        if (rhs.Name == i.Name)
+                        {
+                            pass.AddStructElementLocation(rhs.Token, e.Type);
+                            return;
+                        }
+                    }
+                }
+                pass.Messages.Log(CompilerErrorKind.Error_StructMemberDoesNotExist, $"LHS alias does not contain a member '{rhs.Name}'", rhs.Token.Location, rhs.Token.Remainder);
+                return;
+            }
+
+            pass.Messages.Log(CompilerErrorKind.Error_UndefinedType, $"Cannot determine result type from expression", Token.Location, Token.Remainder);
+            return;
         }
 
         public IExpression LHS => lhs;

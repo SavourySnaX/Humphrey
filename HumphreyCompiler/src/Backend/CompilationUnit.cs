@@ -222,6 +222,12 @@ namespace Humphrey.Backend
         {
             return new CompilationEnumType(type, values, names, debugBuilder, location);
         }
+        
+        public CompilationType FetchAliasType(CompilationType type, CompilationType[][] values, string[][] names, uint [][] rotate, SourceLocation location)
+        {
+            return new CompilationAliasType(type.BackendType, type, values, names, rotate, debugBuilder, location);
+        }
+
 
         public CompilationIntegerType CreateIntegerType(uint numBits, bool isSigned, SourceLocation location)
         {

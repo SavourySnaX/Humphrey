@@ -52,7 +52,8 @@ namespace Humphrey.FrontEnd
             EnumMember,
             GlobalValue,
             FunctionParam,
-            LocalValue
+            LocalValue,
+            AliasType
         }
 
         public SemanticPass(IPackageManager manager, ICompilerMessages overrideDefaultMessages = null)

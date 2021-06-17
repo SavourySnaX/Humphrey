@@ -60,8 +60,18 @@ namespace Humphrey.FrontEnd
             {
                 semanticDone = true;
                 type.Semantic(pass);
+                var checkUnique=new HashSet<string>();
                 foreach (var d in definitions)
                 {
+                    foreach (var n in d.Identifiers)
+                    {
+                        if (checkUnique.Contains(n.Name))
+                        {
+                            pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, "Duplicate symbol defined in enum definition : {i.Name}", n.Token.Location, n.Token.Remainder);
+                        }
+                        else
+                            checkUnique.Add(n.Name);
+                    }
                     d.Semantic(pass);
                 }
             }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text;
 using Humphrey.Backend;
 namespace Humphrey.FrontEnd
@@ -11,7 +12,7 @@ namespace Humphrey.FrontEnd
             definitions = defList;
             semanticDone = autoTyped;
         }
-    
+
         public void CreateOrFetchNamedStruct(CompilationUnit unit, AstIdentifier[] identifiers)
         {
             var compTypes = new CompilationStructureType[identifiers.Length];
@@ -28,7 +29,7 @@ namespace Humphrey.FrontEnd
             (var elementTypes, var names) = CreateElements(unit);
 
             // Now update our created types with the elements
-            for (int a = 0; a < identifiers.Length;a++)
+            for (int a = 0; a < identifiers.Length; a++)
             {
                 // Update our symbol too
                 var symbol = unit.FetchNamedType(identifiers[a]).compilationType as CompilationStructureType;
@@ -76,7 +77,7 @@ namespace Humphrey.FrontEnd
             s.Append("{ ");
             for (int a = 0; a < definitions.Length; a++)
             {
-                if (a!=0)
+                if (a != 0)
                     s.Append(" ");
                 s.Append(definitions[a].Dump());
             }
@@ -89,8 +90,21 @@ namespace Humphrey.FrontEnd
             if (!semanticDone)
             {
                 semanticDone = true;
+                var checkUnique = new HashSet<string>();
                 foreach (var d in definitions)
                 {
+                    foreach (var n in d.Identifiers)
+                    {
+                        if (n.Name != "_")
+                        {
+                            if (checkUnique.Contains(n.Name))
+                            {
+                                pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, "Duplicate symbol defined in struct definition : {i.Name}", n.Token.Location, n.Token.Remainder);
+                            }
+                            else
+                                checkUnique.Add(n.Name);
+                        }
+                    }
                     d.Semantic(pass);
                 }
             }
