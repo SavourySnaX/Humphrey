@@ -73,6 +73,7 @@ namespace Humphrey.FrontEnd.Tests
         [Theory]
         [InlineData("{", Tokens.S_OpenCurlyBrace)]
         [InlineData("}", Tokens.S_CloseCurlyBrace)]
+        [InlineData("|{", Tokens.S_OpenAlias)]
         [InlineData("(", Tokens.S_OpenParanthesis)]
         [InlineData(")", Tokens.S_CloseParanthesis)]
         [InlineData("[", Tokens.S_OpenSquareBracket)]

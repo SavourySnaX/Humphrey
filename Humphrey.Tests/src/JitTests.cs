@@ -1294,24 +1294,72 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
             Assert.True(InputVoidExpects32BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{input}");
         }
 
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit|{msb:[4]bit lsb:[4]bit}) (out : [8]bit) = { out=a.msb; }", "Main", 0x48,0x04)]
+        [InlineData(@"Main : (a:[8]bit|{msb:[4]bit lsb:[4]bit}) (out : [8]bit) = { out=a.lsb; }", "Main", 0x48,0x08)]
+        [InlineData(@"Main : (a:[8]bit|{a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}) (out : [8]bit) = { out=a.a; }", "Main", 0x48,0x00)]
+        [InlineData(@"Main : (a:[8]bit|{a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}) (out : [8]bit) = { out=a.b; }", "Main", 0x48,0x01)]
+        [InlineData(@"Main : (a:[8]bit|{a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}) (out : [8]bit) = { out=a.c; }", "Main", 0x48,0x00)]
+        [InlineData(@"Main : (a:[8]bit|{a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}) (out : [8]bit) = { out=a.d; }", "Main", 0x48,0x00)]
+        [InlineData(@"Main : (a:[8]bit|{a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}) (out : [8]bit) = { out=a.e; }", "Main", 0x48,0x01)]
+        [InlineData(@"Main : (a:[8]bit|{a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}) (out : [8]bit) = { out=a.f; }", "Main", 0x48,0x00)]
+        [InlineData(@"Main : (a:[8]bit|{a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}) (out : [8]bit) = { out=a.g; }", "Main", 0x48,0x00)]
+        [InlineData(@"Main : (a:[8]bit|{a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}) (out : [8]bit) = { out=a.h; }", "Main", 0x48,0x00)]
+        [InlineData(@"Main : (a:[8]bit|{_:bit _:bit _:bit _:bit e:bit _:bit _:bit _:bit}) (out : [8]bit) = { out=a.e; }", "Main", 0xFF,0x01)]
+        [InlineData(@"Main : (a:[8]bit|{_:bit _:bit _:bit _:bit e:bit _:bit _:bit _:bit}) (out : [8]bit) = { out=a.e; }", "Main", 0x00,0x00)]
+        public void CheckAliasFetch(string input, string entryPointName, byte ival1, byte expected)
+        {
+            Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Alias:[8]bit |{ msb:[4]bit lsb:[4]bit}   Main : (a:Alias) (out : Alias) = { a.msb=0xF; out=a; }", "Main", 0x08,0xF8)]
+        [InlineData(@"Alias:[8]bit |{ msb:[4]bit lsb:[4]bit}   Main : (a:Alias) (out : Alias) = { a.msb=0x8; out=a; }", "Main", 0x08,0x88)]
+        [InlineData(@"Alias:[8]bit |{ msb:[4]bit lsb:[4]bit}   Main : (a:Alias) (out : Alias) = { a.lsb=0xF; out=a; }", "Main", 0x80,0x8F)]
+        [InlineData(@"Alias:[8]bit |{ msb:[4]bit lsb:[4]bit}   Main : (a:Alias) (out : Alias) = { a.lsb=0x8; out=a; }", "Main", 0x80,0x88)]
+        [InlineData(@"Alias:[8]bit |{ _:[4]bit e:bit _:[3]bit}   Main : (a:Alias) (out : Alias) = { a.e=1; out=a; }", "Main", 0x00,0x08)]
+        [InlineData(@"Alias:[8]bit |{ _:[4]bit e:bit _:[3]bit}   Main : (a:Alias) (out : Alias) = { a.e=1; out=a; }", "Main", 0xFF,0xFF)]
+        [InlineData(@"Alias:[8]bit |{ _:[4]bit e:bit _:[3]bit}   Main : (a:Alias) (out : Alias) = { a.e=1; out=a; }", "Main", 0xF7,0xFF)]
+        [InlineData(@"Alias:[8]bit |{ a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}   Main : (a:Alias) (out : Alias) = { a.a=0; out=a; }", "Main", 0xFF,0x7F)]
+        [InlineData(@"Alias:[8]bit |{ a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}   Main : (a:Alias) (out : Alias) = { a.b=0; out=a; }", "Main", 0xFF,0xBF)]
+        [InlineData(@"Alias:[8]bit |{ a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}   Main : (a:Alias) (out : Alias) = { a.c=0; out=a; }", "Main", 0xFF,0xDF)]
+        [InlineData(@"Alias:[8]bit |{ a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}   Main : (a:Alias) (out : Alias) = { a.d=0; out=a; }", "Main", 0xFF,0xEF)]
+        [InlineData(@"Alias:[8]bit |{ a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}   Main : (a:Alias) (out : Alias) = { a.e=0; out=a; }", "Main", 0xFF,0xF7)]
+        [InlineData(@"Alias:[8]bit |{ a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}   Main : (a:Alias) (out : Alias) = { a.f=0; out=a; }", "Main", 0xFF,0xFB)]
+        [InlineData(@"Alias:[8]bit |{ a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}   Main : (a:Alias) (out : Alias) = { a.g=0; out=a; }", "Main", 0xFF,0xFD)]
+        [InlineData(@"Alias:[8]bit |{ a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}   Main : (a:Alias) (out : Alias) = { a.h=0; out=a; }", "Main", 0xFF,0xFE)]
+        public void CheckAliasStore(string input, string entryPointName, byte ival1, byte expected)
+        {
+            Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
+        }
+
+
         public IntPtr CompileForTest(string input, string entryPointName)
         {
             var messages = new CompilerMessages(true, true, false);
             var tokenise = new HumphreyTokeniser(messages);
             var tokens = tokenise.Tokenize(input);
-            var parser = new HumphreyParser(tokens, messages);
-            var parsed = parser.File();
-            var semantic = new SemanticPass(null, messages);
-            semantic.RunPass(parsed);
-            var compiler = new HumphreyCompiler(messages);
-            var unit = compiler.Compile(semantic, "test", "x86_64", false, true);
-
-            if (messages.HasErrors)
+            if (!messages.HasErrors)
             {
-                throw new Exception($"{messages.Dump()}");
+                var parser = new HumphreyParser(tokens, messages);
+                var parsed = parser.File();
+                if (!messages.HasErrors)
+                {
+                    var semantic = new SemanticPass(null, messages);
+                    semantic.RunPass(parsed);
+                    if (!messages.HasErrors)
+                    {
+                        var compiler = new HumphreyCompiler(messages);
+                        var unit = compiler.Compile(semantic, "test", "x86_64", false, true);
+                        if (!messages.HasErrors)
+                        {
+                            return unit.JitMethod(entryPointName);
+                        }
+                    }
+                }
             }
 
-            return unit.JitMethod(entryPointName);
+            throw new Exception($"{messages.Dump()}");
         }
 
         delegate void InputVoidOutputBit(byte* returnVal);

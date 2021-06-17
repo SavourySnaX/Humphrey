@@ -258,6 +258,7 @@ namespace Humphrey.FrontEnd.Tests
         [InlineData("bit:()()=0", null)]
         [InlineData("Main:()(returnVal:bit)", "Main : () (returnVal : bit)")]
         [InlineData("Main,ReturnsBit:()(returnVal:bit)", "Main , ReturnsBit : () (returnVal : bit)")]
+        [InlineData("AliasKind:[8]bit|{_:[7]bit lsb:[1]bit}=0", "AliasKind : [8] bit |{ _ : [7] bit lsb : [1] bit} = 0")]
         public void CheckGlobalDefinition(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();
@@ -374,6 +375,21 @@ namespace Humphrey.FrontEnd.Tests
             var parser = new HumphreyParser(tokens);
             CheckAst(input, parser.EnumType(parser.BaseType()), expected);
         }
+
+        [Theory]
+        [InlineData("|{}", null)]
+        [InlineData("bit|{}", "bit |{ }")]
+        [InlineData("a |{ a:b }", "a |{ a : b}")]
+        [InlineData("a |{ a:b }|{c:b}", "a |{ a : b} |{ c : b}")]
+        [InlineData("[32]bit |{ MSB:[8]bit _:[16]bit LSB:[8]bit }", "[32] bit |{ MSB : [8] bit _ : [16] bit LSB : [8] bit}")]
+        public void CheckAliasType(string input, string expected)
+        {
+            var tokenise = new HumphreyTokeniser();
+            var tokens = tokenise.Tokenize(input);
+            var parser = new HumphreyParser(tokens);
+            CheckAst(input, parser.AliasType(parser.BaseType()), expected);
+        }
+
 
         [Theory]
         [InlineData("5+2", new [] {"+ 5 2"})]

@@ -137,6 +137,9 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Syntax", Example = ";")]
         S_SemiColon,
 
+        [Token(Category = "Syntax", Example = "|{")]
+        S_OpenAlias,
+
         [Token(Category = "Syntax", Example = "{")]
         S_OpenCurlyBrace,
 
@@ -426,6 +429,7 @@ namespace Humphrey.FrontEnd
             [('|', '|')] = Tokens.O_LogicalOr,
             [('<', '<')] = Tokens.O_LogicalShiftLeft,
             [('>', '>')] = Tokens.O_LogicalShiftRight,
+            [('|', '{')] = Tokens.S_OpenAlias
         };
 
         readonly Dictionary<(char, char, char), Tokens> _tripleOperators = new Dictionary<(char, char, char), Tokens>

@@ -391,6 +391,10 @@ namespace Humphrey.FrontEnd
         public bool OpenSquareBracket() { return Take(Tokens.S_OpenSquareBracket); }
         public bool PeekOpenSquareBracket() { return Peek(Tokens.S_OpenSquareBracket); }
         public bool CloseSquareBracket() { return Take(Tokens.S_CloseSquareBracket); }
+        public bool OpenAliasOperator() { return Take(Tokens.S_OpenAlias); }
+        public bool PeekOpenAliasOperator() { return Peek(Tokens.S_OpenAlias); }
+        public bool CloseAliasOperator() { return Take(Tokens.S_CloseCurlyBrace); }
+        public bool PeekCloseAliasOperator() { return Peek(Tokens.S_CloseCurlyBrace); }
         public IAst UnderscoreOperator() { return AstItem(Tokens.S_Underscore, (e) => new AstOperator(e)); }
         public bool PointerOperator() { return Take(Tokens.O_Multiply); }
 
@@ -402,7 +406,7 @@ namespace Humphrey.FrontEnd
                 LogicalShiftLeftOperator, LogicalShiftRightOperator, ArithmeticShiftRightOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
         public AstItemDelegate[] BaseTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, TypeIdentifier, FunctionType, StructType};
-        public AstItemDelegate[] Types => new AstItemDelegate[] { BaseTypeOrEnumType };
+        public AstItemDelegate[] Types => new AstItemDelegate[] { BaseTypeOrEnumOrAliasType };
         public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, TypeIdentifier, StructType };
         public AstItemDelegate[] IdentifierOrAnonymous => new AstItemDelegate[] { Identifier, AnonymousIdentifier };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
@@ -604,17 +608,20 @@ namespace Humphrey.FrontEnd
             return exprList;
         }
         
-        // BaseType, or EnumType
-        public IType BaseTypeOrEnumType()
+        // BaseType, or EnumType, or AliasType
+        public IType BaseTypeOrEnumOrAliasType()
         {
             var type = BaseType();
             if (type == null)
                 return null;
 
-            if (!PeekOpenCurlyBrace())
+            if (!PeekOpenCurlyBrace() && !PeekOpenAliasOperator())
                 return type;
 
-            return EnumType(type);
+            if (PeekOpenCurlyBrace())
+                return EnumType(type);
+
+            return AliasType(type);
         }
 
 
@@ -1157,6 +1164,53 @@ namespace Humphrey.FrontEnd
                 d.SetEnumKind(type);
             }
             return enumType;
+        }
+        
+        // alias_type : type |{ struct_element* }*
+        public AstAliasType AliasType(IType type)
+        {
+            if (type == null)
+                return null;
+
+            var start = type.Token;
+            var end = start;
+
+            var aliases=new List<AstStructElement[]>();
+
+            while (true)
+            {
+                if (!OpenAliasOperator())
+                    return null;
+
+                var definitionList = ManyOf<AstStructElement>(StructDefinitions, CloseAliasTerminal, CompilerErrorKind.Error_ExpectedStructMemberDefinition);
+                if (definitionList == null)
+                    return null;
+
+                aliases.Add(definitionList);
+
+                end = CurrentToken();
+
+                if (!CloseAliasOperator())
+                    return null;
+
+                if (!PeekOpenAliasOperator())
+                    break;
+            }
+
+            var aliasArray = new AstStructElement[aliases.Count][];
+            var idx=0;
+            foreach (var alias in aliases)
+            {
+                aliasArray[idx++]=alias;
+            }
+            var aliasType = new AstAliasType(type, aliasArray);
+            aliasType.Token = new Result<Tokens>(start.Value, start.Location, end.Remainder);
+            return aliasType;
+        }
+
+        private bool CloseAliasTerminal(Result<Tokens> currentToken)
+        {
+            return currentToken.HasValue && currentToken.Value == Tokens.S_CloseCurlyBrace;
         }
 
         // struct_type : { struct_element* }
