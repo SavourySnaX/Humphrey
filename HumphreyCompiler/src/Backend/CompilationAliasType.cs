@@ -45,8 +45,9 @@ namespace Humphrey.Backend
                         return false;
                 }
             }
-            return Identifier == check.Identifier;
-        }
+            var anonMatch = Identifier == "" || check.Identifier == "" || Identifier == check.Identifier;
+			return anonMatch;
+		}
 
         public override CompilationType CopyAs(string identifier)
         {
