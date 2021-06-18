@@ -40,6 +40,26 @@ public enum FrameBufferType : byte
             TokenTest(input, expectedLine, expectedColumn);
         }
 
+        const string docLineLongTest = @"bob:bit #This is documentation
+#! blah !# cat:bit #Another doc
+";
+
+        [Theory]
+        [InlineData("bob:bit #This is documentation", "bit", "This is documentation")]
+        [InlineData("bob:bit #!This is documentation", "bit", "")]
+        [InlineData(docLineLongTest, "bob", "This is documentation")]
+        [InlineData(docLineLongTest, "cat", "Another doc")]
+        public void CheckDocFetch(string input, string from, string expectedOutput)
+        {
+            var tokenised = new HumphreyTokeniser().Tokenize(input);
+            foreach (var token in tokenised)
+            {
+                if (token.ToStringValue() == from)
+                {
+                    Assert.True(expectedOutput == token.FetchDocLine());
+                }
+            }
+        }
 
         private void TokenTest(string input, int expectedLine, int expectedColumn)
         {

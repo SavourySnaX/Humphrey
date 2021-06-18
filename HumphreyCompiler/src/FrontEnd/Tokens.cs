@@ -234,6 +234,44 @@ namespace Humphrey.FrontEnd
             return encompass.Substring(position, remain.position - position);
         }
 
+        public string FetchDocLine()
+        {
+            var dupedLocation = this;
+            uint myLine = dupedLocation.line;
+            while (!dupedLocation.AtEnd)
+            {
+                var res = dupedLocation.ConsumeChar();
+                if (res.Remainder.line!=myLine)
+                    break;
+                if (!res.HasValue)
+                    break;
+                if (res.Value=='#')
+                {
+                    if (!AtEnd)
+                    {
+                        if (dupedLocation.encompass[dupedLocation.position]=='!')
+                            break;
+                        int start = dupedLocation.position;
+                        int end = start;
+                        // At this point we have a valid doc line.. consume until we reach end/newline
+                        while (!dupedLocation.AtEnd)
+                        {
+                            res = dupedLocation.ConsumeChar();
+                            if (res.Remainder.line!=myLine || dupedLocation.AtEnd || !res.HasValue)
+                            {
+                                // return docline
+                                if (dupedLocation.AtEnd)
+                                    end++;
+                                return dupedLocation.encompass.Substring(start, end-start);
+                            }
+                            end = dupedLocation.position;
+                        }
+                    }
+                }
+            }
+            return "";
+        }
+
         public bool AtEnd => position >= encompass.Length;
         public Result<char> Until(TokenSpan location)
         {
@@ -350,6 +388,11 @@ namespace Humphrey.FrontEnd
         public string ToStringValue()
         {
             return location.ToStringValue(remaining);
+        }
+
+        public string FetchDocLine()
+        {
+            return location.FetchDocLine();
         }
 
         public Result<T> Combine(Result<T> toCombine)
