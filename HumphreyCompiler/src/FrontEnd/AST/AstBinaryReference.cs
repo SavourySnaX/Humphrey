@@ -161,6 +161,11 @@ namespace Humphrey.FrontEnd
 
             if (aliasType != null)
             {
+                if (rhs.Name=="raw")
+                {
+                    return aliasType.RawType;
+                }
+
                 foreach (var e in aliasType.Elements)
                 {
                     foreach (var i in e.Identifiers)
@@ -230,6 +235,12 @@ namespace Humphrey.FrontEnd
 
             if (aliasType!= null)
             {
+                if (rhs.Name=="raw")
+                {
+                    pass.AddStructElementLocation(rhs.Token, aliasType.RawType);
+                    return;
+                }
+
                 foreach (var e in aliasType.Elements)
                 {
                     foreach (var i in e.Identifiers)

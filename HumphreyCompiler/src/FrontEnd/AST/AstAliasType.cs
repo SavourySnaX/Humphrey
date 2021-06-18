@@ -98,20 +98,21 @@ namespace Humphrey.FrontEnd
                 semanticDone = true;
                 type.Semantic(pass);
                 var checkUnique=new HashSet<string>();
+                checkUnique.Add("raw");                     // Builtin
                 foreach (var elements in definitions)
                 {
                     foreach (var d in elements)
                     {
                         foreach (var n in d.Identifiers)
                         {
-                            if (n.Name!="_")
+                            if (n.Name != "_")
                             {
-                            if (checkUnique.Contains(n.Name))
-                            {
-                                pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, "Duplicate symbol defined in alias definition : {i.Name}", n.Token.Location, n.Token.Remainder);
-                            }
-                            else
-                                checkUnique.Add(n.Name);
+                                if (checkUnique.Contains(n.Name))
+                                {
+                                    pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, "Duplicate symbol defined in alias definition : {i.Name}", n.Token.Location, n.Token.Remainder);
+                                }
+                                else
+                                    checkUnique.Add(n.Name);
                             }
                         }
                         d.Semantic(pass);
@@ -169,6 +170,7 @@ namespace Humphrey.FrontEnd
             return this;
         }
 
+        public IType RawType => type;
         private Result<Tokens> _token;
         public Result<Tokens> Token { get => _token; set => _token = value; }
 

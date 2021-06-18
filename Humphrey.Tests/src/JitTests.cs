@@ -1313,6 +1313,16 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
         }
 
         [Theory]
+        [InlineData(@"Main : (a:[8]bit|{msb:[4]bit lsb:[4]bit}) (out : [8]bit) = { out=a.raw; }", "Main", 0x48,0x48)]
+        [InlineData(@"Main : (a:[8]bit|{msb:[4]bit lsb:[4]bit}) (out : [8]bit) = { out=a.raw; }", "Main", 0x99,0x99)]
+        [InlineData(@"Main : (a:[8]bit|{msb:[4]bit lsb:[4]bit}) (out : [8]bit) = { out=a.raw; }", "Main", 0xFF,0xFF)]
+        public void CheckAliasFetchBase(string input, string entryPointName, byte ival1, byte expected)
+        {
+            Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
+        }
+
+
+        [Theory]
         [InlineData(@"Alias:[8]bit |{ msb:[4]bit lsb:[4]bit}   Main : (a:Alias) (out : Alias) = { a.msb=0xF; out=a; }", "Main", 0x08,0xF8)]
         [InlineData(@"Alias:[8]bit |{ msb:[4]bit lsb:[4]bit}   Main : (a:Alias) (out : Alias) = { a.msb=0x8; out=a; }", "Main", 0x08,0x88)]
         [InlineData(@"Alias:[8]bit |{ msb:[4]bit lsb:[4]bit}   Main : (a:Alias) (out : Alias) = { a.lsb=0xF; out=a; }", "Main", 0x80,0x8F)]
@@ -1333,6 +1343,14 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
             Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
         }
 
+        [Theory]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit|{msb:[4]bit lsb:[4]bit}) = { out.raw=a; }", "Main", 0x48,0x48)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit|{msb:[4]bit lsb:[4]bit}) = { out.raw=a; }", "Main", 0xFF,0xFF)]
+        [InlineData(@"Main : (a:[8]bit) (out : [8]bit|{msb:[4]bit lsb:[4]bit}) = { out.raw=a; }", "Main", 0x99,0x99)]
+        public void CheckAliasStoreBase(string input, string entryPointName, byte ival1, byte expected)
+        {
+            Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
+        }
 
         public IntPtr CompileForTest(string input, string entryPointName)
         {
