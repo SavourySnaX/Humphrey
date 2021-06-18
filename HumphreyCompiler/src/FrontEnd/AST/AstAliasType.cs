@@ -159,7 +159,7 @@ namespace Humphrey.FrontEnd
 
                     if (compareWidth!=width)
                     {
-                        unit.Messages.Log(CompilerErrorKind.Error_AliasWidthMismatch, $"Alias widths must match base type!", type.Token.Location, type.Token.Remainder);
+                        unit.Messages.Log(CompilerErrorKind.Error_AliasWidthMismatch, $"Alias widths must match base type! BaseType Width : {width} != {compareWidth}", type.Token.Location, type.Token.Remainder);
                         return false;
                     }
                 }
