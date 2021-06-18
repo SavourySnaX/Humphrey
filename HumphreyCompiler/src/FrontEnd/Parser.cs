@@ -594,6 +594,7 @@ namespace Humphrey.FrontEnd
             if (CloseParenthesis())
             {
                 exprList = new AstExpressionList();
+                exprList.TokenForParenthesis = start;
             }
             else
             {
@@ -601,6 +602,7 @@ namespace Humphrey.FrontEnd
                 if (exprList == null)
                     return null;
                 end = exprList.Token;
+                exprList.TokenForParenthesis = CurrentToken();
                 if (!CloseParenthesis())
                     return null;
             }

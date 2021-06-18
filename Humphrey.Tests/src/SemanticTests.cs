@@ -421,6 +421,32 @@ namespace Humphrey.FrontEnd.Tests
                 }
             }
         }
+        [Theory]
+        [InlineData(@" Main : (a:[8]bit,c:[8]bit)(r:[8]bit)={ b:=Main(a,c); r=b;}", 51)]
+        [InlineData(@" Main : ()()={ Main(); }", 20)]
+
+        public void CheckCallCloseParenthesis(string input, int offset)
+        {
+            var (semantic,tokens) = Build(input);
+            // find token in tokens
+            bool matches = true;
+            foreach (var t in tokens)
+            {
+                if (t.Location.Position==offset)
+                {
+                    if (!semantic.FetchSemanticInfo(t,out var info))
+                        throw new System.NotImplementedException($"Missing SemanticInfo set on token {t.ToStringValue()} {t.Location.ToString()}");
+
+                    matches &= info.Ast.GetType().Equals(typeof(AstFunctionType));
+                    matches &= info.Base.GetType().Equals(typeof(AstFunctionType));
+                    matches &= info.Kind.Equals(SemanticPass.IdentifierKind.Function);
+
+                    Assert.True(matches);
+                    return;
+                }
+            }
+            throw new System.NotImplementedException($"Failed to match closing parenthesis");
+        }
 
         public (SemanticPass semanticPass, IEnumerable<Result<Tokens>> tokens) Build(string input)
         {

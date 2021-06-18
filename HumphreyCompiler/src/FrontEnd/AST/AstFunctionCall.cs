@@ -185,6 +185,8 @@ namespace Humphrey.FrontEnd
             {
                 e.Semantic(pass);
             }
+            pass.FetchSemanticInfo(expr.Token, out var info);
+            pass.AddSemanticInfoToToken(info, argumentList.TokenForParenthesis);
         }
 
         private Result<Tokens> _token;

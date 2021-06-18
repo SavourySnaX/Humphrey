@@ -4,6 +4,7 @@ namespace Humphrey.FrontEnd
     public class AstExpressionList : IAst
     {
         IExpression[] expressions;
+        Result<Tokens> closeParenthesis;
 
         public AstExpressionList()
         {
@@ -17,7 +18,7 @@ namespace Humphrey.FrontEnd
 
         public string Dump()
         {
-            if (expressions.Length==0)
+            if (expressions.Length == 0)
                 return "";
             var s = new StringBuilder();
             for (int a = 0; a < expressions.Length; a++)
@@ -28,6 +29,8 @@ namespace Humphrey.FrontEnd
             }
             return s.ToString();
         }
+
+        public Result<Tokens> TokenForParenthesis { get => closeParenthesis; set => closeParenthesis=value; }
 
         public IExpression[] Expressions => expressions;
         private Result<Tokens> _token;

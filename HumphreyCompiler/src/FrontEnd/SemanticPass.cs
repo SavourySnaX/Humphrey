@@ -233,6 +233,11 @@ namespace Humphrey.FrontEnd
             return ok;
         }
 
+        public void AddSemanticInfoToToken(SemanticInfo info, Result<Tokens> token)
+        {
+            semanticInfo.Add(token, info);
+        }
+
         public bool AddSemanticLocation(IIdentifier identifier, Result<Tokens> token)
         {
             var entry = currentScope.FetchAny(identifier.Name);
