@@ -20,39 +20,46 @@ namespace Humphrey.FrontEnd
             var baseKind = type.CreateOrFetchType(unit);
             if (!VerifyAliasIsValid(unit, baseKind))
             {
-                return baseKind;
+                var cTypes = new CompilationType[0][];
+                var names = new string[0][];
+                var rotate = new uint[0][];
+
+                return (unit.FetchAliasType(baseKind.compilationType, cTypes, names, rotate, new SourceLocation(Token)), this);
             }
-
-            var cTypes = new CompilationType[definitions.Length][];
-            var names = new string[definitions.Length][];
-            var rotate = new uint[definitions.Length][];
-
-            for (int a=0;a<definitions.Length;a++)
+            else
             {
-                int numElements = 0;
-                foreach (var element in definitions[a])
-                    numElements += element.NumElements;
-                cTypes[a] = new CompilationType[numElements];
-                names[a] = new string[numElements];
-                rotate[a] = new uint[numElements];
 
-                uint start=(baseKind.compilationType as CompilationIntegerType).IntegerWidth;
-                uint idx=0;
-                for (int b=0;b<definitions[a].Length;b++)
+                var cTypes = new CompilationType[definitions.Length][];
+                var names = new string[definitions.Length][];
+                var rotate = new uint[definitions.Length][];
+
+                for (int a = 0; a < definitions.Length; a++)
                 {
-                    for (int c=0;c<definitions[a][b].NumElements;c++)
+                    int numElements = 0;
+                    foreach (var element in definitions[a])
+                        numElements += element.NumElements;
+                    cTypes[a] = new CompilationType[numElements];
+                    names[a] = new string[numElements];
+                    rotate[a] = new uint[numElements];
+
+                    uint start = (baseKind.compilationType as CompilationIntegerType).IntegerWidth;
+                    uint idx = 0;
+                    for (int b = 0; b < definitions[a].Length; b++)
                     {
-                        cTypes[a][idx]=definitions[a][b].Type.CreateOrFetchType(unit).compilationType;
-                        names[a][idx]=definitions[a][b].Identifiers[c].Name;
-                        start-=(cTypes[a][idx] as CompilationIntegerType).IntegerWidth;
-                        rotate[a][idx]=start;
-                        idx++;
+                        for (int c = 0; c < definitions[a][b].NumElements; c++)
+                        {
+                            cTypes[a][idx] = definitions[a][b].Type.CreateOrFetchType(unit).compilationType;
+                            names[a][idx] = definitions[a][b].Identifiers[c].Name;
+                            start -= (cTypes[a][idx] as CompilationIntegerType).IntegerWidth;
+                            rotate[a][idx] = start;
+                            idx++;
+                        }
                     }
                 }
-            }
 
-            // For now, just create the base type (debugability be damned)- TODO - figure out how to map the elements for debug information
-            return (unit.FetchAliasType(baseKind.compilationType, cTypes, names, rotate, new SourceLocation(Token)), this);
+                // For now, just create the base type (debugability be damned)- TODO - figure out how to map the elements for debug information
+                return (unit.FetchAliasType(baseKind.compilationType, cTypes, names, rotate, new SourceLocation(Token)), this);
+            }
         }
     
         public bool IsFunctionType => false;
@@ -152,7 +159,7 @@ namespace Humphrey.FrontEnd
 
                     if (compareWidth!=width)
                     {
-                        unit.Messages.Log(CompilerErrorKind.Error_AliasWidthMismatch, $"Alias widths must match base type!", Token.Location, Token.Remainder);
+                        unit.Messages.Log(CompilerErrorKind.Error_AliasWidthMismatch, $"Alias widths must match base type!", type.Token.Location, type.Token.Remainder);
                         return false;
                     }
                 }

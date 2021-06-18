@@ -94,7 +94,8 @@ namespace Humphrey.Backend
                 idxB=0;
             }
 
-            throw new System.NotImplementedException($"Error Should Already be handled in semantic pass");
+            // If we reach here, it means the field type has not validated.. just return undef
+            return unit.CreateUndef(baseType);
         }
 
         public void StoreElement(CompilationUnit unit, CompilationBuilder builder, CompilationValue dst, IExpression src, string identifier)
