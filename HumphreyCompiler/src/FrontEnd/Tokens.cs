@@ -392,6 +392,8 @@ namespace Humphrey.FrontEnd
 
         public string FetchDocLine()
         {
+            if (location.AtEnd)
+                return "";
             return location.FetchDocLine();
         }
 
