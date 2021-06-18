@@ -66,6 +66,11 @@ namespace Humphrey.Backend
 
         public CompilationValue LoadElement(CompilationUnit unit, CompilationBuilder builder, CompilationValue src, string identifier)
         {
+            if (identifier=="raw")
+            {
+                return new CompilationValue(src.BackendValue, baseType, src.FrontendLocation);
+            }
+
             uint idxA=0;
             uint idxB=0;
             foreach (var names in elementNames)
@@ -94,7 +99,13 @@ namespace Humphrey.Backend
 
         public void StoreElement(CompilationUnit unit, CompilationBuilder builder, CompilationValue dst, IExpression src, string identifier)
         {
-            uint idxA=0;
+            if (identifier=="raw")
+            {
+                var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, src, baseType);
+                builder.Store(storeValue, dst.Storage);
+                return;
+            }
+            uint idxA = 0;
             uint idxB=0;
             foreach (var names in elementNames)
             {
@@ -135,34 +146,6 @@ namespace Humphrey.Backend
             }
 
             throw new System.NotImplementedException($"Error Should Already be handled in semantic pass");
-
-
-
-
-
-            throw new System.NotImplementedException($"TODO");
-            /*
-            // Find identifier in elements
-            uint idx=0;
-            foreach (var i in elementNames)
-            {
-                if (i == identifier)
-                    break;
-                idx++;
-            }
-            if (idx==elementTypes.Length)
-            {
-                // Compilation error, struct xxx does not contain field yyy
-                throw new System.Exception($"Need error message and partial recovery -struct does not contain field {identifier}");
-            }
-
-            CompilationType elementType = elementTypes[idx];
-            var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, src, elementType);
-
-            var newVal = builder.InsertValue(dst, storeValue, idx);
-
-            builder.Store(newVal, dst.Storage);
-            */
         }
 
         public override string DumpType()
