@@ -640,7 +640,7 @@ namespace Humphrey.Backend
             if (kernel)
                 model = LLVMCodeModel.LLVMCodeModelKernel;
 
-            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", kernel?"-sse,-mmx":"", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
 
             moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
@@ -701,7 +701,7 @@ namespace Humphrey.Backend
             if (kernel)
                 model = LLVMCodeModel.LLVMCodeModelKernel;
 
-            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic",  kernel?"-sse,-mmx":"", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
 
             moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
