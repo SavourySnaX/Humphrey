@@ -202,9 +202,11 @@ namespace Humphrey.Experiments
                             else
                             {
                                 if (options.emitLLVM)
-                                    Console.WriteLine(cu.Dump());
+                                {
+                                    cu.DumpLLVM(options.pic, options.kernelCodeModel);
+                                }
                                 else
-                                    cu.DumpDisassembly(options.pic,options.kernelCodeModel);
+                                    cu.DumpDisassembly(options.pic, options.kernelCodeModel);
                             }
                         }
                     }

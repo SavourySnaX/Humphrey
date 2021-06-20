@@ -648,9 +648,7 @@ namespace Humphrey.Backend
             var pm = LLVMPassManagerRef.Create();
             if (optimisations)
             {
-                var passes = PassManagerBuilderCreate();
-                passes.PopulateModulePassManager(pm);
-                passes.PopulateFunctionPassManager(pm);
+                Optimise(pm);
             }
 
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
@@ -692,6 +690,47 @@ namespace Humphrey.Backend
             return default;
         }
 
+        public bool DumpLLVM(bool pic, bool kernel)
+        {
+            LLVMRelocMode reloc = LLVMRelocMode.LLVMRelocDefault;
+            if (pic)
+                reloc = LLVMRelocMode.LLVMRelocPIC;
+            LLVMCodeModel model = LLVMCodeModel.LLVMCodeModelDefault;
+            if (kernel)
+                model = LLVMCodeModel.LLVMCodeModelKernel;
+
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic",  kernel?"-sse,-mmx":"", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
+
+            moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
+            moduleRef.Target = LLVMTargetRef.DefaultTriple;
+
+            var pm = LLVMPassManagerRef.Create();
+            if (optimisations)
+            {
+                Optimise(pm);
+            }
+
+            if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
+            {
+                messages.Log(CompilerErrorKind.Error_FailedVerification, $"Module Verification Failed : {moduleRef.PrintToString()}{Environment.NewLine}{message}");
+                return false;
+            }
+
+            pm.Run(moduleRef);
+
+            Console.WriteLine(moduleRef.PrintToString());
+
+            return true;
+        }
+
+        public void Optimise(LLVMPassManagerRef passManagerRef)
+        {
+            var passes = PassManagerBuilderCreate();
+            passes.SetOptLevel(3);
+            passes.PopulateModulePassManager(passManagerRef);
+            passes.PopulateFunctionPassManager(passManagerRef);
+        }
+
         public bool DumpDisassembly(bool pic, bool kernel)
         {
             LLVMRelocMode reloc = LLVMRelocMode.LLVMRelocDefault;
@@ -710,9 +749,7 @@ namespace Humphrey.Backend
             var pm = LLVMPassManagerRef.Create();
             if (optimisations)
             {
-                var passes = PassManagerBuilderCreate();
-                passes.PopulateModulePassManager(pm);
-                passes.PopulateFunctionPassManager(pm);
+                Optimise(pm);
             }
 
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
