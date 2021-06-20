@@ -146,7 +146,7 @@ namespace Humphrey.Backend
                 idxB=0;
             }
 
-            throw new System.NotImplementedException($"Error Should Already be handled in semantic pass");
+            // If we reach here, it means the field type has not validated.. just return
         }
 
         public override string DumpType()
