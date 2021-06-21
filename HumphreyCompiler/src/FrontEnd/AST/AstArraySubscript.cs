@@ -126,6 +126,13 @@ namespace Humphrey.FrontEnd
                 var rotated = builder.RotateRight(vlhs, matchWidth);
                 return builder.Trunc(rotated, bitType);
             }
+            if (vlhs.Type is CompilationEnumType enumType)
+            {
+                var bitType = unit.FetchIntegerType(1, false, new SourceLocation(subscriptIdx.Token));
+                var matchWidth = builder.MatchWidth(vrhs, enumType.ElementType);
+                var rotated = builder.RotateRight(vlhs, matchWidth);
+                return builder.Trunc(rotated, bitType);
+            }
 
             throw new System.NotImplementedException($"Todo implement expression for subscript of array type...");
         }
@@ -238,6 +245,20 @@ namespace Humphrey.FrontEnd
                 builder.Store(inserted, vlhs.Storage);
                 return;
             }
+            if (vlhs.Type is CompilationEnumType enumType)
+            {
+                var iType=enumType.ElementType;
+                var mask = new CompilationValue(iType.BackendType.CreateConstantValue(1), iType, Token);
+                var matchWidth = builder.MatchWidth(vrhs, iType);
+                var rotatedMask = builder.RotateLeft(mask, matchWidth);
+                var invertedMask = builder.Not(rotatedMask);
+                var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, value, iType);
+                var rotatedStore = builder.RotateLeft(storeValue, matchWidth);
+                var masked = builder.And(vlhs, invertedMask);
+                var inserted = builder.Or(masked, rotatedStore);
+                builder.Store(inserted, vlhs.Storage);
+                return;
+            }
 
 
             throw new System.NotImplementedException($"Todo implement expression for store for subscript of array type...");
@@ -258,6 +279,12 @@ namespace Humphrey.FrontEnd
                 if (subscriptIdx is AstInclusiveRange)
                     return resolved;
                 return pointerType.ElementType;
+            }
+            if (resolvedBase is AstEnumType enumType)
+            {
+                if (subscriptIdx is AstInclusiveRange)
+                    return resolved;
+                return enumType.Type;
             }
             throw new System.NotImplementedException($"TODO other subscripts");
         }
