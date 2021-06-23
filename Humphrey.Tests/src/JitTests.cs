@@ -1295,6 +1295,7 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
         }
 
         [Theory]
+        [InlineData(@"ENUM:[4]bit { a:=0 } Main : (a:[8]bit|{msb:ENUM lsb:[4]bit}) (out : [8]bit) = { out=a.msb; }", "Main", 0x48,0x04)]
         [InlineData(@"Main : (a:[8]bit|{msb:[4]bit lsb:[4]bit}) (out : [8]bit) = { out=a.msb; }", "Main", 0x48,0x04)]
         [InlineData(@"Main : (a:[8]bit|{msb:[4]bit lsb:[4]bit}) (out : [8]bit) = { out=a.lsb; }", "Main", 0x48,0x08)]
         [InlineData(@"Main : (a:[8]bit|{a:bit b:bit c:bit d:bit e:bit f:bit g:bit h:bit}) (out : [8]bit) = { out=a.a; }", "Main", 0x48,0x00)]
@@ -1313,6 +1314,7 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
         }
 
         [Theory]
+        [InlineData(@"ENUM:[4]bit { a:=0 } Main : (a:[8]bit|{msb:ENUM lsb:[4]bit}) (out : [8]bit) = { out=a.raw; }", "Main", 0x48,0x48)]
         [InlineData(@"Main : (a:[8]bit|{msb:[4]bit lsb:[4]bit}) (out : [8]bit) = { out=a.raw; }", "Main", 0x48,0x48)]
         [InlineData(@"Main : (a:[8]bit|{msb:[4]bit lsb:[4]bit}) (out : [8]bit) = { out=a.raw; }", "Main", 0x99,0x99)]
         [InlineData(@"Main : (a:[8]bit|{msb:[4]bit lsb:[4]bit}) (out : [8]bit) = { out=a.raw; }", "Main", 0xFF,0xFF)]
@@ -1323,7 +1325,7 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
 
 
         [Theory]
-        [InlineData(@"Alias:[8]bit |{ msb:[4]bit lsb:[4]bit}   Main : (a:Alias) (out : Alias) = { a.msb=0xF; out=a; }", "Main", 0x08,0xF8)]
+        [InlineData(@"ENUM:[4]bit { a:=0xF } Alias:[8]bit |{ msb:ENUM lsb:[4]bit}   Main : (a:Alias) (out : Alias) = { a.msb=ENUM.a; out=a; }", "Main", 0x08,0xF8)]
         [InlineData(@"Alias:[8]bit |{ msb:[4]bit lsb:[4]bit}   Main : (a:Alias) (out : Alias) = { a.msb=0x8; out=a; }", "Main", 0x08,0x88)]
         [InlineData(@"Alias:[8]bit |{ msb:[4]bit lsb:[4]bit}   Main : (a:Alias) (out : Alias) = { a.lsb=0xF; out=a; }", "Main", 0x80,0x8F)]
         [InlineData(@"Alias:[8]bit |{ msb:[4]bit lsb:[4]bit}   Main : (a:Alias) (out : Alias) = { a.lsb=0x8; out=a; }", "Main", 0x80,0x88)]
@@ -1344,6 +1346,7 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
         }
 
         [Theory]
+        [InlineData(@"ENUM:[4]bit { a:=0 } Main : (a:[8]bit) (out : [8]bit|{msb:ENUM lsb:[4]bit}) = { out.raw=a; }", "Main", 0x48,0x48)]
         [InlineData(@"Main : (a:[8]bit) (out : [8]bit|{msb:[4]bit lsb:[4]bit}) = { out.raw=a; }", "Main", 0x48,0x48)]
         [InlineData(@"Main : (a:[8]bit) (out : [8]bit|{msb:[4]bit lsb:[4]bit}) = { out.raw=a; }", "Main", 0xFF,0xFF)]
         [InlineData(@"Main : (a:[8]bit) (out : [8]bit|{msb:[4]bit lsb:[4]bit}) = { out.raw=a; }", "Main", 0x99,0x99)]

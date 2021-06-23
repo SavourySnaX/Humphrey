@@ -84,7 +84,13 @@ namespace Humphrey.Backend
                         var rotateByMatched = builder.MatchWidth(rotateBy, baseType);
                         var correctedSrc = new CompilationValue(src.BackendValue, baseType, src.FrontendLocation);
                         var shifted = builder.RotateRight(correctedSrc, rotateByMatched);
-                        var truncated = builder.MatchWidth(shifted,elementTypes[idxA][idxB]);
+
+                        var elType = elementTypes[idxA][idxB];
+                        if (elType is CompilationEnumType CET)
+                        {
+                            elType = CET.ElementType;
+                        }
+                        var truncated = builder.MatchWidth(shifted,elType);
                         return truncated;
                     }
                     idxB++;
@@ -130,7 +136,13 @@ namespace Humphrey.Backend
                         var correctedDst = new CompilationValue(dst.BackendValue, baseType, dst.FrontendLocation);
                         var shifted = builder.RotateRight(correctedDst, rotateByMatched);
                         var expanded = builder.MatchWidth(storeValue, baseType);
-                        var mask = unit.CreateConstant($"{(1<<(int)(elementTypes[idxA][idxB] as CompilationIntegerType).IntegerWidth)-1}", Location);
+                        
+                        var elType = elementTypes[idxA][idxB];
+                        if (elType is CompilationEnumType CET)
+                        {
+                            elType = CET.ElementType;
+                        }
+                        var mask = unit.CreateConstant($"{(1<<(int)(elType as CompilationIntegerType).IntegerWidth)-1}", Location);
                         var maskMatched = builder.MatchWidth(mask, baseType);
                         var maskInv = builder.Not(maskMatched);
                         var anded = builder.And(maskInv, shifted);

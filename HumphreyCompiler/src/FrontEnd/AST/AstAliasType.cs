@@ -28,7 +28,6 @@ namespace Humphrey.FrontEnd
             }
             else
             {
-
                 var cTypes = new CompilationType[definitions.Length][];
                 var names = new string[definitions.Length][];
                 var rotate = new uint[definitions.Length][];
@@ -42,7 +41,13 @@ namespace Humphrey.FrontEnd
                     names[a] = new string[numElements];
                     rotate[a] = new uint[numElements];
 
-                    uint start = (baseKind.compilationType as CompilationIntegerType).IntegerWidth;
+                    var baseType = baseKind.compilationType;
+                    if (baseType is CompilationEnumType CET)
+                    {
+                        baseType = CET.ElementType;
+                    }
+
+                    uint start = (baseType as CompilationIntegerType).IntegerWidth;
                     uint idx = 0;
                     for (int b = 0; b < definitions[a].Length; b++)
                     {
@@ -50,7 +55,12 @@ namespace Humphrey.FrontEnd
                         {
                             cTypes[a][idx] = definitions[a][b].Type.CreateOrFetchType(unit).compilationType;
                             names[a][idx] = definitions[a][b].Identifiers[c].Name;
-                            start -= (cTypes[a][idx] as CompilationIntegerType).IntegerWidth;
+                            var elementType = cTypes[a][idx];
+                            if (elementType is CompilationEnumType eCET)
+                            {
+                                elementType = eCET.ElementType;
+                            }
+                            start -= (elementType as CompilationIntegerType).IntegerWidth;
                             rotate[a][idx] = start;
                             idx++;
                         }
@@ -136,7 +146,12 @@ namespace Humphrey.FrontEnd
         //  Alias must be 16 bits long, and a single alias member must not cross between the two elements in the parent struct
         private bool VerifyAliasIsValid(CompilationUnit unit, (CompilationType compilationType, IType originalType) cType)
         {
-            if (cType.compilationType is CompilationIntegerType integerType)
+            var compType = cType.compilationType;
+
+            if (compType is CompilationEnumType enumType)
+                compType = enumType.ElementType;
+
+            if (compType is CompilationIntegerType integerType)
             {
                 var width = integerType.IntegerWidth;
 
@@ -146,8 +161,14 @@ namespace Humphrey.FrontEnd
                     foreach (var element in elements)
                     {
                         var t = element.Type.CreateOrFetchType(unit);// We already do this elsewhere, so wasteful
+                        var elType = t.compilationType;
+
+                        if (elType is CompilationEnumType CET)
+                        {
+                            elType = CET.ElementType;
+                        }
                         
-                        if (t.compilationType is CompilationIntegerType cIT)
+                        if (elType is CompilationIntegerType cIT)
                         {
                             compareWidth+=cIT.IntegerWidth;
                         }
