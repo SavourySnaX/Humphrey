@@ -258,6 +258,9 @@ namespace Humphrey.Backend
         public CompilationValue MatchWidth(CompilationValue src, CompilationType toType)
         {
             var srcIntType = src.Type as CompilationIntegerType;
+            if (src.Type is CompilationEnumType compilationEnumType)
+                srcIntType = compilationEnumType.ElementType as CompilationIntegerType;
+
             var toIntType = toType as CompilationIntegerType;
 
             if (srcIntType != null && toIntType != null)

@@ -120,7 +120,13 @@ namespace Humphrey.Backend
                 {
                     if (name == identifier)
                     {
-                        var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, src, elementTypes[idxA][idxB]);
+                        var elType = elementTypes[idxA][idxB];
+                        if (elType is CompilationEnumType CET)
+                        {
+                            elType = CET.ElementType;
+                        }
+
+                        var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, src, elType);
 
                         // we need to slot the value back into the original type
                         // [AB??EFGH]   [ZX]
@@ -136,12 +142,6 @@ namespace Humphrey.Backend
                         var correctedDst = new CompilationValue(dst.BackendValue, baseType, dst.FrontendLocation);
                         var shifted = builder.RotateRight(correctedDst, rotateByMatched);
                         var expanded = builder.MatchWidth(storeValue, baseType);
-                        
-                        var elType = elementTypes[idxA][idxB];
-                        if (elType is CompilationEnumType CET)
-                        {
-                            elType = CET.ElementType;
-                        }
                         var mask = unit.CreateConstant($"{(1<<(int)(elType as CompilationIntegerType).IntegerWidth)-1}", Location);
                         var maskMatched = builder.MatchWidth(mask, baseType);
                         var maskInv = builder.Not(maskMatched);
