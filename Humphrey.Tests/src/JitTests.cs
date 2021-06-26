@@ -1344,6 +1344,13 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
         {
             Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
         }
+        
+        [Theory]
+        [InlineData(@"ENUM:[4]bit { a:=0xF } Alias:[8]bit |{ msb:ENUM lsb:[4]bit} FPtrToAlias:(a:*Alias)()={a.msb=ENUM.a;}  Main : (a:Alias) (out : Alias) = { FPtrToAlias(&a); out=a; }", "Main", 0x08,0xF8)]
+        public void CheckAliasStorePtrTo(string input, string entryPointName, byte ival1, byte expected)
+        {
+            Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
+        }
 
         [Theory]
         [InlineData(@"ENUM:[4]bit { a:=0 } Main : (a:[8]bit) (out : [8]bit|{msb:ENUM lsb:[4]bit}) = { out.raw=a; }", "Main", 0x48,0x48)]

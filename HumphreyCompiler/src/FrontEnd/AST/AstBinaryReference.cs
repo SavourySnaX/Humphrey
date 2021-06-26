@@ -80,7 +80,7 @@ namespace Humphrey.FrontEnd
             if (aliasType!=null)
             {
                 // Load base value, mask element, shift down, returning as the type
-                var store = vlhs.Storage;
+                var store = pointerToValue;
                 var loaded = new CompilationValue(builder.Load(store).BackendValue, (store.Type as CompilationPointerType).ElementType, Token);
                 loaded.Storage = store;
                 return (loaded,aliasType);
