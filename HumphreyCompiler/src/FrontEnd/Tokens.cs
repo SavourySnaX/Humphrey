@@ -262,7 +262,7 @@ namespace Humphrey.FrontEnd
                                 // return docline
                                 if (dupedLocation.AtEnd)
                                     end++;
-                                return dupedLocation.encompass.Substring(start, end-start);
+                                return dupedLocation.encompass.Substring(start, end-start).Trim();
                             }
                             end = dupedLocation.position;
                         }
