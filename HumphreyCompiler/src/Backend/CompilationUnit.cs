@@ -81,7 +81,7 @@ namespace Humphrey.Backend
             foreach (var extra in extraNamespaces)
             {
                 root.MergeSymbolTable(extra.symbols);
-                foreach (var kv in extra.symbols.pendingDefinitions)
+                foreach (var kv in extra.pass.UsedDefinitions)
                 {
                     currentNamespace.pendingDefinitions.Add(kv.Key, kv.Value);
                 }

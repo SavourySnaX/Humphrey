@@ -18,6 +18,7 @@ namespace Humphrey.FrontEnd
 
         ICompilerMessages messages;
         Dictionary<string, IGlobalDefinition> pendingDefinitions;
+        Dictionary<string, IGlobalDefinition> usedDefinitions;
         List<SymbolTableAndPass> importedNamespaces;
         Dictionary<string,SymbolTableAndPass> allImportedNamespaces;
         List<IGlobalDefinition> pendingCompile;
@@ -90,6 +91,7 @@ namespace Humphrey.FrontEnd
             semanticInfo = new Dictionary<Result<Tokens>, SemanticInfo>();
             pendingCompile = new List<IGlobalDefinition>();
             pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
+            usedDefinitions = new Dictionary<string, IGlobalDefinition>();
             importedNamespaces = new List<SymbolTableAndPass>();
             allImportedNamespaces = allImports;
         }
@@ -124,7 +126,6 @@ namespace Humphrey.FrontEnd
                     usingNamespace.Semantic(this);
                 }
             }
-
         }
 
         public void RunPass(IGlobalDefinition[] globals)
@@ -205,7 +206,8 @@ namespace Humphrey.FrontEnd
                 currentScope=root;
                 foreach (var ident in definition.Identifiers)
                 {
-                    pendingDefinitions.Remove(ident.Dump());
+                    usedDefinitions.Add(ident.Name,definition);
+                    pendingDefinitions.Remove(ident.Name);
                 }
                 definition.Semantic(this);
                 currentScope= symbolStack.Peek();
@@ -344,10 +346,10 @@ namespace Humphrey.FrontEnd
                     var globals = p.File();
                     var sp = new SemanticPass(currentManager, cLevel, allImportedNamespaces, messages);
 
-                    var s = new SymbolTableAndPass{ pass = sp, symbols = sp.root };
+                    var s = new SymbolTableAndPass{ pass = sp, symbols = sp.root};
                     allImportedNamespaces.Add(scopeName.ToString(), s);
                     importedNamespaces.Add(s);
-                    sp.RunPass(globals);
+                    sp.AddToPending(globals);
                 }
                 else
                 {
@@ -415,5 +417,7 @@ namespace Humphrey.FrontEnd
         public IEnumerable<SymbolTableAndPass> ImportedNamespaces => allImportedNamespaces.Values;
         public ICompilerMessages Messages => messages;
         public CommonSymbolTable RootSymbolTable => root;
+
+        public Dictionary<string, IGlobalDefinition> UsedDefinitions => usedDefinitions;
     }
 }
