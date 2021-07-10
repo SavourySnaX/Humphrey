@@ -212,6 +212,7 @@ namespace Humphrey.FrontEnd
                     {
                         pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {ident.Name} already exists", ident.Token.Location, ident.Token.Remainder);
                     }
+                    type.Semantic(pass);
                     functionType.Semantic(pass, null);
                 }
                 else if (functionType != null && initialiser != null && codeBlock != null)
@@ -220,6 +221,7 @@ namespace Humphrey.FrontEnd
                     {
                         pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {ident.Name} already exists", ident.Token.Location, ident.Token.Remainder);
                     }
+                    type.Semantic(pass);
                     functionType.Semantic(pass, codeBlock);
 
                     if (functionType.IsGeneric)

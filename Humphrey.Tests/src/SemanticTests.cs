@@ -395,6 +395,15 @@ namespace Humphrey.FrontEnd.Tests
         }
 
 
+        [Theory]
+        [InlineData(@" MainKind:()() Main:MainKind={ check:=1; }", "MainKind", SemanticPass.IdentifierKind.Function, typeof(AstFunctionType), typeof(AstFunctionType))]
+        public void CheckFunctionKind(string input, string symbol, SemanticPass.IdentifierKind expected, Type t, Type b)
+        {
+            var result = Build(input, symbol, expected, t, b);
+            Assert.True(result);
+        }
+
+
 
         [Theory]
         [InlineData(@"Main : (a : [32]bit) () = { ptr:=&a; }", "ptr", typeof(AstPointerType), typeof(AstArrayType))]
