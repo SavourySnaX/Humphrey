@@ -33,7 +33,7 @@ namespace Humphrey.Backend
 
         bool optimisations;
 
-        public CompilationUnit(string sourceFileNameAndPath, CommonSymbolTable rootFromSemmantic, IEnumerable<CommonSymbolTable> extraNamespaces, IPackageManager manager, IEnumerable<IGlobalDefinition> definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
+        public CompilationUnit(string sourceFileNameAndPath, CommonSymbolTable rootFromSemmantic, IEnumerable<SemanticPass.SymbolTableAndPass> extraNamespaces, IPackageManager manager, IEnumerable<IGlobalDefinition> definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
         {
             optimisations = !disableOptimisations;
 
@@ -80,8 +80,8 @@ namespace Humphrey.Backend
 
             foreach (var extra in extraNamespaces)
             {
-                root.MergeSymbolTable(extra);
-                foreach (var kv in extra.pendingDefinitions)
+                root.MergeSymbolTable(extra.symbols);
+                foreach (var kv in extra.symbols.pendingDefinitions)
                 {
                     currentNamespace.pendingDefinitions.Add(kv.Key, kv.Value);
                 }

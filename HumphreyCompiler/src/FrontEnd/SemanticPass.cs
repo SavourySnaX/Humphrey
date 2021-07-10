@@ -6,14 +6,20 @@ namespace Humphrey.FrontEnd
 {
     public class SemanticPass
     {
+        public struct SymbolTableAndPass
+        {
+            public SemanticPass        pass;
+            public CommonSymbolTable   symbols;
+        }
+
         Stack<CommonSymbolTable> symbolStack;
         CommonSymbolTable root;
         CommonSymbolTable currentScope;
 
         ICompilerMessages messages;
         Dictionary<string, IGlobalDefinition> pendingDefinitions;
-        List<CommonSymbolTable> importedNamespaces;
-        Dictionary<string,CommonSymbolTable> allImportedNamespaces;
+        List<SymbolTableAndPass> importedNamespaces;
+        Dictionary<string,SymbolTableAndPass> allImportedNamespaces;
         List<IGlobalDefinition> pendingCompile;
 
         Dictionary<Result<Tokens>, SemanticInfo> semanticInfo;
@@ -59,19 +65,19 @@ namespace Humphrey.FrontEnd
         public SemanticPass(IPackageManager manager, ICompilerMessages overrideDefaultMessages = null)
         {
             var root = manager?.FetchRoot;
-            ConstructSemanticPass(manager, root, new Dictionary<string, CommonSymbolTable>(), overrideDefaultMessages);
+            ConstructSemanticPass(manager, root, new Dictionary<string, SymbolTableAndPass>(), overrideDefaultMessages);
         }
 
         protected SemanticPass(IPackageManager manager, IPackageLevel level, ICompilerMessages overrideDefaultMessages = null)
         {
-            ConstructSemanticPass(manager, level, new Dictionary<string, CommonSymbolTable>(), overrideDefaultMessages);
+            ConstructSemanticPass(manager, level, new Dictionary<string, SymbolTableAndPass>(), overrideDefaultMessages);
         }
-        protected SemanticPass(IPackageManager manager, IPackageLevel level, Dictionary<string,CommonSymbolTable> allImported, ICompilerMessages overrideDefaultMessages = null)
+        protected SemanticPass(IPackageManager manager, IPackageLevel level, Dictionary<string,SymbolTableAndPass> allImported, ICompilerMessages overrideDefaultMessages = null)
         {
             ConstructSemanticPass(manager, level, allImported, overrideDefaultMessages);
         }
 
-        protected void ConstructSemanticPass(IPackageManager manager, IPackageLevel level, Dictionary<string,CommonSymbolTable> allImports, ICompilerMessages overrideDefaultMessages = null)
+        protected void ConstructSemanticPass(IPackageManager manager, IPackageLevel level, Dictionary<string,SymbolTableAndPass> allImports, ICompilerMessages overrideDefaultMessages = null)
         {
             messages = overrideDefaultMessages;
             if (messages==null)
@@ -84,21 +90,13 @@ namespace Humphrey.FrontEnd
             semanticInfo = new Dictionary<Result<Tokens>, SemanticInfo>();
             pendingCompile = new List<IGlobalDefinition>();
             pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
-            importedNamespaces = new List<CommonSymbolTable>();
+            importedNamespaces = new List<SymbolTableAndPass>();
             allImportedNamespaces = allImports;
         }
 
         public void AddToPending(IGlobalDefinition[] globals)
         {
             pendingCompile.AddRange(globals);
-            // Process using statements first, then the rest
-            foreach (var def in globals)
-            {
-                if (def is AstUsingNamespace usingNamespace)
-                {
-                    usingNamespace.Semantic(this);
-                }
-            }
             root.pendingDefinitions=new Dictionary<string, IGlobalDefinition>();
 
             foreach (var def in globals)
@@ -117,6 +115,16 @@ namespace Humphrey.FrontEnd
                     }
                 }
             }
+
+            // Process using statements second (this way pending definitions are correctly setup)
+            foreach (var def in globals)
+            {
+                if (def is AstUsingNamespace usingNamespace)
+                {
+                    usingNamespace.Semantic(this);
+                }
+            }
+
         }
 
         public void RunPass(IGlobalDefinition[] globals)
@@ -142,9 +150,13 @@ namespace Humphrey.FrontEnd
             if (entry==null)
             {
                 // Need to look in our imported namespaces too
-                foreach (var symbol in importedNamespaces)
+                foreach (var s in importedNamespaces)
                 {
-                    entry = symbol.FetchValue(identifier.Name);
+                    if (s.pass.pendingDefinitions.ContainsKey(identifier.Name))
+                    {
+                        s.pass.Missing(identifier.Name);
+                    }
+                    entry = s.symbols.FetchValue(identifier.Name);
                     if (entry !=null)
                     {
                         return entry?.AstType;
@@ -162,9 +174,13 @@ namespace Humphrey.FrontEnd
             if (type == null)
             {
                 // Need to look in our imported namespaces too
-                foreach (var symbol in importedNamespaces)
+                foreach (var s in importedNamespaces)
                 {
-                    type = symbol.FetchAny(identifier.Name)?.AstType;
+                    if (s.pass.pendingDefinitions.ContainsKey(identifier.Name))
+                    {
+                        s.pass.Missing(identifier.Name);
+                    }
+                    type = s.symbols.FetchAny(identifier.Name)?.AstType;
                     if (type !=null)
                     {
                         return type;
@@ -244,9 +260,13 @@ namespace Humphrey.FrontEnd
             if (entry == null)
             {
                 // Need to look in our imported namespaces too
-                foreach (var symbol in importedNamespaces)
+                foreach (var s in importedNamespaces)
                 {
-                    entry = symbol.FetchAny(identifier.Name);
+                    if (s.pass.pendingDefinitions.ContainsKey(identifier.Name))
+                    {
+                        s.pass.Missing(identifier.Name);
+                    }
+                    entry = s.symbols.FetchAny(identifier.Name);
                     if (entry !=null)
                     {
                         semanticInfo.Add(token, entry.SemanticInfo);
@@ -317,17 +337,22 @@ namespace Humphrey.FrontEnd
             {
                 var scopeNameString = scopeName.ToString();
                 var newScope = PushScope();
-                var t = new HumphreyTokeniser(messages);
-                var p = new HumphreyParser(t.Tokenize(packageEntry.Contents, packageEntry.Path), messages);
-                var globals = p.File();
-                var sp = new SemanticPass(currentManager, cLevel, allImportedNamespaces, messages);
-                sp.RunPass(globals);
-
                 if (!allImportedNamespaces.ContainsKey(scopeNameString))
                 {
-                    allImportedNamespaces.Add(scopeName.ToString(), sp.root);
+                    var t = new HumphreyTokeniser(messages);
+                    var p = new HumphreyParser(t.Tokenize(packageEntry.Contents, packageEntry.Path), messages);
+                    var globals = p.File();
+                    var sp = new SemanticPass(currentManager, cLevel, allImportedNamespaces, messages);
+
+                    var s = new SymbolTableAndPass{ pass = sp, symbols = sp.root };
+                    allImportedNamespaces.Add(scopeName.ToString(), s);
+                    importedNamespaces.Add(s);
+                    sp.RunPass(globals);
                 }
-                importedNamespaces.Add(sp.root);
+                else
+                {
+                    importedNamespaces.Add(allImportedNamespaces[scopeNameString]);
+                }
             }
             else
             {
@@ -387,7 +412,7 @@ namespace Humphrey.FrontEnd
 
         public IPackageManager Manager => currentManager;
         public IEnumerable<IGlobalDefinition> ToCompile => pendingCompile;
-        public IEnumerable<CommonSymbolTable> ImportedNamespaces => allImportedNamespaces.Values;
+        public IEnumerable<SymbolTableAndPass> ImportedNamespaces => allImportedNamespaces.Values;
         public ICompilerMessages Messages => messages;
         public CommonSymbolTable RootSymbolTable => root;
     }
