@@ -168,7 +168,14 @@ namespace Humphrey.Experiments
             var list = new List<IPackageManager>();
             list.Add(new FileSystemPackageManager(Path.GetDirectoryName(options.inputFiles[0])));
             // temp until i command lines
-            list.Add(new GitPackageManager("C:\\work\\humphrey.system\\.git", "main"));
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                list.Add(new GitPackageManager("C:\\work\\humphrey.system\\.git", "main"));
+            }
+            else
+            {
+                list.Add(new GitPackageManager("/home/snax/Work/Humphrey.System/.git", "main"));
+            }
             var packageManager = new DefaultPackageManager(list.ToArray());
 
             var messages = new CompilerMessages(options.debugLog, options.infoLog, options.warningsAsErrors);
