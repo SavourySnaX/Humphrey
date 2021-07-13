@@ -30,7 +30,18 @@ namespace Humphrey.FrontEnd
                 return constantValue;
             }
             else
-                return builder.Not(value as CompilationValue);
+            {
+                var cv = value as CompilationValue;
+                if (cv.Type is CompilationIntegerType || cv.Type is CompilationEnumType)
+                {
+                    return builder.Not(cv);
+                }
+                else
+                {
+                    unit.Messages.Log(CompilerErrorKind.Error_ExpectedType, $"Expected an integer", Token.Location, Token.Remainder);
+                    return cv;
+                }
+            }
         }
 
         public IType ResolveExpressionType(SemanticPass pass)
