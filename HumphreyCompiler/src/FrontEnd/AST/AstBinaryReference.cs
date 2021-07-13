@@ -87,7 +87,8 @@ namespace Humphrey.FrontEnd
             }
 
             // Compilation error... cannot fetch field from a non field based type 
-            throw new System.NotImplementedException($"Attempt to reference a structure member of a non structure type!");
+            unit.Messages.Log(CompilerErrorKind.Error_ExpectedType, $"Attempted to get element from a '{vlhs.Type.DumpType()}' this is not possible", Token.Location, Token.Remainder);
+            return (null, null);
         }
         
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
