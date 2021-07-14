@@ -293,7 +293,10 @@ namespace Humphrey.FrontEnd
         public void AddEnumElementLocation(Result<Tokens> token, IType type)
         {
             var s = new SemanticPass.SemanticInfo(type, type.ResolveBaseType(this), IdentifierKind.EnumMember);
-            semanticInfo.Add(token, s);
+            if (token.HasValue)
+            {
+                semanticInfo.Add(token, s);
+            }
         }
 
 
@@ -325,7 +328,8 @@ namespace Humphrey.FrontEnd
                 cLevel = cLevel.FetchEntry(s.Name);
                 if (cLevel == null)
                 {
-                    throw new System.Exception($"TODO error unknown namespace");
+                    messages.Log(CompilerErrorKind.Error_UnknownNamespace, $"Unknown Namespace {scopeName.ToString()}", s.Token.Location, s.Token.Remainder);
+                    return;
                 }
             }
             if (cLevel == null)
