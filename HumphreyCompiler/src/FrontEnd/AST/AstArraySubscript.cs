@@ -286,7 +286,8 @@ namespace Humphrey.FrontEnd
                     return resolved;
                 return enumType.Type;
             }
-            throw new System.NotImplementedException($"TODO other subscripts");
+            pass.Messages.Log(CompilerErrorKind.Error_ExpectedType, $"Unhandled Type {resolvedBase.Dump()} in array subscript", Token.Location, Token.Remainder);
+            return resolvedBase;
         }
 
         public void Semantic(SemanticPass pass)

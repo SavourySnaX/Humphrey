@@ -23,6 +23,7 @@ namespace Humphrey.FrontEnd
         Error_ExpectedType = Error | ParseError | 0x0B,
         Error_StructMemberDoesNotExist = Error | ParseError | 0x0C,
         Error_UndefinedFunction = Error | ParseError | 0x0D,
+        Error_UnknownNamespace = Error | ParseError | 0x0E,
 
         // Compilation block
         Error_MissingOutputAssignment = Error | CompileError | 0x01,
