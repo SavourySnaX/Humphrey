@@ -13,7 +13,9 @@ namespace Humphrey.Backend
     {
         string targetTriple;
 
+        IPackageManager packageManager;
         CommonSymbolTable root;
+        CommonSymbolTable currentNamespace;
         CommonSymbolTable currentScope;
         Stack<LLVMMetadataRef> debugScopeStack;
         LLVMMetadataRef rootDebugScope;
@@ -26,14 +28,12 @@ namespace Humphrey.Backend
 
         CompilationDebugBuilder debugBuilder;
 
-        Dictionary<string, IGlobalDefinition> pendingDefinitions;
-
         Version VersionNumber => new Version(1, 0);
         string CompilerVersion => $"Humphrey Compiler - V{VersionNumber}";
 
         bool optimisations;
 
-        public CompilationUnit(string sourceFileNameAndPath, CommonSymbolTable rootFromSemmantic, IGlobalDefinition[] definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
+        public CompilationUnit(string sourceFileNameAndPath, CommonSymbolTable rootFromSemmantic, IEnumerable<SemanticPass.SymbolTableAndPass> extraNamespaces, IPackageManager manager, IEnumerable<IGlobalDefinition> definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
         {
             optimisations = !disableOptimisations;
 
@@ -52,6 +52,7 @@ namespace Humphrey.Backend
             LLVM.InitializeX86AsmPrinter();
 
             root = rootFromSemmantic;
+            packageManager = manager;
             debugScopeStack=new Stack<LLVMMetadataRef>();
 
             var moduleName = System.IO.Path.GetFileNameWithoutExtension(sourceFileNameAndPath);
@@ -62,16 +63,29 @@ namespace Humphrey.Backend
             rootDebugScope = debugBuilder.RootScope;
             PushScope(root, rootDebugScope);
 
-            pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
+            currentNamespace = root;
+            currentNamespace.pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
+            targetDataRef = moduleRef.GetDataLayout();
+
             foreach (var def in definitions)
             {
-                foreach (var ident in def.Identifiers)
+                if (!(def is AstUsingNamespace))
                 {
-                    pendingDefinitions.Add(ident.Dump(), def);
+                    foreach (var ident in def.Identifiers)
+                    {
+                        currentNamespace.pendingDefinitions.Add(ident.Name, def);
+                    }
                 }
             }
 
-            targetDataRef = moduleRef.GetDataLayout();
+            foreach (var extra in extraNamespaces)
+            {
+                root.MergeSymbolTable(extra.symbols);
+                foreach (var kv in extra.pass.UsedDefinitions)
+                {
+                    currentNamespace.pendingDefinitions.Add(kv.Key, kv.Value);
+                }
+            }
         }
 
         public UInt64 GetTypeSizeInBits(CompilationType type)
@@ -86,9 +100,9 @@ namespace Humphrey.Backend
 
         public void Compile()
         {
-            while (pendingDefinitions.Count!=0)
+            while (currentNamespace.pendingDefinitions.Count!=0)
             {
-                var enumerator = pendingDefinitions.Keys.GetEnumerator();
+                var enumerator = currentNamespace.pendingDefinitions.Keys.GetEnumerator();
                 enumerator.MoveNext();
                 CompileMissing(enumerator.Current);
             }
@@ -97,12 +111,12 @@ namespace Humphrey.Backend
         }
         public bool CompileMissing(string identifier)
         {
-            if (pendingDefinitions.TryGetValue(identifier, out var definition))
+            if (currentNamespace.pendingDefinitions.TryGetValue(identifier, out var definition))
             {
-                var savedScope = PushScope(root, rootDebugScope);
+                var savedScope = PushScope(currentNamespace, rootDebugScope);
                 foreach (var ident in definition.Identifiers)
                 {
-                    pendingDefinitions.Remove(ident.Dump());
+                    currentNamespace.pendingDefinitions.Remove(ident.Dump());
                 }
                 definition.Compile(this);
                 PopScope(savedScope);
@@ -208,6 +222,12 @@ namespace Humphrey.Backend
         {
             return new CompilationEnumType(type, values, names, debugBuilder, location);
         }
+        
+        public CompilationType FetchAliasType(CompilationType type, CompilationType[][] values, string[][] names, uint [][] rotate, SourceLocation location)
+        {
+            return new CompilationAliasType(type.BackendType, type, values, names, rotate, debugBuilder, location);
+        }
+
 
         public CompilationIntegerType CreateIntegerType(uint numBits, bool isSigned, SourceLocation location)
         {
@@ -468,10 +488,12 @@ namespace Humphrey.Backend
 
             predefinedValue.SetCommpilationFunction(cfunc);
 
-            var debugFunction = debugBuilder.CreateDebugFunction(functionName, new SourceLocation(identifier.Token), type);
+            if (DebugInfoEnabled)
+            {
+                var debugFunction = debugBuilder.CreateDebugFunction(functionName, new SourceLocation(identifier.Token), type);
 
-            cfunc.BackendValue.SetSubprogram(debugFunction);
-
+                cfunc.BackendValue.SetSubprogram(debugFunction);
+            }
             return cfunc;
         }
 
@@ -493,11 +515,26 @@ namespace Humphrey.Backend
             return cfunc;
         }
 
+        // Used for namespaces.. but we probably need a proper debug scope for this
+        public (CommonSymbolTable oldScope, CommonSymbolTable oldNamespace) PushNamespaceScope(CommonSymbolTable newScope)
+        {
+            var oldNamespace = currentNamespace;
+            currentNamespace = newScope;
+            return (PushScope(newScope, debugScopeStack.Peek()), oldNamespace);
+        }
+
+        public void PopNamespaceScope((CommonSymbolTable oldScope, CommonSymbolTable oldNamespace) dc)
+        {
+            currentNamespace = dc.oldNamespace;
+            PopScope(dc.oldScope);
+        }
+
         public CommonSymbolTable PushScope(CommonSymbolTable newScope, LLVMMetadataRef debugScope)
         {
             debugScopeStack.Push(debugScope);
             var oldScope = currentScope;
             currentScope = newScope;
+            currentScope.PatchScope(root);
             return oldScope;
         }
 
@@ -603,7 +640,7 @@ namespace Humphrey.Backend
             if (kernel)
                 model = LLVMCodeModel.LLVMCodeModelKernel;
 
-            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", kernel?"-sse,-mmx":"", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
 
             moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
@@ -611,9 +648,7 @@ namespace Humphrey.Backend
             var pm = LLVMPassManagerRef.Create();
             if (optimisations)
             {
-                var passes = PassManagerBuilderCreate();
-                passes.PopulateModulePassManager(pm);
-                passes.PopulateFunctionPassManager(pm);
+                Optimise(pm);
             }
 
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
@@ -655,6 +690,47 @@ namespace Humphrey.Backend
             return default;
         }
 
+        public bool DumpLLVM(bool pic, bool kernel)
+        {
+            LLVMRelocMode reloc = LLVMRelocMode.LLVMRelocDefault;
+            if (pic)
+                reloc = LLVMRelocMode.LLVMRelocPIC;
+            LLVMCodeModel model = LLVMCodeModel.LLVMCodeModelDefault;
+            if (kernel)
+                model = LLVMCodeModel.LLVMCodeModelKernel;
+
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic",  kernel?"-sse,-mmx":"", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
+
+            moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
+            moduleRef.Target = LLVMTargetRef.DefaultTriple;
+
+            var pm = LLVMPassManagerRef.Create();
+            if (optimisations)
+            {
+                Optimise(pm);
+            }
+
+            if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
+            {
+                messages.Log(CompilerErrorKind.Error_FailedVerification, $"Module Verification Failed : {moduleRef.PrintToString()}{Environment.NewLine}{message}");
+                return false;
+            }
+
+            pm.Run(moduleRef);
+
+            Console.WriteLine(moduleRef.PrintToString());
+
+            return true;
+        }
+
+        public void Optimise(LLVMPassManagerRef passManagerRef)
+        {
+            var passes = PassManagerBuilderCreate();
+            passes.SetOptLevel(3);
+            passes.PopulateModulePassManager(passManagerRef);
+            passes.PopulateFunctionPassManager(passManagerRef);
+        }
+
         public bool DumpDisassembly(bool pic, bool kernel)
         {
             LLVMRelocMode reloc = LLVMRelocMode.LLVMRelocDefault;
@@ -664,7 +740,7 @@ namespace Humphrey.Backend
             if (kernel)
                 model = LLVMCodeModel.LLVMCodeModelKernel;
 
-            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic",  kernel?"-sse,-mmx":"", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
 
             moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
@@ -673,9 +749,7 @@ namespace Humphrey.Backend
             var pm = LLVMPassManagerRef.Create();
             if (optimisations)
             {
-                var passes = PassManagerBuilderCreate();
-                passes.PopulateModulePassManager(pm);
-                passes.PopulateFunctionPassManager(pm);
+                Optimise(pm);
             }
 
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
@@ -706,7 +780,12 @@ namespace Humphrey.Backend
 
         public void AddNamedMetadata(string key, string value)
         {
-            moduleRef.AddNamedMetadataWithStringValue(contextRef, key, value);
+            moduleRef.AddNamedMetadataOperand(key,LLVMValueRef.CreateMDNode(new[] { moduleRef.Context.GetMDString(value) }));
+        }
+
+        public LLVMBasicBlockRef AppendNewBasicBlockToFunction(CompilationFunction function, string basicBlockName)
+        {
+            return contextRef.AppendBasicBlock(function.BackendValue, basicBlockName);
         }
 
         public LLVMMetadataRef CreateDebugScope(SourceLocation location)
@@ -733,6 +812,9 @@ namespace Humphrey.Backend
         {
             return debugBuilder.CreateGlobalVarable(name, debugScopeStack.Peek(), location, type);
         }
+
+        public CommonSymbolTable CurrentScope => currentScope;
+        public LLVMMetadataRef DebugScope => debugScopeStack.Peek();
 
         public LLVMModuleRef Module => moduleRef;
         public CompilerMessages Messages => messages;

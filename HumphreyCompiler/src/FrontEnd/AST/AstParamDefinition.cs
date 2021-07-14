@@ -17,7 +17,7 @@ namespace Humphrey.FrontEnd
         }
         public CompilationParam FetchParam(CompilationUnit unit, IType inputType)
         {
-            (type as AstGenericType).SetInstanceType(inputType);
+            (type as AstGenericType).SetInstanceType(inputType, unit.CurrentScope);
             
             return unit.CreateFunctionParameter(inputType.CreateOrFetchType(unit).compilationType, ident);
         }

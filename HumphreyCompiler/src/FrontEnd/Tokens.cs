@@ -33,6 +33,9 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Keyword", Example = "bit", SemanticKind = "Type")]
         KW_Bit,
 
+        [Token(Category = "Keyword", Example = "using", SemanticKind = "Keyword")]
+        KW_Using,
+
         [Token(Category = "Keyword", Example = "for", SemanticKind = "Keyword")]
         KW_For,
 
@@ -134,6 +137,9 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Syntax", Example = ";")]
         S_SemiColon,
 
+        [Token(Category = "Syntax", Example = "|{")]
+        S_OpenAlias,
+
         [Token(Category = "Syntax", Example = "{")]
         S_OpenCurlyBrace,
 
@@ -154,6 +160,9 @@ namespace Humphrey.FrontEnd
 
         [Token(Category = "Syntax", Example = ",")]
         S_Comma,
+
+        [Token(Category = "Syntax", Example = "::")]
+        S_ColonColon,
 
         [Token(Category = "Syntax", Example = "_")]
         S_Underscore,
@@ -223,6 +232,44 @@ namespace Humphrey.FrontEnd
             if (remain.AtEnd)
                 return encompass.Substring(position);
             return encompass.Substring(position, remain.position - position);
+        }
+
+        public string FetchDocLine()
+        {
+            var dupedLocation = this;
+            uint myLine = dupedLocation.line;
+            while (!dupedLocation.AtEnd)
+            {
+                var res = dupedLocation.ConsumeChar();
+                if (res.Remainder.line!=myLine)
+                    break;
+                if (!res.HasValue)
+                    break;
+                if (res.Value=='#')
+                {
+                    if (!AtEnd)
+                    {
+                        if (dupedLocation.encompass[dupedLocation.position]=='!')
+                            break;
+                        int start = dupedLocation.position;
+                        int end = start;
+                        // At this point we have a valid doc line.. consume until we reach end/newline
+                        while (!dupedLocation.AtEnd)
+                        {
+                            res = dupedLocation.ConsumeChar();
+                            if (res.Remainder.line!=myLine || dupedLocation.AtEnd || !res.HasValue)
+                            {
+                                // return docline
+                                if (dupedLocation.AtEnd)
+                                    end++;
+                                return dupedLocation.encompass.Substring(start, end-start).Trim();
+                            }
+                            end = dupedLocation.position;
+                        }
+                    }
+                }
+            }
+            return "";
         }
 
         public bool AtEnd => position >= encompass.Length;
@@ -343,6 +390,13 @@ namespace Humphrey.FrontEnd
             return location.ToStringValue(remaining);
         }
 
+        public string FetchDocLine()
+        {
+            if (location.AtEnd)
+                return "";
+            return location.FetchDocLine();
+        }
+
         public Result<T> Combine(Result<T> toCombine)
         {
             if (location.Position < toCombine.location.Position)
@@ -409,6 +463,7 @@ namespace Humphrey.FrontEnd
         readonly Dictionary<(char, char), Tokens> _dualOperators = new Dictionary<(char, char), Tokens>
         {
             [('.', '.')] = Tokens.O_DotDot,
+            [(':', ':')] = Tokens.S_ColonColon,
             [('=', '=')] = Tokens.O_EqualsEquals,
             [('+', '+')] = Tokens.O_PlusPlus,
             [('-', '-')] = Tokens.O_MinusMinus,
@@ -419,6 +474,7 @@ namespace Humphrey.FrontEnd
             [('|', '|')] = Tokens.O_LogicalOr,
             [('<', '<')] = Tokens.O_LogicalShiftLeft,
             [('>', '>')] = Tokens.O_LogicalShiftRight,
+            [('|', '{')] = Tokens.S_OpenAlias
         };
 
         readonly Dictionary<(char, char, char), Tokens> _tripleOperators = new Dictionary<(char, char, char), Tokens>
@@ -435,6 +491,7 @@ namespace Humphrey.FrontEnd
             ["if"] = Tokens.KW_If,
             ["else"] = Tokens.KW_Else,
             ["while"] = Tokens.KW_While,
+            ["using"] = Tokens.KW_Using,
         };
 
         protected static Result<char> SkipWhiteSpace(TokenSpan span)
@@ -831,9 +888,9 @@ namespace Humphrey.FrontEnd
             return ConvertNumber(number) != null;
         }
 
-        public IEnumerable<Result<Tokens>> Tokenize(string input)
+        public IEnumerable<Result<Tokens>> Tokenize(string input, string path="")
         {
-            return Tokenize(new TokenSpan("", input));
+			return Tokenize(new TokenSpan(path, input));
         }
 
         public IEnumerable<Result<Tokens>> TokenizeFromFile(string filename)

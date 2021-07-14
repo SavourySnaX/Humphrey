@@ -43,7 +43,8 @@ namespace Humphrey.Backend
                 if (!parameters[a].Type.Same(check.parameters[a].Type))
                     return false;
             }
-            return outParameterOffset == check.outParameterOffset && Identifier == check.Identifier;
+            var anonMatch = Identifier == "" || check.Identifier == "" || Identifier == check.Identifier;
+            return outParameterOffset == check.outParameterOffset && anonMatch;
         }
 
         public CompilationStructureType CreateOutputParameterStruct(CompilationUnit unit, SourceLocation location)

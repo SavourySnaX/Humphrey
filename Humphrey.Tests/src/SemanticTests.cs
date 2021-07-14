@@ -14,6 +14,7 @@ namespace Humphrey.FrontEnd.Tests
         [InlineData(@" Main : *bit", "Main", SemanticPass.IdentifierKind.Type, typeof(AstPointerType), typeof(AstPointerType))]
         [InlineData(@" Main : {bob:bit}", "Main", SemanticPass.IdentifierKind.StructType, typeof(AstStructureType), typeof(AstStructureType))]
         [InlineData(@" Main : [8]bit {bob:=1}", "Main", SemanticPass.IdentifierKind.EnumType, typeof(AstEnumType), typeof(AstEnumType))]
+        [InlineData(@" Main : [8]bit |{bob:[8]bit}", "Main", SemanticPass.IdentifierKind.AliasType, typeof(AstAliasType), typeof(AstAliasType))]
         public void CheckGlobalType(string input, string symbol, SemanticPass.IdentifierKind expected, Type t, Type b)
         {
             var result = Build(input, symbol, expected, t, b);
@@ -134,6 +135,11 @@ namespace Humphrey.FrontEnd.Tests
         [InlineData(@" Enum : [8]bit { a:=1 } Main : ()()={ b:=Enum.a; }", "a", SemanticPass.IdentifierKind.EnumMember, typeof(AstArrayType), typeof(AstArrayType))]
         [InlineData(@" Enum : [8]bit { a:=1 } Main : ()()={ b:=Enum.a; }", "Enum", SemanticPass.IdentifierKind.EnumType, typeof(AstEnumType), typeof(AstEnumType))]
         [InlineData(@" Enum : [8]bit { a:=1 } Main : ()()={ b:=Enum.a; }", "b", SemanticPass.IdentifierKind.LocalValue, typeof(AstArrayType), typeof(AstArrayType))]
+        [InlineData(@" Alias : [2]bit |{ msb:bit lsb:bit } Main : ()()={ c:Alias=0; d:=Alias.msb; }", "msb", SemanticPass.IdentifierKind.StructMember, typeof(AstBitType), typeof(AstBitType))]
+        [InlineData(@" Alias : [2]bit |{ msb:bit lsb:bit } Main : ()()={ c:Alias=0; d:=Alias.msb; }", "lsb", SemanticPass.IdentifierKind.StructMember, typeof(AstBitType), typeof(AstBitType))]
+        [InlineData(@" Alias : [2]bit |{ msb:bit lsb:bit } Main : ()()={ c:Alias=0; d:=Alias.msb; }", "c", SemanticPass.IdentifierKind.LocalValue, typeof(AstIdentifier), typeof(AstAliasType))]
+        [InlineData(@" Alias : [2]bit |{ msb:bit lsb:bit } Main : ()()={ c:Alias=0; d:=Alias.msb; }", "d", SemanticPass.IdentifierKind.LocalValue, typeof(AstBitType), typeof(AstBitType))]
+        [InlineData(@" Alias : [2]bit |{ msb:bit lsb:bit } Main : ()()={ c:Alias=0; d:=Alias.msb; }", "Alias", SemanticPass.IdentifierKind.AliasType, typeof(AstAliasType), typeof(AstAliasType))]
         public void CheckMember(string input, string symbol, SemanticPass.IdentifierKind expected, Type t, Type b)
         {
             var result = Build(input, symbol, expected, t, b);
@@ -371,8 +377,8 @@ namespace Humphrey.FrontEnd.Tests
         }
 
         [Theory]
-        [InlineData(@" SizeOf : (a:_)(out:[64]bit)={ ptr:=&a; out=(&ptr[1])-(&ptr[0])}", "a", SemanticPass.IdentifierKind.FunctionParam, typeof(AstGenericType), typeof(AstGenericType))]
-        [InlineData(@" SizeOf : (a:_)(out:[64]bit)={ ptr:=&a; out=(&ptr[1])-(&ptr[0])}", "ptr", SemanticPass.IdentifierKind.LocalValue, typeof(AstPointerType), typeof(AstPointerType))]
+        [InlineData(@" SizeOf : (a:_)(out:[64]bit)={ ptr:=&a; out=(&ptr[1])-(&ptr[0]);}", "a", SemanticPass.IdentifierKind.FunctionParam, typeof(AstGenericType), typeof(AstGenericType))]
+        [InlineData(@" SizeOf : (a:_)(out:[64]bit)={ ptr:=&a; out=(&ptr[1])-(&ptr[0]);}", "ptr", SemanticPass.IdentifierKind.LocalValue, typeof(AstPointerType), typeof(AstPointerType))]
         public void CheckGeneric(string input, string symbol, SemanticPass.IdentifierKind expected, Type t, Type b)
         {
             var result = Build(input, symbol, expected, t, b);
@@ -381,8 +387,17 @@ namespace Humphrey.FrontEnd.Tests
 
 
         [Theory]
-        [InlineData(@" UInt64 : [64]bit GetVal32:()(out:[32]bit)={ out=12; } GetVal64:()(out:UInt64)={ out=22;}  Main:()()={check:=GetVal64() + GetVal32();}}", "check", SemanticPass.IdentifierKind.LocalValue, typeof(AstIdentifier), typeof(AstArrayType))]
+        [InlineData(@" UInt64 : [64]bit GetVal32:()(out:[32]bit)={ out=12; } GetVal64:()(out:UInt64)={ out=22;}  Main:()()={check:=GetVal64() + GetVal32();}", "check", SemanticPass.IdentifierKind.LocalValue, typeof(AstIdentifier), typeof(AstArrayType))]
         public void CheckAutoStructResolution(string input, string symbol, SemanticPass.IdentifierKind expected, Type t, Type b)
+        {
+            var result = Build(input, symbol, expected, t, b);
+            Assert.True(result);
+        }
+
+
+        [Theory]
+        [InlineData(@" MainKind:()() Main:MainKind={ check:=1; }", "MainKind", SemanticPass.IdentifierKind.Function, typeof(AstFunctionType), typeof(AstFunctionType))]
+        public void CheckFunctionKind(string input, string symbol, SemanticPass.IdentifierKind expected, Type t, Type b)
         {
             var result = Build(input, symbol, expected, t, b);
             Assert.True(result);
@@ -415,17 +430,53 @@ namespace Humphrey.FrontEnd.Tests
                 }
             }
         }
+        [Theory]
+        [InlineData(@" Main : (a:[8]bit,c:[8]bit)(r:[8]bit)={ b:=Main(a,c); r=b;}", 51)]
+        [InlineData(@" Main : ()()={ Main(); }", 20)]
+
+        public void CheckCallCloseParenthesis(string input, int offset)
+        {
+            var (semantic,tokens) = Build(input);
+            // find token in tokens
+            bool matches = true;
+            foreach (var t in tokens)
+            {
+                if (t.Location.Position==offset)
+                {
+                    if (!semantic.FetchSemanticInfo(t,out var info))
+                        throw new System.NotImplementedException($"Missing SemanticInfo set on token {t.ToStringValue()} {t.Location.ToString()}");
+
+                    matches &= info.Ast.GetType().Equals(typeof(AstFunctionType));
+                    matches &= info.Base.GetType().Equals(typeof(AstFunctionType));
+                    matches &= info.Kind.Equals(SemanticPass.IdentifierKind.Function);
+
+                    Assert.True(matches);
+                    return;
+                }
+            }
+            throw new System.NotImplementedException($"Failed to match closing parenthesis");
+        }
 
         public (SemanticPass semanticPass, IEnumerable<Result<Tokens>> tokens) Build(string input)
         {
             var messages = new CompilerMessages(true, true, false);
             var tokenise = new HumphreyTokeniser(messages);
             var tokens = tokenise.Tokenize(input);
-            var parser = new HumphreyParser(tokens, messages);
-            var parsed = parser.File();
-            var semantic = new SemanticPass("test", messages);
-            semantic.RunPass(parsed);
-            return (semantic,tokens);
+            if (!messages.HasErrors)
+            {
+                var parser = new HumphreyParser(tokens, messages);
+                var parsed = parser.File();
+                if (!messages.HasErrors)
+                {
+                    var semantic = new SemanticPass(null, messages);
+                    semantic.RunPass(parsed);
+
+                    if (!messages.HasErrors)
+                        return (semantic,tokens);
+                }
+            }
+
+            throw new System.NotImplementedException($"Failed to compile : {messages.Dump()}");
         }
 
         public bool Build(string input, string symbol, SemanticPass.IdentifierKind expectedKind, Type astKind, Type baseType)
@@ -448,10 +499,7 @@ namespace Humphrey.FrontEnd.Tests
                     matches &= info.Base.GetType().Equals(baseType);
                     matches &= info.Kind.Equals(expectedKind);
 
-                    if (!matches)
-                    {
-                        matches = false;
-                    }
+                    Assert.True(matches);
                 }
             }
 

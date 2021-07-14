@@ -18,9 +18,9 @@ namespace Humphrey.FrontEnd
             builder.SetDebugLocation(new SourceLocation(Token));
 
             //Create check_end
-            var checkBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"while_check"));
+            var checkBlock = new CompilationBlock(unit.AppendNewBasicBlockToFunction(function, $"while_check"));
             var compilationBlock = loop.CreateCodeBlock(unit, function, builder.LocalBuilder, $"while_block");
-            var endBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"while_end"));
+            var endBlock = new CompilationBlock(unit.AppendNewBasicBlockToFunction(function, $"while_end"));
 
             builder.Branch(checkBlock);
 

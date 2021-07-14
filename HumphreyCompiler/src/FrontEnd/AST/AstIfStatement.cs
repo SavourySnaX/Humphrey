@@ -22,7 +22,7 @@ namespace Humphrey.FrontEnd
 
             // Create blocks for if/end and else
             var trueBlock = conditionTrue.CreateCodeBlock(unit, function, builder.LocalBuilder, "if_if");
-            var endBlock = new CompilationBlock(function.BackendValue.AppendBasicBlock($"if_end"));
+            var endBlock = new CompilationBlock(unit.AppendNewBasicBlockToFunction(function, $"if_end"));
 
             // Evaluate condition
             // TODO need to validate we have a true/false result type 

@@ -105,7 +105,7 @@ namespace Humphrey.FrontEnd
 
             if (vlhs.Type is CompilationPointerType pointerType)
             {
-                var gep = builder.InBoundsGEP(vlhs, pointerType, new LLVMSharp.Interop.LLVMValueRef[] { builder.Ext(vrhs, vrhsIntType, i64Type).BackendValue });
+                var gep = builder.InBoundsGEP(vlhs, pointerType, new LLVMSharp.Interop.LLVMValueRef[] { builder.Ext(vrhs, i64Type).BackendValue });
                 var dereferenced = builder.Load(gep);
                 var result = new CompilationValue(dereferenced.BackendValue, pointerType.ElementType, Token);
                 result.Storage = dereferenced.Storage;
@@ -113,7 +113,7 @@ namespace Humphrey.FrontEnd
             }
             if (vlhs.Type is CompilationArrayType arrayType)
             {
-                var gep = builder.InBoundsGEP(vlhs.Storage, vlhs.Storage.Type as CompilationPointerType, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, vrhsIntType, unit.FetchIntegerType(64, false, new SourceLocation(subscriptIdx.Token))).BackendValue });
+                var gep = builder.InBoundsGEP(vlhs.Storage, vlhs.Storage.Type as CompilationPointerType, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, unit.FetchIntegerType(64, false, new SourceLocation(subscriptIdx.Token))).BackendValue });
                 var dereferenced = builder.Load(gep);
                 var result = new CompilationValue(dereferenced.BackendValue, arrayType.ElementType, Token);
                 result.Storage = dereferenced.Storage;
@@ -123,6 +123,13 @@ namespace Humphrey.FrontEnd
             {
                 var bitType = unit.FetchIntegerType(1, false, new SourceLocation(subscriptIdx.Token));
                 var matchWidth = builder.MatchWidth(vrhs, integerType);
+                var rotated = builder.RotateRight(vlhs, matchWidth);
+                return builder.Trunc(rotated, bitType);
+            }
+            if (vlhs.Type is CompilationEnumType enumType)
+            {
+                var bitType = unit.FetchIntegerType(1, false, new SourceLocation(subscriptIdx.Token));
+                var matchWidth = builder.MatchWidth(vrhs, enumType.ElementType);
                 var rotated = builder.RotateRight(vlhs, matchWidth);
                 return builder.Trunc(rotated, bitType);
             }
@@ -212,7 +219,7 @@ namespace Humphrey.FrontEnd
             if (vlhs.Type is CompilationPointerType pointerType)
             {
                 CompilationType elementType = pointerType.ElementType;
-                var gep = builder.InBoundsGEP(vlhs, pointerType, new LLVMSharp.Interop.LLVMValueRef[] { builder.Ext(vrhs, vrhsIntType, i64Type).BackendValue });
+                var gep = builder.InBoundsGEP(vlhs, pointerType, new LLVMSharp.Interop.LLVMValueRef[] { builder.Ext(vrhs, i64Type).BackendValue });
                 var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, value, elementType);
                 builder.Store(storeValue, gep);
                 return;
@@ -220,7 +227,7 @@ namespace Humphrey.FrontEnd
             if (vlhs.Type is CompilationArrayType arrayType)
             {
                 CompilationType elementType = arrayType.ElementType;
-                var gep = builder.InBoundsGEP(vlhs.Storage, vlhs.Storage.Type as CompilationPointerType, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, vrhsIntType, i64Type).BackendValue });
+                var gep = builder.InBoundsGEP(vlhs.Storage, vlhs.Storage.Type as CompilationPointerType, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, i64Type).BackendValue });
                 var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, value, elementType);
                 builder.Store(storeValue, gep);
                 return;
@@ -232,6 +239,20 @@ namespace Humphrey.FrontEnd
                 var rotatedMask = builder.RotateLeft(mask, matchWidth);
                 var invertedMask = builder.Not(rotatedMask);
                 var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, value, integerType);
+                var rotatedStore = builder.RotateLeft(storeValue, matchWidth);
+                var masked = builder.And(vlhs, invertedMask);
+                var inserted = builder.Or(masked, rotatedStore);
+                builder.Store(inserted, vlhs.Storage);
+                return;
+            }
+            if (vlhs.Type is CompilationEnumType enumType)
+            {
+                var iType=enumType.ElementType;
+                var mask = new CompilationValue(iType.BackendType.CreateConstantValue(1), iType, Token);
+                var matchWidth = builder.MatchWidth(vrhs, iType);
+                var rotatedMask = builder.RotateLeft(mask, matchWidth);
+                var invertedMask = builder.Not(rotatedMask);
+                var storeValue = AstUnaryExpression.EnsureTypeOk(unit, builder, value, iType);
                 var rotatedStore = builder.RotateLeft(storeValue, matchWidth);
                 var masked = builder.And(vlhs, invertedMask);
                 var inserted = builder.Or(masked, rotatedStore);
@@ -259,7 +280,14 @@ namespace Humphrey.FrontEnd
                     return resolved;
                 return pointerType.ElementType;
             }
-            throw new System.NotImplementedException($"TODO other subscripts");
+            if (resolvedBase is AstEnumType enumType)
+            {
+                if (subscriptIdx is AstInclusiveRange)
+                    return resolved;
+                return enumType.Type;
+            }
+            pass.Messages.Log(CompilerErrorKind.Error_ExpectedType, $"Unhandled Type {resolvedBase.Dump()} in array subscript", Token.Location, Token.Remainder);
+            return resolvedBase;
         }
 
         public void Semantic(SemanticPass pass)

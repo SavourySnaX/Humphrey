@@ -38,9 +38,16 @@ namespace Humphrey.Tests
         [InlineData("byte:[8]bit", CompilerErrorKind.Debug)]
         [InlineData("byte:bit[8]", CompilerErrorKind.Error_ExpectedGlobalDefinition)]
         [InlineData("okStruct:{byte:bit}", CompilerErrorKind.Debug)]
+        [InlineData("dupMemberStruct:{byte:bit byte:bit}", CompilerErrorKind.Error_DuplicateSymbol)]
+        [InlineData("okMemberStruct:{_:bit _:bit}", CompilerErrorKind.Debug)]
         [InlineData("brokenStruct:{byte:bit[}", CompilerErrorKind.Error_ExpectedStructMemberDefinition)]
         [InlineData("okEnum:bit{True:=1}", CompilerErrorKind.Debug)]
+        [InlineData("dupMemberEnum:bit{True:=1 True:=0}", CompilerErrorKind.Error_DuplicateSymbol)]
         [InlineData("brokenEnum:bit{True=1}", CompilerErrorKind.Error_ExpectedEnumMemberDefinition)]
+        [InlineData("okAlias:bit|{bool:bit}", CompilerErrorKind.Debug)]
+        [InlineData("dupMemberAlias:bit|{bool:bit bool:bit}", CompilerErrorKind.Error_DuplicateSymbol)]
+        [InlineData("okAlias:[2]bit|{_:bit _:bit}", CompilerErrorKind.Debug)]
+        [InlineData("okAlias:[2]bit|{_:bit}", CompilerErrorKind.Error_AliasWidthMismatch)]
         [InlineData("myType:bit bob:myType", CompilerErrorKind.Debug)]
         [InlineData("brokenType:bit bob:myType", CompilerErrorKind.Error_UndefinedType)]
         [InlineData("brokenType:=_", CompilerErrorKind.Error_UndefinedType)]
@@ -82,11 +89,11 @@ namespace Humphrey.Tests
                 var parsed = parser.File();
                 if (!messages.HasErrors)
                 {
-                    var semantic = new SemanticPass("test", messages);
+                    var semantic = new SemanticPass(null, messages);
                     semantic.RunPass(parsed);
                     if (!messages.HasErrors)
                     {
-                        var unit = new HumphreyCompiler(messages).Compile(semantic.RootSymbolTable, parsed, "test", "x86_64", false, false);
+                        var unit = new HumphreyCompiler(messages).Compile(semantic, "test", "x86_64", false, false);
                     }
                 }
             }

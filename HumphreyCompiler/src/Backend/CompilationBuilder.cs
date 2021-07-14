@@ -220,20 +220,35 @@ namespace Humphrey.Backend
             return value;
         }
 
-        public CompilationValue Ext(CompilationValue src, CompilationIntegerType srcType, CompilationIntegerType toType)
-        {
-            if (srcType.IsSigned)
-                return new CompilationValue(builderRef.BuildSExt(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
-            else
-                return new CompilationValue(builderRef.BuildZExt(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
-        }
-
-        public CompilationValue Trunc(CompilationValue src, CompilationType toType)
+        public CompilationValue Ext(CompilationValue src, CompilationIntegerType toType)
         {
             var srcIntType = src.Type as CompilationIntegerType;
-            var toIntType = toType as CompilationIntegerType;
+            var srcEnumType = src.Type as CompilationEnumType;
+            if (srcEnumType != null)
+            {
+                srcIntType = srcEnumType.ElementType as CompilationIntegerType;
+            }
 
-            if (srcIntType != null && toIntType != null)
+            if (srcIntType != null)
+            {
+                if (srcIntType.IsSigned)
+                    return new CompilationValue(builderRef.BuildSExt(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
+                else
+                    return new CompilationValue(builderRef.BuildZExt(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
+            }
+            throw new NotImplementedException($"Unhandled type in ext");
+        }
+
+        public CompilationValue Trunc(CompilationValue src, CompilationIntegerType toType)
+        {
+            var srcIntType = src.Type as CompilationIntegerType;
+            var srcEnumType = src.Type as CompilationEnumType;
+            if (srcEnumType != null)
+            {
+                srcIntType = srcEnumType.ElementType as CompilationIntegerType;
+            }
+
+            if (srcIntType != null)
             {
                 return new CompilationValue(builderRef.BuildTrunc(src.BackendValue, toType.BackendType), toType, src.FrontendLocation);
             }
@@ -243,6 +258,9 @@ namespace Humphrey.Backend
         public CompilationValue MatchWidth(CompilationValue src, CompilationType toType)
         {
             var srcIntType = src.Type as CompilationIntegerType;
+            if (src.Type is CompilationEnumType compilationEnumType)
+                srcIntType = compilationEnumType.ElementType as CompilationIntegerType;
+
             var toIntType = toType as CompilationIntegerType;
 
             if (srcIntType != null && toIntType != null)
@@ -250,9 +268,9 @@ namespace Humphrey.Backend
                 if (srcIntType.IntegerWidth == toIntType.IntegerWidth)
                     return src;
                 else if (srcIntType.IntegerWidth > toIntType.IntegerWidth)
-                    return Ext(src, srcIntType, toIntType);
+                    return Trunc(src, toIntType);
                 else
-                    return Trunc(src, toType);
+                    return Ext(src, toIntType);
             }
             throw new NotImplementedException($"Unhandled type in match width");
         }
@@ -282,6 +300,8 @@ namespace Humphrey.Backend
             if (dType is CompilationFunctionType cft)
                 dType = unit.CreatePointerType(cft,cft.Location);                 
             if (sType is CompilationPointerType && dType is CompilationIntegerType)
+                return new CompilationValue(builderRef.BuildPtrToInt(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
+            if (sType is CompilationFunctionType && dType is CompilationIntegerType)
                 return new CompilationValue(builderRef.BuildPtrToInt(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
             if (sType is CompilationIntegerType && dType is CompilationPointerType)
                 return new CompilationValue(builderRef.BuildIntToPtr(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);

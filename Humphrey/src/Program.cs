@@ -164,6 +164,20 @@ namespace Humphrey.Experiments
                 return;
             }
 
+            // Todo Package Manager
+            var list = new List<IPackageManager>();
+            list.Add(new FileSystemPackageManager(Path.GetDirectoryName(options.inputFiles[0])));
+            // temp until i command lines
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                list.Add(new GitPackageManager("C:\\work\\humphrey.system\\.git", "main"));
+            }
+            else
+            {
+                list.Add(new GitPackageManager("/home/snax/Work/Humphrey.System/.git", "main"));
+            }
+            var packageManager = new DefaultPackageManager(list.ToArray());
+
             var messages = new CompilerMessages(options.debugLog, options.infoLog, options.warningsAsErrors);
 
             var tokeniser = new HumphreyTokeniser(messages);
@@ -176,12 +190,12 @@ namespace Humphrey.Experiments
 
                 if (!messages.HasErrors)
                 {
-                    var semantic = new SemanticPass(options.inputFiles[0], messages);
+                    var semantic = new SemanticPass(packageManager, messages);
                     semantic.RunPass(parse);
                     if (!messages.HasErrors)
                     {
                         var compiler = new HumphreyCompiler(messages);
-                        var cu = compiler.Compile(semantic.RootSymbolTable, parse, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo);
+                        var cu = compiler.Compile(semantic, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo);
 
                         if (!messages.HasErrors)
                         {
@@ -195,9 +209,11 @@ namespace Humphrey.Experiments
                             else
                             {
                                 if (options.emitLLVM)
-                                    Console.WriteLine(cu.Dump());
+                                {
+                                    cu.DumpLLVM(options.pic, options.kernelCodeModel);
+                                }
                                 else
-                                    cu.DumpDisassembly(options.pic,options.kernelCodeModel);
+                                    cu.DumpDisassembly(options.pic, options.kernelCodeModel);
                             }
                         }
                     }

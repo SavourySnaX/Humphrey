@@ -23,6 +23,7 @@ namespace Humphrey.FrontEnd
         Error_ExpectedType = Error | ParseError | 0x0B,
         Error_StructMemberDoesNotExist = Error | ParseError | 0x0C,
         Error_UndefinedFunction = Error | ParseError | 0x0D,
+        Error_UnknownNamespace = Error | ParseError | 0x0E,
 
         // Compilation block
         Error_MissingOutputAssignment = Error | CompileError | 0x01,
@@ -31,6 +32,7 @@ namespace Humphrey.FrontEnd
         Error_UndefinedValue = Error | CompileError | 0x04,
         Error_TypeMismatch = Error | CompileError | 0x05,
         Error_SignedUnsignedMismatch = Error | CompileError | 0x06,
+        Error_AliasWidthMismatch = Error | CompileError | 0x07, 
         Error_CompilationAborted = Error | CompileError | 0xFF,
         
         // LLVM block

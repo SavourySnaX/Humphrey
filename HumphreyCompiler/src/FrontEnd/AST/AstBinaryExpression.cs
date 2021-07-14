@@ -215,11 +215,11 @@ namespace Humphrey.FrontEnd
 
                 if (leftIntType.IntegerWidth < rightIntType.IntegerWidth)
                 {
-                    return (builder.Ext(left, leftIntType, rightIntType), right);
+                    return (builder.Ext(left, rightIntType), right);
                 }
                 if (rightIntType.IntegerWidth < leftIntType.IntegerWidth)
                 {
-                    return (left, builder.Ext(right, rightIntType, leftIntType));
+                    return (left, builder.Ext(right, leftIntType));
                 }
 
                 throw new NotImplementedException($"TODO - Integer Bit width does not match");
@@ -293,8 +293,8 @@ namespace Humphrey.FrontEnd
                     return left;
                 if (resolvedRight.GetType()==typeof(AstArrayType) && resolvedLeft.GetType()==typeof(AstBitType))
                     return right;
-                    
-                throw new System.NotImplementedException($"Type mismatch in binary expression... really need int ast type");
+
+                pass.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Type mismatch : '{left.Token.Value}' != '{right.Token.Value}", token.Location, token.Remainder);
             }
 
             return left;

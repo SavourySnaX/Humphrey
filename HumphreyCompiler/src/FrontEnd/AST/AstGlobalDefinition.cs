@@ -18,6 +18,57 @@ namespace Humphrey.FrontEnd
             initialiser = init;
         }
 
+        // Probably move this to compilation unit actually
+        public static void CompileType(CompilationUnit unit, IType type, AstIdentifier identifier)
+        {
+            CompilationType ct = null;
+            IType ot = default;
+
+            if (type == null)
+            {
+                throw new System.Exception($"Should not occur, types should be resolved as part of semantic pass");
+            }
+            else 
+            {
+                // Potentially self referential structures need slightly different handling as we need to 
+                //forward declare them prior to ensure if it is self referencing it can safely construct
+                if (type is AstStructureType structureType)
+                {
+                    structureType.CreateOrFetchNamedStruct(unit, new AstIdentifier[] { identifier });
+                    return;
+                }
+                else if (type is AstFunctionType astFunctionType && astFunctionType.IsGeneric)
+                {
+                    // We should not materialise this function, and instead should deal with it at the call site
+                    return;
+                }
+                else
+                {
+                    (ct, ot) = type.CreateOrFetchType(unit);
+                }
+            }
+
+            if (ct == null)
+            {
+                if (unit.Messages.HasErrors)
+                    return;   // Attempt recovery from previous error
+                throw new System.Exception($"Recovery attempt without prior error");
+            }
+
+            var functionType = ct as CompilationFunctionType;
+            if (functionType != null)
+            {
+                if (functionType.FunctionCallingConvention == CompilationFunctionType.CallingConvention.CDecl)
+                {
+                    // Instead of creating a type, create an external function reference instead
+                    unit.CreateExternalCFunction(functionType, identifier);
+                    return;
+                }
+            }
+            unit.CreateNamedType(identifier.Name, ct, ot);
+        }
+
+
         public bool Compile(CompilationUnit unit)
         {
             // Resolve common things
@@ -70,7 +121,7 @@ namespace Humphrey.FrontEnd
                     }
                     else
                     {
-                        unit.CreateNamedType(ident.Dump(), ct, ot);
+                        unit.CreateNamedType(ident.Name, ct, ot);
                     }
                 }
                 else if (functionType != null && initialiser != null && codeBlock != null)
@@ -80,17 +131,21 @@ namespace Humphrey.FrontEnd
                 }
                 else if (initialiser == null)
                 {
-                    unit.CreateNamedType(ident.Dump(), ct, ot);
+                    unit.CreateNamedType(ident.Name, ct, ot);
                 }
                 else
                 {
-                    var varName = ident.Dump();
+                    var varName = ident.Name;
                     var location = new SourceLocation(Token);
                     var (newGlobal,adjustType) = unit.CreateGlobalVariable(ct, ident, location, exprValue);
 
+
                     // Debug information
-                    var gve = unit.CreateGlobalVariableExpression(varName, location, adjustType.DebugType);
-                    newGlobal.BackendValue.SetGlobalMetadata(LLVMSharp.Interop.LLVMMetadataKind.LLVMMDStringMetadataKind, gve);
+                    if (unit.DebugInfoEnabled)
+                    {
+                        var gve = unit.CreateGlobalVariableExpression(varName, location, adjustType.DebugType);
+                        newGlobal.BackendValue.SetGlobalMetadata(LLVMSharp.Interop.LLVMMetadataKind.LLVMMDStringMetadataKind, gve);
+                    }
                 }
             }
 
@@ -157,6 +212,7 @@ namespace Humphrey.FrontEnd
                     {
                         pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {ident.Name} already exists", ident.Token.Location, ident.Token.Remainder);
                     }
+                    type.Semantic(pass);
                     functionType.Semantic(pass, null);
                 }
                 else if (functionType != null && initialiser != null && codeBlock != null)
@@ -165,6 +221,7 @@ namespace Humphrey.FrontEnd
                     {
                         pass.Messages.Log(CompilerErrorKind.Error_DuplicateSymbol, $"A symbol called {ident.Name} already exists", ident.Token.Location, ident.Token.Remainder);
                     }
+                    type.Semantic(pass);
                     functionType.Semantic(pass, codeBlock);
 
                     if (functionType.IsGeneric)
