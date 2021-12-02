@@ -5,6 +5,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HumphreyCompiler\HumphreyCompiler.csproj" />
+    <ProjectReference Include="..\Humphrey.Compiler\Humphrey.Compiler.csproj" />
   </ItemGroup>
 </Project>
