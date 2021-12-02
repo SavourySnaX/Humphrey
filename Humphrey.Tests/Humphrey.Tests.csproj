@@ -1,22 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="src\NewFolder\**"/>
-    <EmbeddedResource Remove="src\NewFolder\**"/>
-    <None Remove="src\NewFolder\**"/>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="LibGit2Sharp" Version="0.27.0-preview-0034"/>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0"/>
-    <PackageReference Include="xunit" Version="2.4.1"/>
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3"/>
-    <PackageReference Include="coverlet.collector" Version="3.0.3"/>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Humphrey.Compiler\Humphrey.Compiler.csproj"/>
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+	<ItemGroup>
+		<Compile Remove="src\NewFolder\**"/>
+		<EmbeddedResource Remove="src\NewFolder\**"/>
+		<None Remove="src\NewFolder\**"/>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="LibGit2Sharp" Version="0.27.0-preview-0158"/>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0"/>
+		<PackageReference Include="xunit" Version="2.4.1"/>
+		<PackageReference Include="xunit.runner.visualstudio" Version="2.4.3"/>
+		<PackageReference Include="coverlet.collector" Version="3.1.0"/>
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Humphrey.Compiler\Humphrey.Compiler.csproj"/>
+	</ItemGroup>
 </Project>
