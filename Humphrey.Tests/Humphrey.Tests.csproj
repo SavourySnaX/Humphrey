@@ -17,6 +17,6 @@
     <PackageReference Include="coverlet.collector" Version="3.0.3"/>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HumphreyCompiler\HumphreyCompiler.csproj"/>
+    <ProjectReference Include="..\Humphrey.Compiler\Humphrey.Compiler.csproj"/>
   </ItemGroup>
 </Project>
