@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 
 using Humphrey.FrontEnd;
-using Humphrey.Backend;
 using System.Collections.Generic;
 using System.IO;
-using LLVMSharp.Interop;
 
+using Extensions;
 namespace Humphrey.Experiments
 {
     unsafe class Program
@@ -42,7 +40,7 @@ namespace Humphrey.Experiments
             options.debugLog = false;
             options.infoLog = true;
             options.warningsAsErrors = false;
-            options.target = LLVMTargetRef.DefaultTriple;
+            options.target = Helpers.GetDefaultTargetTriple();
             options.emitLLVM = false;
             options.optimisations = true;
             options.debugInfo = false;
