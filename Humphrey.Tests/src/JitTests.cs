@@ -1378,7 +1378,7 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
                     if (!messages.HasErrors)
                     {
                         var compiler = new HumphreyCompiler(messages);
-                        var unit = compiler.Compile(semantic, "test", "x86_64", false, true);
+                        var unit = compiler.Compile(semantic, "test", "x86_64", false, false);
                         if (!messages.HasErrors)
                         {
                             return unit.JitMethod(entryPointName);

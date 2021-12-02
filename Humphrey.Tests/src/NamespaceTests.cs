@@ -232,7 +232,7 @@ MemorySizeOf:(type:_)(size:UInt64)=
             CompilationUnit unit=null;
             if (!messages.HasErrors)
             {
-                unit = compiler.Compile(semantic, "test", "x86_64", false, true);
+                unit = compiler.Compile(semantic, "test", "x86_64", false, false);
             }
 
             if (messages.HasErrors)
