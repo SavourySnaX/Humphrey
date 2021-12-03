@@ -33,6 +33,7 @@ namespace Humphrey.FrontEnd
         Error_TypeMismatch = Error | CompileError | 0x05,
         Error_SignedUnsignedMismatch = Error | CompileError | 0x06,
         Error_AliasWidthMismatch = Error | CompileError | 0x07, 
+        Error_SignatureMismatch = Error | CompileError | 0x08,
         Error_CompilationAborted = Error | CompileError | 0xFF,
         
         // LLVM block

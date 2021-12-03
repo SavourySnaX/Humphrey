@@ -115,6 +115,11 @@ namespace Humphrey.FrontEnd
                 // we might want to always set this for alloca...
                 allocSpace.Storage = new CompilationValue(allocSpace.BackendValue, unit.CreatePointerType(structType, new SourceLocation(argumentList.Token)), argumentList.Token);
             }
+            if (inputs.Length != ftype.InputCount)
+            {
+                return structType == null ? null : unit.CreateUndef(structType);
+            }
+
             var arguments = new CompilationValue[ftype.Parameters.Length];
             for (uint a = 0; a < inputs.Length;a++)
             {
@@ -143,7 +148,10 @@ namespace Humphrey.FrontEnd
         {
             // pass the input expression results to the input arguments  
             if (argumentList.Expressions.Length != ftype.InputCount)
-                throw new System.Exception($"TODO - this is an error, function call doesn't match function arguments");
+            {
+                unit.Messages.Log(CompilerErrorKind.Error_SignatureMismatch, $"Attempt to call function with wrong number of parameters", Token.Location, Token.Remainder);
+                return new CompilationValue[0];
+            }
             var arguments = new CompilationValue[ftype.InputCount];
             for (uint a = 0; a < argumentList.Expressions.Length; a++)
             {
