@@ -631,6 +631,14 @@ SizeOf : (a:_)(size:[64]bit)=
         }
         
         [Theory]
+        [InlineData(@" FunctionType:()(out:[8]bit) Returns12:FunctionType= { out=12; } DoFunction:(fPtr:FunctionType)(out:[8]bit)={out=fPtr();} Main:(a:[8]bit,b:[8]bit)(out:[8]bit)= { out = a+b+DoFunction(Returns12); } ", "Main", 2,3,17)]
+        [InlineData(@" FunctionType:()(out:[8]bit) Returns12:FunctionType= { out=12; } Returns13:FunctionType= { out=13; } DoFunction:(fPtr:FunctionType)(out:[8]bit)={out=fPtr();} Main:(a:[8]bit,b:[8]bit)(out:[8]bit)= { out = a+b+DoFunction(Returns12)+DoFunction(Returns13); } ", "Main", 2,3,30)]
+        public void CheckFunctionPointerParam(string input, string entryPointName, byte ival1, byte ival2, byte expected)
+        {
+            Assert.True(Input8Bit8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{ival2},{expected}");
+        }
+        
+        [Theory]
         [InlineData(@" Flags:[64]bit { a:=1<<0 b:=1<<1 c:=1<<2 d:=1<<3} Return:(dc:*[8]bit,in:[8]bit)(out:[8]bit)={ out=in; }  Main:()(out:[8]bit)= { dd:[8]bit=_; out=Return(&dd,(~(Flags.b|Flags.c)) as [8]bit); } ", "Main", 0xF9)]
         public void CheckEnumFlagExpression(string input, string entryPointName, byte expected)
         {
