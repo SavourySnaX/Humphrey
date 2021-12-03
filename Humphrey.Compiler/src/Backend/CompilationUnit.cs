@@ -535,6 +535,7 @@ namespace Humphrey.Backend
             var oldScope = currentScope;
             currentScope = newScope;
             currentScope.PatchScope(root);
+            currentScope.FixParent(oldScope);
             return oldScope;
         }
 
@@ -602,6 +603,10 @@ namespace Humphrey.Backend
 
         public CompilationParam CreateFunctionParameter(CompilationType type, AstIdentifier identifier)
         {
+            if (type is CompilationFunctionType)
+            {
+                type = CreatePointerType(type, type.Location);
+            }
             return new CompilationParam(type, identifier);
         }
 

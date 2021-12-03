@@ -158,5 +158,19 @@ namespace Humphrey
             // If we reach here, glue the symbol tables together
             scope._parent = root;
         }
+
+        internal void FixParent(CommonSymbolTable parent)
+        {
+            if (_parent==null)
+                return;
+            foreach (var v in _parent._valueTable)
+            {
+                var value =  parent.FetchValue(v.Key);
+                if (value!=null && value.Value!=null && v.Value.Value==null)
+                {
+                    _parent._valueTable[v.Key]=value;
+                }
+            }
+        }
     }
 }
