@@ -166,6 +166,12 @@ namespace Humphrey.FrontEnd
             functionType = resolved as AstFunctionType;
             if (functionType == null)
             {
+                var chkPtrToFunction=resolved as AstPointerType;
+                if (chkPtrToFunction!=null)
+                {
+                    resolved=chkPtrToFunction.ElementType;
+                }
+            
                 var baseT = resolved.ResolveBaseType(pass);
                 functionType = baseT as AstFunctionType;
                 if (functionType == null)
