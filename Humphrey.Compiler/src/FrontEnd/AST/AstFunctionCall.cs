@@ -117,6 +117,10 @@ namespace Humphrey.FrontEnd
             }
             if (inputs.Length != ftype.InputCount)
             {
+                if (ftype.FunctionCallingConvention == CompilationFunctionType.CallingConvention.CDecl)
+                {
+                    return unit.CreateUndef(ftype.ReturnType.Type);
+                }
                 return structType == null ? null : unit.CreateUndef(structType);
             }
 

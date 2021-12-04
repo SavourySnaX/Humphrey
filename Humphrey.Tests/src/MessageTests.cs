@@ -73,7 +73,8 @@ namespace Humphrey.Tests
         [InlineData("[]", CompilerErrorKind.Error_EmptyMetaDataNode)]
         [InlineData("[%]", CompilerErrorKind.Error_ExpectedIdentifierList)]
         [InlineData("[metadata%]", CompilerErrorKind.Error_ExpectedToken)]
-        [InlineData("func:(bob:bit,carol:bit)()={} main:()()={func(5);}", CompilerErrorKind.Error_SignatureMismatch)]
+        [InlineData("func:(bob:bit,carol:bit)()={} main:()()={func(1);}", CompilerErrorKind.Error_SignatureMismatch)]
+        [InlineData("[C_CALLING_CONVENTION] func:(bob:bit,carol:bit)(out:*bit) main:()()={do:=func(1) as **bit;}", CompilerErrorKind.Error_SignatureMismatch)]
         public void CheckCompilationMessages(string input, CompilerErrorKind kind)
         {
             CompilationTest(input, kind);
