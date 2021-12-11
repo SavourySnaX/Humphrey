@@ -84,11 +84,8 @@ namespace Humphrey.Backend
                 }
                 else if (numBits == destIntType.IntegerWidth)
                 {
-                    if (isSigned == destIntType.IsSigned)
-                    {
-                        return unit.CreateConstant(this, numBits, isSigned, location);
-                    }
-                    throw new System.NotImplementedException($"TODO - signed/unsigned mismatch");
+                    // For constants, we can allow signs to differ
+                    return unit.CreateConstant(this, destIntType.IntegerWidth, destIntType.IsSigned, location);
                 }
                 unit.Messages.Log(CompilerErrorKind.Error_IntegerWidthMismatch, $"Constant '{FrontendLocation.Location.ToStringValue(FrontendLocation.Remainder)}' is larger than {destIntType.DumpType()}!", FrontendLocation.Location, FrontendLocation.Remainder);
                 return unit.CreateUndef(destType);  // Allow compilation to continue
