@@ -731,7 +731,6 @@ namespace Humphrey.Backend
         public void Optimise(LLVMPassManagerRef passManagerRef)
         {
             var passes = PassManagerBuilderCreate();
-            passes.SetOptLevel(3);
             passes.PopulateModulePassManager(passManagerRef);
             passes.PopulateFunctionPassManager(passManagerRef);
         }
