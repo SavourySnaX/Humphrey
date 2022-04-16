@@ -80,6 +80,13 @@ namespace Humphrey.Tests
             CompilationTest(input, kind);
         }
 
+        [Theory]
+        [InlineData("Main:(a:[8]bit,b:[8]bit)(out:[8]bit)={if Func==0 {out=12;} else {out=a;}} Func:(a:[8]bit)(o:bit)={ o=1; }", CompilerErrorKind.Error_TypeMismatch)]
+        public void CheckMoreCompilationMessages(string input, CompilerErrorKind kind)
+        {
+            CompilationTest(input, kind);
+        }
+
         private void CompilationTest(string input, CompilerErrorKind expected)
         {
             var messages = new CompilerMessages(true, true, false);

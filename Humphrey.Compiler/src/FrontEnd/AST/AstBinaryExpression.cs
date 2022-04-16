@@ -188,6 +188,18 @@ namespace Humphrey.FrontEnd
                     throw new Exception($"TODO - Error incompatable pointer");
             }
 
+            var leftFunction = left.Type as CompilationFunctionType;
+            var rightFunction = right.Type as CompilationFunctionType;
+
+            if (leftFunction != null && rightFunction != null)
+            {
+                if (leftFunction.Same(rightFunction))
+                    return (left, right);
+                else
+                    throw new Exception($"TODO - Error incompatable function");
+            }
+
+
             var leftEnum = left.Type as CompilationEnumType;
             var rightEnum = right.Type as CompilationEnumType;
 

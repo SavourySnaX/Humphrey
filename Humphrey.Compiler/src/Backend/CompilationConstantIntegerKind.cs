@@ -70,7 +70,7 @@ namespace Humphrey.Backend
 
             // Special cases for 0 (which we allow for use in stating zero initialisation for complex types)
             // disallow for pointers though as we don't want implicit conversion
-            if (constant.IsZero && !(destType is CompilationPointerType))
+            if (constant.IsZero && !(destType is CompilationPointerType) && !(destType is CompilationFunctionType))
                 return unit.CreateZero(destType);
 
             if (destType is CompilationEnumType compilationEnumType)
