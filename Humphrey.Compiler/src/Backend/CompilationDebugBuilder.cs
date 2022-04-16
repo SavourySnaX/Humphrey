@@ -48,9 +48,6 @@ namespace Humphrey.Backend
                     unit.AddModuleFlag(LLVMModuleFlagBehavior.LLVMModuleFlagBehaviorWarning, "Dwarf Version", 2);
                 }
 
-                //Finally we need to tag the llvm.ident
-                unit.AddNamedMetadata("llvm.ident", compilerVersion);
-
                 debugScope = CreateDebugFile(fileNameAndPath);
                 debugCU = builderRef.CreateCompileUnit(LLVMDWARFSourceLanguage.LLVMDWARFSourceLanguageC,
                     debugScope,
