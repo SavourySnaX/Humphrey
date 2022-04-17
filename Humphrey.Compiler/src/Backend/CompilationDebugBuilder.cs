@@ -277,6 +277,63 @@ namespace Humphrey.Backend
             }
         }
 
+        public CompilationDebugType CreateAliasType(string name, CompilationAliasType aliasType)
+        {
+            if (enabled)
+            {
+                int totalElements=1;
+                for (int unionIdx=0;unionIdx<aliasType.Elements.Length;unionIdx++)
+                {
+                    for (int structIdx=0;structIdx<aliasType.ElementNames[unionIdx].Length;structIdx++)
+                    {
+                        if (aliasType.ElementNames[unionIdx][structIdx]!="_")
+                        {
+                            totalElements++;
+                        }
+                    }
+                }
+
+                var dataLayout = unit.Module.GetDataLayout();
+                var unionElements = new LLVMMetadataRef[totalElements];
+                var elementIdx=0;
+                // First element is hardcoded (raw)
+                {
+                        var location = aliasType.Location;
+                        var type = aliasType.BaseType.DebugType.BackendType;
+                        var sizeInBits=dataLayout.GetTypeSizeInBits(aliasType.BaseType.BackendType);
+                        uint offsetBits=0;
+                        uint alignBits=1;
+                        var flags=LLVMDIFlags.LLVMDIFlagBitField;
+                        unionElements[elementIdx++] = builderRef.CreateMemberType(debugScope,"raw",CreateDebugFile(location.File), location.StartLine, sizeInBits, alignBits, offsetBits, flags, type);
+                }
+                // Other elements are added as is, so long as they are not named _ (ordered MSB->LSB)
+                for (int unionIdx=0;unionIdx<aliasType.Elements.Length;unionIdx++)
+                {
+                    var structMemberOffsetBits=dataLayout.GetTypeSizeInBits(aliasType.BaseType.BackendType);
+                    for (int structIdx=0;structIdx<aliasType.Elements[unionIdx].Length;structIdx++)
+                    {
+                        var sizeInBits=dataLayout.GetTypeSizeInBits(aliasType.Elements[unionIdx][structIdx].BackendType);
+                        structMemberOffsetBits-=sizeInBits;
+                        if (aliasType.ElementNames[unionIdx][structIdx]!="_")
+                        {
+                            var location = aliasType.Elements[unionIdx][structIdx].Location;
+                            var type = aliasType.BaseType.DebugType.BackendType;
+                            uint offsetBits=(uint)structMemberOffsetBits;
+                            uint alignBits=1;
+                            var flags=LLVMDIFlags.LLVMDIFlagBitField;
+                            unionElements[elementIdx++] = builderRef.CreateMemberType(debugScope,aliasType.ElementNames[unionIdx][structIdx],CreateDebugFile(location.File), location.StartLine, sizeInBits, alignBits, offsetBits, flags, type);
+                        }
+                    }
+                }
+                var uSizeBits = dataLayout.GetTypeSizeInBits(aliasType.BaseType.BackendType);
+                var uAlignBits = 8u;
+                var uFlags = LLVMDIFlags.LLVMDIFlagPublic;
+                var unionType = builderRef.CreateUnion(debugScope, name, CreateDebugFile(aliasType.Location.File), aliasType.Location.StartLine, uSizeBits, uAlignBits, uFlags, unionElements);
+                return new CompilationDebugType(name, unionType);
+            }
+            return default;
+        }
+
         public CompilationDebugType CreateStructureType(string name, CompilationStructureType structType)
         {
             if (enabled)
@@ -292,7 +349,7 @@ namespace Humphrey.Backend
                     var offsetBits = structLayout.GetElementOffsetInBits(idx);
                     var sizeBits = structLayout.GetElementSizeInBits(idx);
                     var location = structType.Elements[idx].Location;
-                    var dbgType = builderRef.CreateStructElement(debugScope, structType.Fields[idx], CreateDebugFile(location.File), location.StartLine, sizeBits, alignBits, offsetBits, flags, structType.Elements[idx].DebugType.BackendType);
+                    var dbgType = builderRef.CreateMemberType(debugScope, structType.Fields[idx], CreateDebugFile(location.File), location.StartLine, sizeBits, alignBits, offsetBits, flags, structType.Elements[idx].DebugType.BackendType);
                     structElements[idx] = dbgType;
                 }
 

@@ -59,7 +59,7 @@ namespace Humphrey.Backend
             if (DebugBuilder.Enabled)
             {
                 var name = DumpType();
-                var debugType = new CompilationDebugType(name, baseType.DebugType.BackendType);
+                var debugType = DebugBuilder.CreateAliasType(name, this);
                 SetDebugType(debugType);
             }
         }
@@ -177,6 +177,10 @@ namespace Humphrey.Backend
             }
             return name;
         }
+
+        public CompilationType BaseType => baseType;
+        public CompilationType[][] Elements=>elementTypes;
+        public string[][] ElementNames=>elementNames;
     }
 }
 

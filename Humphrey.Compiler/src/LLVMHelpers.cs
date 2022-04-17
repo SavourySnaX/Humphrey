@@ -302,7 +302,7 @@ namespace Extensions
             return LLVM.ConstNull(typeRef);
         }
 
-        public static LLVMMetadataRef CreateStructElement(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, LLVMMetadataRef file, uint line, UInt64 bitSize, uint alignBits, uint offsetBits, LLVMDIFlags flags, LLVMMetadataRef type)       
+        public static LLVMMetadataRef CreateMemberType(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, LLVMMetadataRef file, uint line, UInt64 bitSize, uint alignBits, uint offsetBits, LLVMDIFlags flags, LLVMMetadataRef type)       
         {
             fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
             {
@@ -326,6 +326,29 @@ namespace Extensions
         public static void ReplaceForwardStructWithFinal(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef frwd, LLVMMetadataRef final)
         {
             LLVM.MetadataReplaceAllUsesWith(frwd,final);
+        }
+
+        public static LLVMMetadataRef CreateUnion(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, LLVMMetadataRef file, uint line, UInt64 sizeBits, uint alignBits, LLVMDIFlags flags, LLVMMetadataRef[] elements)
+        {
+            uint runtimeLang = 0;
+            LLVMMetadataRef derivedFrom = null;
+            LLVMMetadataRef vtableHolder = null;
+            string unique = "";
+            fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
+            {
+                fixed (byte* uniquePtr = Encoding.ASCII.GetBytes(unique))
+                {
+                    uint numTypes = (uint)elements.Length;
+                    var opaque = new LLVMOpaqueMetadata*[numTypes];
+                    for (int a = 0; a < elements.Length; a++)
+                        opaque[a] = elements[a];
+
+                    fixed (LLVMOpaqueMetadata** opaqueTypes = opaque)
+                    {
+                        return LLVM.DIBuilderCreateUnionType(debugBuilder, scope, (sbyte*)namePtr, (UIntPtr)name.Length,file,line,sizeBits,alignBits,flags,opaqueTypes,numTypes,runtimeLang,(sbyte*)uniquePtr,(UIntPtr)unique.Length);
+                    }
+                }
+            }
         }
 
         public static LLVMMetadataRef CreateStruct(this LLVMDIBuilderRef debugBuilder, LLVMMetadataRef scope, string name, LLVMMetadataRef file, uint line, UInt64 sizeBits, uint alignBits, LLVMDIFlags flags, LLVMMetadataRef[] elements)
