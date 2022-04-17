@@ -154,6 +154,7 @@ namespace Humphrey.FrontEnd
             if (compiledBlock.exit.BackendValue.Terminator == null)
             {
                 var builder = unit.CreateBuilder(newFunction, compiledBlock.exit);
+                builder.SetDebugLocation(new SourceLocation(codeBlock.BlockEnd));
                 builder.Branch(newFunction.ExitBlock);
             }
 

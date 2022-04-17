@@ -18,6 +18,7 @@ namespace Humphrey.FrontEnd
             var newBB = new CompilationBlock(unit.AppendNewBasicBlockToFunction(function,blockName));
 
             var builder = unit.CreateBuilder(function, newBB);
+            builder.SetDebugLocation(new SourceLocation(BlockStart));
             builder.LocalBuilder = locals;
 
             foreach (var s in statementList)
@@ -25,6 +26,8 @@ namespace Humphrey.FrontEnd
                 s.BuildStatement(unit, function, builder);
             }
 
+            builder.SetDebugLocation(new SourceLocation(BlockEnd));
+            builder.LocalBuilder = locals;
             unit.PopScope(oldScope);
             return (newBB, builder.CurrentBlock);
         }

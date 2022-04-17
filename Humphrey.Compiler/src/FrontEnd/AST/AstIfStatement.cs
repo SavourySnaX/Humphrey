@@ -34,6 +34,7 @@ namespace Humphrey.FrontEnd
                 var endCondBuilder = unit.CreateBuilder(function, trueBlock.exit);
                 if (trueBlock.exit.BackendValue.Terminator == null)
                 {
+                    endCondBuilder.SetDebugLocation(new SourceLocation(conditionTrue.BlockEnd));
                     endCondBuilder.Branch(endBlock);
                 }
             }
@@ -54,6 +55,7 @@ namespace Humphrey.FrontEnd
                     var endCondBuilder = unit.CreateBuilder(function, falseBlock.exit);
                     if (falseBlock.exit.BackendValue.Terminator == null)
                     {
+                        endCondBuilder.SetDebugLocation(new SourceLocation(conditionElse.BlockEnd));
                         endCondBuilder.Branch(endBlock);
                     }
                 }

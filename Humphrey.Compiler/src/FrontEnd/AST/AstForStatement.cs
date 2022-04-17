@@ -43,6 +43,7 @@ namespace Humphrey.FrontEnd
             // CheckBlock performs iter end check basically
             {
                 var checkBuilder = unit.CreateBuilder(function, checkBlock);
+                checkBuilder.SetDebugLocation(new SourceLocation(Token));
                 var compare = new AstBinaryCompareLess(identifiers[0], rangeList[0].ExclusiveEnd);
                 compare.Token=rangeList[0].Token;
                 var cond = compare.ProcessExpression(unit, checkBuilder);
@@ -54,6 +55,7 @@ namespace Humphrey.FrontEnd
                 var loopBlockBuilder = unit.CreateBuilder(function, compilationBlock.exit);
                 if (compilationBlock.exit.BackendValue.Terminator==null)
                 {
+                    loopBlockBuilder.SetDebugLocation(new SourceLocation(loopBlock.BlockEnd));
                     loopBlockBuilder.Branch(iterBlock);
                 }
             }
@@ -61,6 +63,7 @@ namespace Humphrey.FrontEnd
             // IterBlock performs iter next
             {
                 var iterBuilder = unit.CreateBuilder(function, iterBlock);
+                iterBuilder.SetDebugLocation(new SourceLocation(rangeList[0].Token));
                 var binaryAdd = new AstBinaryPlus(identifiers[0], new AstNumber("1"));
                 identifiers[0].ProcessExpressionForStore(unit, iterBuilder, binaryAdd);
                 iterBuilder.Branch(checkBlock);

@@ -38,12 +38,14 @@ namespace Humphrey.FrontEnd
                 var loopBlockBuilder = unit.CreateBuilder(function, compilationBlock.exit);
                 if (compilationBlock.exit.BackendValue.Terminator == null)
                 {
+                    loopBlockBuilder.SetDebugLocation(new SourceLocation(loop.BlockEnd));
                     loopBlockBuilder.Branch(checkBlock);
                 }
             }
 
             // ensure our builder correctly points at end block now
             builder.PositionAtEnd(endBlock);
+            builder.SetDebugLocation(new SourceLocation(loop.BlockEnd));
 
             return true;
         }
