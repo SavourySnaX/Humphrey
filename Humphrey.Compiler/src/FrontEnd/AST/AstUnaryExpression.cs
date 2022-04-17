@@ -45,9 +45,8 @@ namespace Humphrey.FrontEnd
             var result = expr.ProcessExpression(unit, builder);
             if (result == null)
             {
-                if (unit.Messages.HasErrors)
-                    return unit.CreateUndef(destType);  // Allow recovery from a missing value error
-                throw new System.Exception($"Recovery attempt without prior error");
+                unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Result of expression '{expr.Token.Location.ToStringValue(expr.Token.Remainder)}' is not assignable!", expr.Token.Location, expr.Token.Remainder);
+                return unit.CreateUndef(destType);  // Allow recovery from a missing value error
             }
             return EnsureTypeOk(unit, builder, result, destType, expr.Token);
         }
