@@ -644,8 +644,11 @@ namespace Humphrey.Backend
             LLVMCodeModel model = LLVMCodeModel.LLVMCodeModelDefault;
             if (kernel)
                 model = LLVMCodeModel.LLVMCodeModelKernel;
+            LLVMCodeGenOptLevel codeGenLevel = LLVMCodeGenOptLevel.LLVMCodeGenLevelNone;
+            if (optimisations)
+                codeGenLevel=LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive;
 
-            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", kernel?"-sse,-mmx":"", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", kernel?"-sse,-mmx":"", codeGenLevel, reloc, model);
 
             moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
@@ -703,8 +706,11 @@ namespace Humphrey.Backend
             LLVMCodeModel model = LLVMCodeModel.LLVMCodeModelDefault;
             if (kernel)
                 model = LLVMCodeModel.LLVMCodeModelKernel;
+            LLVMCodeGenOptLevel codeGenLevel = LLVMCodeGenOptLevel.LLVMCodeGenLevelNone;
+            if (optimisations)
+                codeGenLevel=LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive;
 
-            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic",  kernel?"-sse,-mmx":"", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic",  kernel?"-sse,-mmx":"", codeGenLevel, reloc, model);
 
             moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
@@ -743,8 +749,11 @@ namespace Humphrey.Backend
             LLVMCodeModel model = LLVMCodeModel.LLVMCodeModelDefault;
             if (kernel)
                 model = LLVMCodeModel.LLVMCodeModelKernel;
+            LLVMCodeGenOptLevel codeGenLevel = LLVMCodeGenOptLevel.LLVMCodeGenLevelNone;
+            if (optimisations)
+                codeGenLevel=LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive;
 
-            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic",  kernel?"-sse,-mmx":"", LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive, reloc, model);
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic",  kernel?"-sse,-mmx":"", codeGenLevel, reloc, model);
 
             moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
             moduleRef.Target = LLVMTargetRef.DefaultTriple;
