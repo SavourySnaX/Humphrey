@@ -2,7 +2,6 @@
 
 using Humphrey.FrontEnd;
 using System.Collections.Generic;
-using System.IO;
 
 using Extensions;
 namespace Humphrey.Experiments
@@ -21,6 +20,7 @@ namespace Humphrey.Experiments
             public List<string> inputFiles;
             public string outputFileName;
             public string target;
+            public string packageJson;
             public bool debugLog;
             public bool infoLog;
             public bool warningsAsErrors;
@@ -46,6 +46,7 @@ namespace Humphrey.Experiments
             options.debugInfo = false;
             options.pic = false;
             options.kernelCodeModel = false;
+            options.packageJson = "humphrey.json";
         }
 
         static void ShowOptions()
@@ -53,6 +54,8 @@ namespace Humphrey.Experiments
             Console.WriteLine($"Humphrey.exe [options] inputs");
             Console.WriteLine();
             Console.WriteLine($"Options are case sensistive!");
+            Console.WriteLine();
+            Console.WriteLine($"--package=<path>             Package json (Default: {options.packageJson})");
             Console.WriteLine();
             Console.WriteLine($"-o=<filename>                Output filename and path (Default: compile and dump disassembly)");
             Console.WriteLine($"--output=<filename>");
@@ -105,6 +108,7 @@ namespace Humphrey.Experiments
 
         static readonly Dictionary<string, Assign> _optionsParsers = new Dictionary<string, Assign>
         {
+            ["--package"] = (s, split) => ParseStringOption(s, split, out options.packageJson),
             ["-o"] = (s, split) => ParseStringOption(s, split, out options.outputFileName),
             ["--output"] = (s, split) => ParseStringOption(s, split, out options.outputFileName),
             ["--debugLog"] = (s, split) => ParseBoolOption(s, split, out options.debugLog),
@@ -162,19 +166,13 @@ namespace Humphrey.Experiments
                 return;
             }
 
-            // Todo Package Manager
-            var list = new List<IPackageManager>();
-            list.Add(new FileSystemPackageManager(Path.GetDirectoryName(options.inputFiles[0])));
-            // temp until i command lines
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            if (!System.IO.File.Exists(options.packageJson))
             {
-                list.Add(new GitPackageManager("C:\\work\\humphrey.system\\.git", "main"));
+                ShowOptionError(ExitCodes.InvalidArguments, $"Could not find {options.packageJson}");
+                return;
             }
-            else
-            {
-                list.Add(new GitPackageManager("/home/snax/Work/Humphrey.System/.git", "main"));
-            }
-            var packageManager = new DefaultPackageManager(list.ToArray());
+
+            var packageManager=new PackageManager(options.packageJson).Manager;
 
             var messages = new CompilerMessages(options.debugLog, options.infoLog, options.warningsAsErrors);
 

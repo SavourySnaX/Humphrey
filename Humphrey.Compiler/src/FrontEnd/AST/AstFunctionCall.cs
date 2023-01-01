@@ -86,6 +86,11 @@ namespace Humphrey.FrontEnd
                 {
                     throw new System.NotImplementedException($"Todo - constant compilation value....");
                 }
+                if (function.BackendValue.IsUndef)
+                {
+                    unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Attempt to call a function type!", Token.Location, Token.Remainder);
+                    return null;
+                }
                 var ftype = function.Type as CompilationFunctionType;
                 if (ftype == null)
                 {
