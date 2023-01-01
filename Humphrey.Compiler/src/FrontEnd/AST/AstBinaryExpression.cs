@@ -278,11 +278,11 @@ namespace Humphrey.FrontEnd
 
             if (lP != null && rP != null)
             {
-                if (lP.ElementType == rP.ElementType)
+                if (lP.ElementType.Dump() == rP.ElementType.Dump())
                     return left;
                 else
                 {
-                    pass.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Type mismatch : '{left.Token.Value}' != '{right.Token.Value}", token.Location, token.Remainder);
+                    pass.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Type mismatch : '{lP.ElementType.Dump()}' != '{rP.ElementType.Dump()}'", token.Location, token.Remainder);
                     return left;
                 }
             }

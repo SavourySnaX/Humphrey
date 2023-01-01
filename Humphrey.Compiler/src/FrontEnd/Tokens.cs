@@ -131,7 +131,7 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Operator", Example = ">>>", SemanticKind = "Operator")]
         O_ArithmaticShiftRight,
 
-        [Token(Category = "Operator", Example = "as")]
+        [Token(Category = "Operator", Example = "as", SemanticKind = "Keyword")]
         O_As,
 
         [Token(Category = "Syntax", Example = ";")]
@@ -173,7 +173,7 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Comment", SemanticKind = "Comment")]
         SingleComment,
 
-        [Token(Category = "Comment")]
+        [Token(Category = "Comment", SemanticKind = "Comment")]
         MultiLineComment
     }
 
