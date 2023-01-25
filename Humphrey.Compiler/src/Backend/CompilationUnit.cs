@@ -677,6 +677,11 @@ namespace Humphrey.Backend
             return FetchIntrinsic(moduleRef, functionName, typeRefs);
         }
 
+        public LLVMTypeRef FetchIntrinsicType(string functionName, LLVMTypeRef[] typeRefs)
+        {
+            return FetchIntrinsicFunctionType(moduleRef, functionName, typeRefs);
+        }
+
         public LLVMMetadataRef CreateDebugLocationMeta(SourceLocation location)
         {
             // We don't bother with the column for source locations as we are only doing per statement line location information anyway

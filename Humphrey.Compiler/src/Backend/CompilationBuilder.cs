@@ -58,7 +58,7 @@ namespace Humphrey.Backend
 
         public CompilationValue Load(CompilationValue loadFrom)
         {
-            var loadedValue = new CompilationValue(builderRef.BuildLoad(loadFrom.BackendValue), loadFrom.Type, loadFrom.FrontendLocation);
+            var loadedValue = new CompilationValue(builderRef.BuildLoad2(loadFrom.BackendType,loadFrom.BackendValue), loadFrom.Type, loadFrom.FrontendLocation);
             loadedValue.Storage = loadFrom.Storage;
             return loadedValue;
         }
@@ -215,7 +215,7 @@ namespace Humphrey.Backend
             var ptrType = ptr.Type as CompilationPointerType;
             if (ptrType==null)
                 throw new System.ArgumentException($"GEP requires a pointer value");
-            var value = new CompilationValue(builderRef.BuildInBoundsGEP(ptr.BackendValue, indices), resolvedType, ptr.FrontendLocation);
+            var value = new CompilationValue(builderRef.BuildInBoundsGEP2(ptr.BackendType, ptr.BackendValue, indices), resolvedType, ptr.FrontendLocation);
             value.Storage = value;
             return value;
         }
@@ -342,22 +342,24 @@ namespace Humphrey.Backend
         {
             var backendType = value.BackendType;
             var funnelShift = unit.FetchIntrinsicFunction("llvm.fshl", new LLVMTypeRef[] { backendType });
+            var funnelShiftType = unit.FetchIntrinsicType("llvm.fshl", new LLVMTypeRef[] { backendType });
             var backendValues = new LLVMValueRef[3];
             backendValues[0] = value.BackendValue;
             backendValues[1] = value.BackendValue;
             backendValues[2] = rotateBy.BackendValue;
-            return new CompilationValue(builderRef.BuildCall(funnelShift, backendValues), value.Type, value.FrontendLocation.Combine(rotateBy.FrontendLocation));
+            return new CompilationValue(builderRef.BuildCall2(funnelShiftType, funnelShift, backendValues), value.Type, value.FrontendLocation.Combine(rotateBy.FrontendLocation));
         }
 
         public CompilationValue RotateRight(CompilationValue value, CompilationValue rotateBy)
         {
             var backendType = value.BackendType;
             var funnelShift = unit.FetchIntrinsicFunction("llvm.fshr", new LLVMTypeRef[] { backendType });
+            var funnelShiftType = unit.FetchIntrinsicType("llvm.fshl", new LLVMTypeRef[] { backendType });
             var backendValues = new LLVMValueRef[3];
             backendValues[0] = value.BackendValue;
             backendValues[1] = value.BackendValue;
             backendValues[2] = rotateBy.BackendValue;
-            return new CompilationValue(builderRef.BuildCall(funnelShift, backendValues), value.Type, value.FrontendLocation.Combine(rotateBy.FrontendLocation));
+            return new CompilationValue(builderRef.BuildCall2(funnelShiftType, funnelShift, backendValues), value.Type, value.FrontendLocation.Combine(rotateBy.FrontendLocation));
         }
 
         public CompilationValue Call(CompilationValue func, CompilationValue[] arguments)
@@ -370,7 +372,7 @@ namespace Humphrey.Backend
 
             var returnKind = (func.Type as CompilationFunctionType).ReturnType;
 
-            var res=builderRef.BuildCall(func.BackendValue, backendValues);
+            var res=builderRef.BuildCall2(func.BackendType,func.BackendValue, backendValues);
             if (returnKind==null)
                 return null;
             return new CompilationValue(res, returnKind.Type, func.FrontendLocation);
