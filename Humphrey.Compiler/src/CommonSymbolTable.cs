@@ -127,6 +127,49 @@ namespace Humphrey
 
         public CommonSymbolTable Parent => _parent;
 
+        internal IEnumerable<(string,CommonSymbolTableEntry)> EnumerateTable(Dictionary<string,CommonSymbolTableEntry> table, int bodge)
+        {
+            var nextParent = _parent;
+            while (table!=null)
+            {
+                foreach (var e in table)
+                {
+                    yield return (e.Key,e.Value);
+                }
+
+                switch (bodge)
+                {
+                    default:
+                    case 0:
+                        table = nextParent?._valueTable;
+                        break;
+                    case 1:
+                        table = nextParent?._typeTable;
+                        break;
+                    case 2:
+                        table = nextParent?._functionTable;
+                        break;
+                }
+                nextParent=nextParent?._parent;
+            }
+        }
+
+        public IEnumerable<(string name,CommonSymbolTableEntry entry)> EnumerateSymbols()
+        {
+            foreach (var e in EnumerateTable(_valueTable,0))
+            {
+                yield return e;
+            }
+            foreach (var e in EnumerateTable(_typeTable,1))
+            {
+                yield return e;
+            }
+            foreach (var e in EnumerateTable(_functionTable,2))
+            {
+                yield return e;
+            }
+        }
+
         internal void MergeSymbolTable(CommonSymbolTable rootSymbolTable)
         {
             // Do types

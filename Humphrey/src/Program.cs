@@ -180,11 +180,11 @@ namespace Humphrey.Experiments
 
             var tokens = tokeniser.TokenizeFromFile(options.inputFiles[0]);
 
-            if (!messages.HasErrors)
+            if (true || !messages.HasErrors)
             {
                 var parse = new HumphreyParser(tokens, messages).File();
 
-                if (!messages.HasErrors)
+                if (true || !messages.HasErrors)
                 {
                     var semantic = new SemanticPass(packageManager, messages);
                     semantic.RunPass(parse);

@@ -33,24 +33,28 @@ namespace Humphrey.FrontEnd
             private IType _ast;
             private IType _base;
             private IdentifierKind _kind;
+            private CommonSymbolTable _symbolScope;
 
-            public SemanticInfo(IType type, IType baseT, IdentifierKind kind)
+            public SemanticInfo(IType type, IType baseT, IdentifierKind kind, CommonSymbolTable scope)
             {
                 _ast = type;
                 _base = baseT;
                 _kind = kind;
                 if (kind == IdentifierKind.Type && _base != null)
                     _kind = _base.GetBaseType;
+                _symbolScope = scope;
             }
 
             public IType Ast => _ast;
             public IType Base => _base;
             public IdentifierKind Kind => _kind;
+            public CommonSymbolTable Scope => _symbolScope;
         }
 
         public enum IdentifierKind
         {
             None,
+            Namespace,
             Function,
             Type,
             StructType,
@@ -218,7 +222,7 @@ namespace Humphrey.FrontEnd
         public bool AddFunction(IIdentifier identifier, IType type)
         {
             var baseT = type.ResolveBaseType(this);
-            var s = new SemanticPass.SemanticInfo(type, baseT, SemanticPass.IdentifierKind.Function);
+            var s = new SemanticPass.SemanticInfo(type, baseT, SemanticPass.IdentifierKind.Function, currentScope);
             var ok = currentScope.AddFunction(identifier.Name, new CommonSymbolTableEntry(type, s));
             if (ok)
             {
@@ -230,7 +234,7 @@ namespace Humphrey.FrontEnd
         public bool AddType(IIdentifier identifier, IType type)
         {
             var baseT = type.ResolveBaseType(this);
-            var s = new SemanticPass.SemanticInfo(type, baseT, SemanticPass.IdentifierKind.Type);
+            var s = new SemanticPass.SemanticInfo(type, baseT, SemanticPass.IdentifierKind.Type, currentScope);
             var ok = currentScope.AddType(identifier.Name, new CommonSymbolTableEntry(type, s));
             if (ok)
             {
@@ -242,7 +246,7 @@ namespace Humphrey.FrontEnd
         public bool AddValue(IIdentifier identifier, SemanticPass.IdentifierKind kind, IType type, bool addSemanticInfo = true)
         {
             var baseT = type.ResolveBaseType(this);
-            var s = new SemanticPass.SemanticInfo(type, baseT, kind);
+            var s = new SemanticPass.SemanticInfo(type, baseT, kind, currentScope);
             var ok = currentScope.AddValue(identifier.Name, new CommonSymbolTableEntry(type, s));
             if (ok && addSemanticInfo)  // addSemanticInfo is bodge to ensure function pointer delegate types work
             {
@@ -286,13 +290,13 @@ namespace Humphrey.FrontEnd
 
         public void AddStructElementLocation(Result<Tokens> token, IType type)
         {
-            var s = new SemanticPass.SemanticInfo(type, type.ResolveBaseType(this), IdentifierKind.StructMember);
+            var s = new SemanticPass.SemanticInfo(type, type.ResolveBaseType(this), IdentifierKind.StructMember, currentScope);
             semanticInfo.Add(token, s);
         }
         
         public void AddEnumElementLocation(Result<Tokens> token, IType type)
         {
-            var s = new SemanticPass.SemanticInfo(type, type.ResolveBaseType(this), IdentifierKind.EnumMember);
+            var s = new SemanticPass.SemanticInfo(type, type.ResolveBaseType(this), IdentifierKind.EnumMember, currentScope);
             if (token.HasValue)
             {
                 semanticInfo.Add(token, s);

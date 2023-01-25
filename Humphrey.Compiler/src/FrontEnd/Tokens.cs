@@ -225,6 +225,7 @@ namespace Humphrey.FrontEnd
             return new Result<char>(encompass[position], this, new TokenSpan(filename, encompass, ++position, nxtLin, nxtCol));
         }
 
+
         public string ToStringValue(TokenSpan remain)
         {
             if (encompass==null)
