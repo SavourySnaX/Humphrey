@@ -315,7 +315,7 @@ namespace Humphrey.Backend
                 if (entry.Value == null)
                     return null;
                 var value = entry.Value;
-                return builder.Load(value);
+                return builder.Load(entry.Value.Type,value);
             }
 
             // Check for function - i guess we can construct this on the fly?
@@ -675,6 +675,11 @@ namespace Humphrey.Backend
         public LLVMValueRef FetchIntrinsicFunction(string functionName, LLVMTypeRef[] typeRefs)
         {
             return FetchIntrinsic(moduleRef, functionName, typeRefs);
+        }
+        
+        public LLVMTypeRef FetchIntrinsicFunctionType(string functionName, LLVMTypeRef[] typeRefs)
+        {
+            return FetchIntrinsicType(moduleRef, functionName, typeRefs);
         }
 
         public LLVMMetadataRef CreateDebugLocationMeta(SourceLocation location)

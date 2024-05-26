@@ -131,7 +131,7 @@ namespace Humphrey.FrontEnd
                 local.Storage = new CompilationValueOutputParameter(local.Storage.BackendValue, local.Storage.Type, paramIdent.Dump(), functionType.Parameters[a].Token);
 
                 // Copy temporary storage to output
-                var returnValue = exitBlockBuilder.Load(local);
+                var returnValue = exitBlockBuilder.Load(local.Type, local);
                 exitBlockBuilder.Store(returnValue, output);
                 
                 // Debug information
