@@ -27,7 +27,7 @@ namespace Humphrey.FrontEnd
                 var constPointer = constantValue.GetCompilationValue(unit, null);
                 if (constPointer.Type is CompilationPointerType constPointerType)
                 {
-                    var dereferenced = builder.Load(constPointer);
+                    var dereferenced = builder.Load((constPointer.Type as CompilationPointerType).ElementType, constPointer);
                     return new CompilationValue(dereferenced.BackendValue, constPointerType.ElementType, Token);
                 }
                 throw new System.Exception($"Cannot derefence a constant expression");
@@ -40,7 +40,7 @@ namespace Humphrey.FrontEnd
                 var compilationPointerType = compilationValue.Type as CompilationPointerType;
                 if (compilationPointerType == null)
                     throw new System.Exception($"Cannot derefence a non pointer type");
-                var dereferenced = builder.Load(compilationValue);
+                var dereferenced = builder.Load(compilationPointerType.ElementType, compilationValue);
                 return new CompilationValue(dereferenced.BackendValue, compilationPointerType.ElementType, Token);
             }
         }

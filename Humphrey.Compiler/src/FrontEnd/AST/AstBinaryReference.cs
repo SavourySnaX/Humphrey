@@ -60,7 +60,8 @@ namespace Humphrey.FrontEnd
             if (type != null)
             {
                 var store = type.AddressElement(unit, builder, pointerToValue, rhs.Dump());
-                var loaded = new CompilationValue(builder.Load(store).BackendValue, (store.Type as CompilationPointerType).ElementType, Token);
+                var storeElementType = (store.Type as CompilationPointerType).ElementType;
+                var loaded = new CompilationValue(builder.Load(storeElementType,store).BackendValue, (store.Type as CompilationPointerType).ElementType, Token);
                 loaded.Storage = store;
 
                 return (loaded, null);
@@ -81,7 +82,7 @@ namespace Humphrey.FrontEnd
             {
                 // Load base value, mask element, shift down, returning as the type
                 var store = pointerToValue;
-                var loaded = new CompilationValue(builder.Load(store).BackendValue, (store.Type as CompilationPointerType).ElementType, Token);
+                var loaded = new CompilationValue(builder.Load(aliasType, store).BackendValue, (store.Type as CompilationPointerType).ElementType, Token);
                 loaded.Storage = store;
                 return (loaded,aliasType);
             }

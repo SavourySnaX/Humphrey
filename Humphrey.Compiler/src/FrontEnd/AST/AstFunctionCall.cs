@@ -150,7 +150,7 @@ namespace Humphrey.FrontEnd
                 return null;        // undef?
 
             // return the anonymous struct as the ICompilationValue
-            return builder.Load(allocSpace);
+            return builder.Load(structType, allocSpace);
         }
 
         private CompilationValue[] ComputeInputValues(CompilationUnit unit, CompilationBuilder builder, CompilationFunctionType ftype)
