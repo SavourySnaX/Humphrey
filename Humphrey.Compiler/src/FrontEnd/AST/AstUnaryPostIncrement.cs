@@ -44,7 +44,7 @@ namespace Humphrey.FrontEnd
                 else if (cv.Type is CompilationPointerType cpt)
                 {
                     // GEP
-                    incremented = builder.InBoundsGEP(cv, cpt, new LLVMSharp.Interop.LLVMValueRef[] { unit.CreateI64Constant(1) });
+                    incremented = builder.InBoundsGEP(cpt.ElementType, cv, cpt, new LLVMSharp.Interop.LLVMValueRef[] { unit.CreateI64Constant(1) });
                 }
                 else
                 {
