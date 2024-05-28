@@ -136,7 +136,7 @@ namespace Humphrey.Backend
             }
 
             var cPtrType = unit.CreatePointerType(elementTypes[idx], elementTypes[idx].Location);
-            return builder.InBoundsGEP(src, cPtrType, new LLVMValueRef[] { unit.CreateI32Constant(0), unit.CreateI32Constant(idx) });
+            return builder.InBoundsGEP(this, src, cPtrType, new LLVMValueRef[] { unit.CreateI32Constant(0), unit.CreateI32Constant(idx) });
         }
 
         void CreateDebugType()
