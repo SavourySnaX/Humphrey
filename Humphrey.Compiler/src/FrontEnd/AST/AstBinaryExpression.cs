@@ -314,6 +314,23 @@ namespace Humphrey.FrontEnd
                 if (resolvedRight.GetType()==typeof(AstArrayType) && resolvedLeft.GetType()==typeof(AstBitType))
                     return right;
 
+                if (resolvedLeft.GetType() == typeof(AstFp32Type) && resolvedRight.GetType() == typeof(AstBitType))
+                    return left;
+                if (resolvedRight.GetType() == typeof(AstFp32Type) && resolvedLeft.GetType() == typeof(AstBitType))
+                    return right;
+                if (resolvedLeft.GetType() == typeof(AstFp32Type) && resolvedRight.GetType() == typeof(AstArrayType))
+                {
+                    var rightArray = resolvedRight as AstArrayType;
+                    if (rightArray.ElementType.GetType() == typeof(AstBitType))
+                        return left;
+                }
+                if (resolvedRight.GetType() == typeof(AstFp32Type) && resolvedLeft.GetType() == typeof(AstArrayType))
+                {
+                    var leftArray = resolvedLeft as AstArrayType;
+                    if (leftArray.ElementType.GetType() == typeof(AstBitType))
+                        return right;
+                }
+
                 pass.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Type mismatch : '{left.Token.Value}' != '{right.Token.Value}", token.Location, token.Remainder);
             }
 

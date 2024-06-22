@@ -19,14 +19,14 @@ namespace Humphrey.FrontEnd
             return $"{DumpOperator()} {lhs.Dump()} {rhs.Dump()}";
         }
 
-        public abstract CompilationConstantIntegerKind CompilationConstantValue(CompilationConstantIntegerKind left, CompilationConstantIntegerKind right);
+        public abstract ICompilationConstantValue CompilationConstantValue(ICompilationConstantValue left, ICompilationConstantValue right);
 
         public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
-            var valueLeft = lhs.ProcessConstantExpression(unit) as CompilationConstantIntegerKind;
-            var valueRight = rhs.ProcessConstantExpression(unit) as CompilationConstantIntegerKind;
+            var les = lhs.ProcessConstantExpression(unit);
+            var res = rhs.ProcessConstantExpression(unit);
 
-            return CompilationConstantValue(valueLeft, valueRight);
+            return CompilationConstantValue(les, res);
         }
 
         public abstract ICompilationValue CompilationValue(CompilationBuilder builder, CompilationValue left, CompilationValue right);
@@ -42,7 +42,10 @@ namespace Humphrey.FrontEnd
             {
                 throw new CompilationAbortException($"Aborting due to missing symbol");
             }
-            if (rlhs is CompilationConstantIntegerKind clhs && rrhs is CompilationConstantIntegerKind crhs)
+
+            bool isConstant = rlhs is CompilationConstantIntegerKind || rlhs is CompilationConstantFloatKind;
+            isConstant = isConstant && (rrhs is CompilationConstantIntegerKind || rrhs is CompilationConstantFloatKind);
+            if (isConstant)
                 return ProcessConstantExpression(unit);
 
             var vlhs = rlhs as CompilationValue;

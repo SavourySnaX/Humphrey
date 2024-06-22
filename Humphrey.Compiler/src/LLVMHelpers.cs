@@ -48,6 +48,11 @@ namespace Extensions
             }
         }
 
+        public static LLVMValueRef CreateConstantFloatValue(this LLVMTypeRef type, float value)
+        {
+            return LLVM.ConstReal(type, value);
+        }
+
         public static LLVMValueRef CreateConstantArrayFromValues(LLVMValueRef[] constants, LLVMTypeRef type)
         {
             var toManaged = new LLVMOpaqueValue*[constants.Length];

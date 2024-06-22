@@ -1375,6 +1375,9 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
         [InlineData(@"Main:(a:fp32)(out:fp32)={out=a;}","Main",0.0f,0.0f)]
         [InlineData(@"Main:(a:fp32)(out:fp32)={out=a;}","Main",1.3333f,1.3333f)]
         [InlineData(@"Main:(a:fp32)(out:fp32)={out=a;}","Main",100099.0f,100099.0f)]
+        [InlineData(@"Main:(a:fp32)(out:fp32)={out=23.9;}", "Main", 0.0f, 23.9f)]
+        [InlineData(@"Main:(a:fp32)(out:fp32)={out=5+2.1;}", "Main", 0.0f, 7.1f)]
+        [InlineData(@"Main:(a:fp32)(out:fp32)={out=5.1+2;}", "Main", 0.0f, 7.1f)]
         public void CheckSimpleFloat(string input, string entryPointName, float ival1, float expected)
         {
             Assert.True(InputFloatExpectsFloatValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");

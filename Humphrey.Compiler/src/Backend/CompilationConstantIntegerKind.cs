@@ -277,6 +277,11 @@ namespace Humphrey.Backend
             resultType = type;
         }
 
+        public CompilationConstantFloatKind AsFloat()
+        {
+            return new CompilationConstantFloatKind(new AstFloatNumber(Constant.ToString()));
+        }
+
         public BigInteger Constant => constant;
 
         public Result<Tokens> FrontendLocation => frontendLocation;

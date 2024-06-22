@@ -126,6 +126,7 @@ namespace Humphrey.FrontEnd.Tests
         [InlineData("a<<b==c","== << a b c")]
         [InlineData("a>>b==c","== >> a b c")]
         [InlineData("a>>>b==c","== >>> a b c")]
+        [InlineData("1.2+1.3!=6","!= + 1.2 1.3 6")]
         [InlineData("()",null)]
         [InlineData("[]",null)]
         [InlineData("(]",null)]

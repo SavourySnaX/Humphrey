@@ -13,10 +13,12 @@ namespace Humphrey.FrontEnd
             return ">=";
         }
 
-        public override CompilationConstantIntegerKind CompilationConstantValue(CompilationConstantIntegerKind left, CompilationConstantIntegerKind right)
+        public override ICompilationConstantValue CompilationConstantValue(ICompilationConstantValue left, ICompilationConstantValue right)
         {
-            left.CompareGreaterEqual(right);
-            return left;
+            var l = left as CompilationConstantIntegerKind;
+            var r = right as CompilationConstantIntegerKind;
+            l.CompareGreaterEqual(r);
+            return l;
         }
 
         public override ICompilationValue CompilationValue(CompilationBuilder builder, CompilationValue left, CompilationValue right)

@@ -434,6 +434,14 @@ namespace Humphrey.Backend
 
             return new CompilationValue(constType.BackendType.CreateConstantValue(constantValue.Constant.ToString(), 10), constType, constantValue.FrontendLocation);
         }
+        
+        public CompilationValue CreateConstant(CompilationConstantFloatKind constantValue, SourceLocation location)
+        {
+            var constType = new CompilationFloatType(contextRef.FloatType, debugBuilder, location);
+
+            return new CompilationValue(constType.BackendType.CreateConstantFloatValue(constantValue.Constant), constType, constantValue.FrontendLocation);
+        }
+
 
         public CompilationValue CreateConstant(AstNumber decimalNumber, SourceLocation location)
         {

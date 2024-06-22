@@ -266,6 +266,7 @@ namespace Humphrey.FrontEnd
 
         // number : Number
         public AstNumber Number() { return AstItem(Tokens.Number, (e) => new AstNumber(e)) as AstNumber; }
+        public AstFloatNumber FloatNumber() { return AstItem(Tokens.FloatNumber, (e) => new AstFloatNumber(e)) as AstFloatNumber; }
         public AstString StringLiteral() { return AstItem(Tokens.String, (e)=>new AstString(e)) as AstString; }
 
         // identifier : Identifier  (must be standalone ie not namespaced/referencing)
@@ -415,7 +416,7 @@ namespace Humphrey.FrontEnd
         public AstItemDelegate[] GlobalDefinition => new AstItemDelegate[] { Using, GlobalScopeDefinition };
 
         // terminal : Number | IdentifierTerminal | BracketedExpression
-        public AstItemDelegate[] Terminal => new AstItemDelegate[] { Number, StringLiteral, IdentifierTerminal, BracketedExpression };
+        public AstItemDelegate[] Terminal => new AstItemDelegate[] { Number, FloatNumber, StringLiteral, IdentifierTerminal, BracketedExpression };
 
         // bracketed_expresson : ( Expression )
         public IAst BracketedExpression()
