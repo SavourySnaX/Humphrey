@@ -173,14 +173,47 @@ namespace Humphrey
             }
         }
 
+        internal IEnumerable<(string, CommonSymbolTableEntry)> EnumerateTable(Dictionary<string, CommonSymbolTableEntry> table, int kind)
+        {
+            var nextParent = _parent;
+            while (table != null)
+            {
+                foreach (var e in table)
+                {
+                    yield return (e.Key, e.Value);
+                }
+
+                switch (kind)
+                {
+                    default:
+                    case 0:
+                        table = nextParent?._valueTable;
+                        break;
+                    case 1:
+                        table = nextParent?._typeTable;
+                        break;
+                    case 2:
+                        table = nextParent?._functionTable;
+                        break;
+                }
+                nextParent = nextParent?._parent;
+            }
+        }
+
         public IEnumerable<(string name, CommonSymbolTableEntry entry)> EnumerateSymbols()
         {
-            foreach (var e in _typeTable)
-                yield return (e.Key,e.Value);
-            foreach (var e in _functionTable)
-                yield return (e.Key, e.Value);
-            foreach (var e in _valueTable)
-                yield return (e.Key, e.Value);
+            foreach (var e in EnumerateTable(_valueTable, 0))
+            {
+                yield return e;
+            }
+            foreach (var e in EnumerateTable(_typeTable, 1))
+            {
+                yield return e;
+            }
+            foreach (var e in EnumerateTable(_functionTable, 2))
+            {
+                yield return e;
+            }
         }
     }
 }
