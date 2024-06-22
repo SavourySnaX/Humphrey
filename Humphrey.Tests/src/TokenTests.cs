@@ -94,6 +94,7 @@ namespace Humphrey.FrontEnd.Tests
         [InlineData("if", Tokens.KW_If)]
         [InlineData("else", Tokens.KW_Else)]
         [InlineData("while", Tokens.KW_While)]
+        [InlineData("fp32", Tokens.KW_FP32)]
         public void CheckKeywordTokens(string input, Tokens expected)
         {
             TokenTest(input, new[] { expected });
@@ -129,6 +130,19 @@ namespace Humphrey.FrontEnd.Tests
         {
             TokenTest(input, new[] { expected });
         }
+
+        [Theory]
+        [InlineData("0.", Tokens.FloatNumber)]
+        [InlineData("0.0", Tokens.FloatNumber)]
+        [InlineData("100.", Tokens.FloatNumber)]
+        [InlineData("01.9", Tokens.FloatNumber)]
+        [InlineData("1_000_000.333_333", Tokens.FloatNumber)]
+        public void CheckFloatNumbers(string input, Tokens expected)
+        {
+            TokenTest(input, new[] { expected });
+        }
+        
+
 
         [Theory]
         [InlineData("__", new[] { Tokens.S_Underscore, Tokens.S_Underscore })]

@@ -218,6 +218,7 @@ namespace Humphrey.FrontEnd.Tests
         [InlineData("a","a")]
         [InlineData("[55] a","[55] a")]
         [InlineData("0",null)]
+        [InlineData("fp32", "fp32")]
         public void CheckType(string input, string expected)
         {
             var tokenise = new HumphreyTokeniser();

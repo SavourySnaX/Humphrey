@@ -21,6 +21,8 @@ namespace Humphrey.FrontEnd
 
         public override ICompilationValue CompilationValue(CompilationBuilder builder, CompilationValue left, CompilationValue right)
         {
+            if (left.Type is CompilationFloatType)
+                return builder.FMul(left, right);
             return builder.Mul(left, right);
         }
     }

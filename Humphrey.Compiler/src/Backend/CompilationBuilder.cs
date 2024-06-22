@@ -106,6 +106,31 @@ namespace Humphrey.Backend
             return new CompilationValue(builderRef.BuildSub(left.BackendValue, right.BackendValue), left.Type, left.FrontendLocation.Combine(right.FrontendLocation));
         }
 
+        public CompilationValue FAdd(CompilationValue left, CompilationValue right)
+        {
+            return new CompilationValue(builderRef.BuildFAdd(left.BackendValue, right.BackendValue), left.Type, left.FrontendLocation.Combine(right.FrontendLocation));
+        }
+
+        public CompilationValue FSub(CompilationValue left, CompilationValue right)
+        {
+            return new CompilationValue(builderRef.BuildFSub(left.BackendValue, right.BackendValue), left.Type, left.FrontendLocation.Combine(right.FrontendLocation));
+        }
+        
+        public CompilationValue FMul(CompilationValue left, CompilationValue right)
+        {
+            return new CompilationValue(builderRef.BuildFMul(left.BackendValue, right.BackendValue), left.Type, left.FrontendLocation.Combine(right.FrontendLocation));
+        }
+
+        public CompilationValue FDiv(CompilationValue left, CompilationValue right)
+        {
+            return new CompilationValue(builderRef.BuildFDiv(left.BackendValue, right.BackendValue), left.Type, left.FrontendLocation.Combine(right.FrontendLocation));
+        }
+
+        public CompilationValue FRem(CompilationValue left, CompilationValue right)
+        {
+            return new CompilationValue(builderRef.BuildFRem(left.BackendValue, right.BackendValue), left.Type, left.FrontendLocation.Combine(right.FrontendLocation));
+        }
+
         public CompilationValue LogicalAnd(CompilationValue left, CompilationValue right)
         {
             return new CompilationValue(builderRef.BuildAnd(left.BackendValue, right.BackendValue), left.Type, left.FrontendLocation.Combine(right.FrontendLocation));

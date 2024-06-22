@@ -17,6 +17,7 @@ namespace Humphrey.Backend
 
         public enum BasicType
         {
+            Float,
             SignedInt,
             UnsignedInt
         }
@@ -131,6 +132,9 @@ namespace Humphrey.Backend
                 var dwarfType = LLVMDwarfATEValues.None;
                 switch (type)
                 {
+                    case BasicType.Float:
+                        dwarfType = LLVMDwarfATEValues.DW_ATE_float;
+                        break;
                     case BasicType.SignedInt:
                         dwarfType = LLVMDwarfATEValues.DW_ATE_signed;
                         break;

@@ -237,6 +237,14 @@ namespace Humphrey.FrontEnd
                 throw new NotImplementedException($"TODO - Integer Bit width does not match");
             }
 
+            var leftFloatType = left.Type as CompilationFloatType;
+            var rightFloatType = right.Type as CompilationFloatType;
+
+            if (leftFloatType != null && rightFloatType != null)
+            {
+                return (left, right);
+            }
+
             throw new NotImplementedException($"TODO - Non integer types in promotion?");
         }
 

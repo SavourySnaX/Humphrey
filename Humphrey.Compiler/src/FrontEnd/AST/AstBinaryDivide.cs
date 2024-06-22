@@ -21,6 +21,9 @@ namespace Humphrey.FrontEnd
 
         public override ICompilationValue CompilationValue(CompilationBuilder builder, CompilationValue left, CompilationValue right)
         {
+            if (left.Type is CompilationFloatType)
+                return builder.FDiv(left, right);
+
             var leftIntType = left.Type as CompilationIntegerType;
             var rightIntType = right.Type as CompilationIntegerType;
 

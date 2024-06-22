@@ -29,9 +29,15 @@ namespace Humphrey.FrontEnd
 
         [Token(Category = "Number", Example = "1234", SemanticKind = "Number")]
         Number,
+        
+        [Token(Category = "Number", Example = "1.2", SemanticKind = "Number")]
+        FloatNumber,        // For Now, if number parsed is decimal digits and a dot is present, its a float number
 
         [Token(Category = "Keyword", Example = "bit", SemanticKind = "Type")]
         KW_Bit,
+        
+        [Token(Category = "Keyword", Example = "fp32", SemanticKind = "Type")]
+        KW_FP32,
 
         [Token(Category = "Keyword", Example = "using", SemanticKind = "Keyword")]
         KW_Using,
@@ -291,7 +297,7 @@ namespace Humphrey.FrontEnd
             {
                 length = remain.Value.position - position;
             }
-            if (remain.Value.AtEnd)
+            if (remain == null || remain.Value.AtEnd)
             {
                 return "";
             }
@@ -486,6 +492,7 @@ namespace Humphrey.FrontEnd
         {
             ["as"] = Tokens.O_As,
             ["bit"] = Tokens.KW_Bit,
+            ["fp32"] = Tokens.KW_FP32, // TODO: Remove this when we have a proper floating point type
             ["for"] = Tokens.KW_For,
             ["return"] = Tokens.KW_Return,
             ["if"] = Tokens.KW_If,
@@ -524,6 +531,7 @@ namespace Humphrey.FrontEnd
             char secondChar = '\0';
             bool operatorOnly = firstChar == '_';
             bool digitOnly = char.IsDigit(firstChar);
+            bool decimalPointHit = false;
             var endNumber = 0;
 
             var next = span.ConsumeChar();
@@ -554,6 +562,7 @@ namespace Humphrey.FrontEnd
                 {
                     if (firstChar == '0' && secondChar == '\0' && (c == 'x' || c == 'b'))
                     {
+                        digitOnly = false;
                         // Handle x/b
                         if (c == 'x')
                             secondChar = 'x';
@@ -569,6 +578,10 @@ namespace Humphrey.FrontEnd
                     {
                         if (!(c == '0' || c == '1' || c == '_'))
                             break;
+                    }
+                    else if (digitOnly && c == '.' && !decimalPointHit)
+                    {
+                        decimalPointHit = true;
                     }
                     else if (c != '_')
                     {
@@ -589,7 +602,14 @@ namespace Humphrey.FrontEnd
                         }
                     }
                 }
+                var last = next;
                 next = next.Remainder.ConsumeChar();
+                // Handle .. operator
+                if (c=='.' && next.HasValue && next.Value=='.')
+                {
+                    next=last;
+                    break;
+                }
             }
             if (operatorOnly)
             {
@@ -850,6 +870,14 @@ namespace Humphrey.FrontEnd
             return Decimalise(builderN.ToString(), radii);
         }
 
+        public static string ConvertFloat(string number)
+        {
+            number = number.Replace("_", "");
+            if (float.TryParse(number, out _))
+                return number;
+            return null;
+        }
+
         private static bool ExtractSubValue(string number, int offset, out int radii)
         {
             int radix = 0;
@@ -883,9 +911,14 @@ namespace Humphrey.FrontEnd
             return int.TryParse(builderR.ToString(), System.Globalization.NumberStyles.Integer, null, out radii);
         }
 
-        protected bool IsLegalNumberFormat(string number)
+        protected bool IsLegalNumberFormat(string number, out bool isFloat)
         {
-            return ConvertNumber(number) != null;
+            isFloat = false;
+            var res = ConvertNumber(number);
+            if (res != null)
+                return true;
+            isFloat = true;
+            return ConvertFloat(number) != null;
         }
 
         public IEnumerable<Result<Tokens>> Tokenize(string input, string path="")
@@ -979,10 +1012,16 @@ namespace Humphrey.FrontEnd
                         else
                             yield return new Result<Tokens>(Tokens.Identifier, start.Location, next.Location);
                     }
-                    else if (kind == Tokens.Number)
+                    else if (kind == Tokens.Number) 
                     {
-                        if (IsLegalNumberFormat(keywordCheck))
-                            yield return new Result<Tokens>(Tokens.Number, start.Location, next.Location);
+                        // Could be number or floatnumber
+                        if (IsLegalNumberFormat(keywordCheck, out var isFloat))
+                        {
+                            if (isFloat)
+                                yield return new Result<Tokens>(Tokens.FloatNumber, start.Location, next.Location);
+                            else
+                                yield return new Result<Tokens>(Tokens.Number, start.Location, next.Location);
+                        }
                         else
                             yield break;
                     }

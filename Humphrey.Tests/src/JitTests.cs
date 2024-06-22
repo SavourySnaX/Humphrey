@@ -1370,6 +1370,33 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
             Assert.True(Input8BitExpects8BitValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
         }
 
+        [Theory]
+        [InlineData(@"Main:(a:fp32)(out:fp32)={out=a;}","Main",1.0f,1.0f)]
+        [InlineData(@"Main:(a:fp32)(out:fp32)={out=a;}","Main",0.0f,0.0f)]
+        [InlineData(@"Main:(a:fp32)(out:fp32)={out=a;}","Main",1.3333f,1.3333f)]
+        [InlineData(@"Main:(a:fp32)(out:fp32)={out=a;}","Main",100099.0f,100099.0f)]
+        public void CheckSimpleFloat(string input, string entryPointName, float ival1, float expected)
+        {
+            Assert.True(InputFloatExpectsFloatValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main:(a:fp32,b:fp32)(out:fp32)={out=a+b;}", "Main", 1.0f, 2.0f, 3.0f)]
+        [InlineData(@"Main:(a:fp32,b:fp32)(out:fp32)={out=a+b;}", "Main", 1.25f, 2.5f, 3.75f)]
+        [InlineData(@"Main:(a:fp32,b:fp32)(out:fp32)={out=a-b;}", "Main", 1.0f, 2.0f, -1.0f)]
+        [InlineData(@"Main:(a:fp32,b:fp32)(out:fp32)={out=a-b;}", "Main", 0.75f, 2.5f, -1.75f)]
+        [InlineData(@"Main:(a:fp32,b:fp32)(out:fp32)={out=a*b;}", "Main", 1.25f, 5.5f, 6.875f)]
+        [InlineData(@"Main:(a:fp32,b:fp32)(out:fp32)={out=a*b;}", "Main", 0.0f, 0.5f, 0.0f)]
+        [InlineData(@"Main:(a:fp32,b:fp32)(out:fp32)={out=a/b;}", "Main", 5.0f, 1.0f, 5.0f)]
+        [InlineData(@"Main:(a:fp32,b:fp32)(out:fp32)={out=a/b;}", "Main", 5.0f, 0.5f, 10.0f)]
+        [InlineData(@"Main:(a:fp32,b:fp32)(out:fp32)={out=a%b;}", "Main", 5.0f, 1.0f, 0.0f)]
+        [InlineData(@"Main:(a:fp32,b:fp32)(out:fp32)={out=a%b;}", "Main", 3.0f, 2.0f, 1.0f)]
+
+        public void CheckFloatArithmetic(string input, string entryPointName, float ival1, float ival2, float expected)
+        {
+            Assert.True(InputFloatFloatExpectsFloatValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{expected}");
+        }
+
         public IntPtr CompileForTest(string input, string entryPointName)
         {
             var messages = new CompilerMessages(true, true, false);
@@ -1660,6 +1687,27 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
             Marshal.FreeHGlobal(unmanagedAddr);
             return afterFunction.Equals(expected);
         }
+
+        delegate float InputFloatOutputFloat(float inputVal, float* returnVal);
+
+        public static bool InputFloatExpectsFloatValue(IntPtr ee, float input, float expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputFloatOutputFloat>(ee);
+            float returnValue;
+            func(input, &returnValue);
+            return returnValue == expected;
+        }
+
+        delegate float InputFloatFloatOutputFloat(float a, float b, float* returnVal);
+
+        public static bool InputFloatFloatExpectsFloatValue(IntPtr ee, float a, float b, float expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputFloatFloatOutputFloat>(ee);
+            float returnValue;
+            func(a, b, &returnValue);
+            return returnValue == expected;
+        }
+
     }
 }
 

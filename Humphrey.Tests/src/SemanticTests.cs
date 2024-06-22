@@ -10,6 +10,7 @@ namespace Humphrey.FrontEnd.Tests
     {
         [Theory]
         [InlineData(@" Main : bit", "Main", SemanticPass.IdentifierKind.Type, typeof(AstBitType), typeof(AstBitType))]
+        [InlineData(@" Main : fp32", "Main", SemanticPass.IdentifierKind.Type, typeof(AstFp32Type), typeof(AstFp32Type))]
         [InlineData(@" Main : [8]bit", "Main", SemanticPass.IdentifierKind.Type, typeof(AstArrayType), typeof(AstArrayType))]
         [InlineData(@" Main : *bit", "Main", SemanticPass.IdentifierKind.Type, typeof(AstPointerType), typeof(AstPointerType))]
         [InlineData(@" Main : {bob:bit}", "Main", SemanticPass.IdentifierKind.StructType, typeof(AstStructureType), typeof(AstStructureType))]

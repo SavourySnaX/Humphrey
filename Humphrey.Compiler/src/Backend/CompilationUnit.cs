@@ -148,6 +148,11 @@ namespace Humphrey.Backend
             return CreateIntegerType(num, isSigned, location);
         }
 
+        public CompilationFloatType FetchFloatType(SourceLocation location)
+        {
+            return CreateFloatType(location);
+        }
+
         public CompilationIntegerType FetchIntegerType(uint numBits, bool isSigned, SourceLocation location)
         {
             return CreateIntegerType(numBits, isSigned, location);
@@ -228,6 +233,10 @@ namespace Humphrey.Backend
             return new CompilationAliasType(type.BackendType, type, values, names, rotate, debugBuilder, location);
         }
 
+        public CompilationFloatType CreateFloatType(SourceLocation location)
+        {
+            return new CompilationFloatType( contextRef.FloatType, debugBuilder, location);
+        }
 
         public CompilationIntegerType CreateIntegerType(uint numBits, bool isSigned, SourceLocation location)
         {
