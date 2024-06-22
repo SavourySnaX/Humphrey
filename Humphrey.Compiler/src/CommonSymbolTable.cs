@@ -172,5 +172,15 @@ namespace Humphrey
                 }
             }
         }
+
+        public IEnumerable<CommonSymbolTableEntry> EnumerateSymbols()
+        {
+            foreach (var e in _typeTable)
+                yield return e.Value;
+            foreach (var e in _functionTable)
+                yield return e.Value;
+            foreach (var e in _valueTable)
+                yield return e.Value;
+        }
     }
 }
