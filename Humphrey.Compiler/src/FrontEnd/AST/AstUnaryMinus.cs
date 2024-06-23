@@ -16,9 +16,18 @@ namespace Humphrey.FrontEnd
 
         public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
-            var result = expr.ProcessConstantExpression(unit) as CompilationConstantIntegerKind;
-            result.Negate();
-            return result;
+            var result = expr.ProcessConstantExpression(unit);
+            if (result is CompilationConstantIntegerKind constantValue)
+            {
+                constantValue.Negate();
+                return constantValue;
+            }
+            else if (result is CompilationConstantFloatKind constantFloat)
+            {
+                constantFloat.Negate();
+                return constantFloat;
+            }
+            throw new System.NotImplementedException("Unknown constant type");
         }
 
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
@@ -28,6 +37,11 @@ namespace Humphrey.FrontEnd
             {
                 constantValue.Negate();
                 return constantValue;
+            }
+            else if (value is CompilationConstantFloatKind constantFloat)
+            {
+                constantFloat.Negate();
+                return constantFloat;
             }
             else
                 return builder.Negate(value as CompilationValue);

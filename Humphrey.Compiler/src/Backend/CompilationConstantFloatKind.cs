@@ -45,6 +45,11 @@ namespace Humphrey.Backend
             {
                 return unit.CreateConstant(this, location);
             }
+            if (destType is CompilationIntegerType destIntType)
+            {
+                var intType = AsInt();
+                return intType.GetCompilationValue(unit, destType);
+            }
 
             unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Attempting to assign a value '{constant}' to type '{destType.DumpType()}.'", frontendLocation.Location, frontendLocation.Remainder);
 			return unit.CreateUndef(destType);
@@ -86,9 +91,19 @@ namespace Humphrey.Backend
             constant = constant % rhs.Constant;
         }
 
-        public void Cast(IType type)
+        public ICompilationConstantValue Cast(IType type)
         {
+            if (type is CompilationConstantIntegerKind)
+            {
+                return AsInt();
+            }
             resultType = type;
+            return this;
+        }
+
+        public CompilationConstantIntegerKind AsInt()
+        {
+            return new CompilationConstantIntegerKind(new AstNumber(((int)constant).ToString()));
         }
 
         public float Constant => constant;

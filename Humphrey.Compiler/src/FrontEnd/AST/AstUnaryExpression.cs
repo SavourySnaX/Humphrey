@@ -122,6 +122,25 @@ namespace Humphrey.FrontEnd
                 unit.Messages.Log(CompilerErrorKind.Error_IntegerWidthMismatch, $"Result of expression '{Token.Location.ToStringValue(Token.Remainder)}' of type '{srcIntType.DumpType()}' is larger than {destIntType.DumpType()}!", Token.Location, Token.Remainder);
                 return unit.CreateUndef(destType);  // Allow compilation to continue
             }
+
+            var destFloatType = destType as CompilationFloatType;
+
+            if (srcIntType!=null && destFloatType!=null)
+            {
+                if (srcIntType.IsSigned)
+                {
+                    if (srcIntType.IntegerWidth<=32)
+                    {
+                        return builder.SignedToFloat(src, destFloatType);
+                    }
+                }
+                else if (srcIntType.IntegerWidth<32)
+                {
+                    return builder.UnsignedToFloat(src, destFloatType);
+                }
+            }
+
+
             unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Attempting to assign a value of type '{src.Type.DumpType()}' to type '{destType.DumpType()}.'", Token.Location, Token.Remainder);
 			return unit.CreateUndef(destType);
         }

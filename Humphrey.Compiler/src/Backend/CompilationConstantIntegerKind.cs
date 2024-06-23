@@ -113,6 +113,14 @@ namespace Humphrey.Backend
                     return new CompilationValue(constant.BackendValue.ConstIntToPtr(type.BackendType), type, FrontendLocation);
                 }
             }
+            else if (destType is CompilationFloatType destFloat)
+            {
+                if (numBits < 32)
+                {
+                    var fpConstant = AsFloat();
+                    return fpConstant.GetCompilationValue(unit, destFloat);
+                }
+            }
 
             unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Attempting to assign a value '{constant}' to type '{destType.DumpType()}.'", frontendLocation.Location, frontendLocation.Remainder);
 			return unit.CreateUndef(destType);
@@ -272,9 +280,14 @@ namespace Humphrey.Backend
             constant = constant | rhs.Constant;
         }
 
-        public void Cast(IType type)
+        public ICompilationConstantValue Cast(IType type)
         {
+            if (type is CompilationConstantFloatKind)
+            {
+                return AsFloat();
+            }
             resultType = type;
+            return this;
         }
 
         public CompilationConstantFloatKind AsFloat()

@@ -1400,6 +1400,35 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
             Assert.True(InputFloatFloatExpectsFloatValue(CompileForTest(input, entryPointName), ival1, ival2, expected), $"Test {entryPointName},{input},{ival1},{expected}");
         }
 
+        [Theory]
+        [InlineData(@"Func:(a:fp32)(o:fp32)={o=a;} Main:(a:fp32)(out:fp32)={out=Func(22);}", "Main", 0.0f, 22.0f)]
+        [InlineData(@"Func:(a:fp32)(o:fp32)={o=a;} Main:(a:fp32)(out:fp32)={t:=22; out=Func(t);}", "Main", 0.0f, 22.0f)]
+        [InlineData(@"Func:(a:fp32)(o:fp32)={o=a;} Main:(a:fp32)(out:fp32)={t:[-16]bit=-22; out=Func(t);}", "Main", 0.0f, -22.0f)]
+        public void CheckIntFloatPromotionConversion(string input, string entryPointName, float ival1, float expected)
+        {
+            Assert.True(InputFloatExpectsFloatValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main:(a:fp32)(out:[-32]bit)={out=a as [-32]bit;}", "Main", -99.2f, -99)]
+        [InlineData(@"Main:(a:fp32)(out:[32]bit)={out=a as [32]bit;}", "Main", 22.5f, 22)]
+        [InlineData(@"Main:(a:fp32)(out:[-32]bit)={out=(-99.5) as [-32]bit;}", "Main", -99.0f, -99)]
+        [InlineData(@"Main:(a:fp32)(out:[32]bit)={out=22.2 as [32]bit;}", "Main", 22.0f, 22)]
+        public void CheckFloatIntConversion(string input, string entryPointName, float ival1, int expected)
+        {
+            Assert.True(InputFloatExpectsIntValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
+        }
+
+        [Theory]
+        [InlineData(@"Main:(a:[-32]bit)(out:fp32)={out=a as fp32;}", "Main", -99, -99.0f)]
+        [InlineData(@"Main:(a:[32]bit)(out:fp32)={out=a as fp32;}", "Main", 22, 22.0f)]
+        [InlineData(@"Main:(a:[-32]bit)(out:fp32)={out=(-99) as fp32;}", "Main", -99, -99.0f)]
+        [InlineData(@"Main:(a:[32]bit)(out:fp32)={out=22 as fp32;}", "Main", 22, 22.0f)]
+        public void CheckIntFloatConversion(string input, string entryPointName, int ival1, float expected)
+        {
+            Assert.True(InputIntExpectsFloatValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
+        }
+
         public IntPtr CompileForTest(string input, string entryPointName)
         {
             var messages = new CompilerMessages(true, true, false);
@@ -1696,6 +1725,26 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
         public static bool InputFloatExpectsFloatValue(IntPtr ee, float input, float expected)
         {
             var func = Marshal.GetDelegateForFunctionPointer<InputFloatOutputFloat>(ee);
+            float returnValue;
+            func(input, &returnValue);
+            return returnValue == expected;
+        }
+        
+        delegate float InputFloatOutputInt(float inputVal, int* returnVal);
+
+        public static bool InputFloatExpectsIntValue(IntPtr ee, float input, int expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputFloatOutputInt>(ee);
+            int returnValue;
+            func(input, &returnValue);
+            return returnValue == expected;
+        }
+
+        delegate float InputIntOutputFloat(int inputVal, float* returnVal);
+
+        public static bool InputIntExpectsFloatValue(IntPtr ee, int input, float expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputIntOutputFloat>(ee);
             float returnValue;
             func(input, &returnValue);
             return returnValue == expected;

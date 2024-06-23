@@ -131,6 +131,26 @@ namespace Humphrey.Backend
             return new CompilationValue(builderRef.BuildFRem(left.BackendValue, right.BackendValue), left.Type, left.FrontendLocation.Combine(right.FrontendLocation));
         }
 
+        public CompilationValue SignedToFloat(CompilationValue src, CompilationType destType)
+        {
+            return new CompilationValue(builderRef.BuildSIToFP(src.BackendValue, destType.BackendType), destType, src.FrontendLocation);
+        }
+
+        public CompilationValue UnsignedToFloat(CompilationValue src, CompilationType destType)
+        {
+            return new CompilationValue(builderRef.BuildUIToFP(src.BackendValue, destType.BackendType), destType, src.FrontendLocation);
+        }
+
+        public CompilationValue FloatToSigned(CompilationValue src, CompilationType destType)
+        {
+            return new CompilationValue(builderRef.BuildFPToSI(src.BackendValue, destType.BackendType), destType, src.FrontendLocation);
+        }
+
+        public CompilationValue FloatToUnsigned(CompilationValue src, CompilationType destType)
+        {
+            return new CompilationValue(builderRef.BuildFPToUI(src.BackendValue, destType.BackendType), destType, src.FrontendLocation);
+        }
+
         public CompilationValue LogicalAnd(CompilationValue left, CompilationValue right)
         {
             return new CompilationValue(builderRef.BuildAnd(left.BackendValue, right.BackendValue), left.Type, left.FrontendLocation.Combine(right.FrontendLocation));

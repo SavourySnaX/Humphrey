@@ -19,7 +19,7 @@ namespace Humphrey.Backend
             frontendLocation = frontendLoc;
         }
 
-        public void Cast(IType type)
+        public ICompilationConstantValue Cast(IType type)
         {
             throw new System.NotImplementedException();
         }

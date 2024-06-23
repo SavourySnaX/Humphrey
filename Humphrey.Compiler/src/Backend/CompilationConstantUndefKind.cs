@@ -35,9 +35,10 @@ namespace Humphrey.Backend
             return unit.CreateUndef(destType);
         }
 
-        public void Cast(IType type)
+        public ICompilationConstantValue Cast(IType type)
         {
             resultType = type;
+            return this;
         }
 
         public Result<Tokens> FrontendLocation => frontendLocation;

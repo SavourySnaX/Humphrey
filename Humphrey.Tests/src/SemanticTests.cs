@@ -24,6 +24,7 @@ namespace Humphrey.FrontEnd.Tests
 
         [Theory]
         [InlineData(@" Main := 0", "Main", SemanticPass.IdentifierKind.GlobalValue, typeof(AstBitType), typeof(AstBitType))]
+        [InlineData(@" Main := 0.0", "Main", SemanticPass.IdentifierKind.GlobalValue, typeof(AstFp32Type), typeof(AstFp32Type))]
         [InlineData(@" bob:()()={} Main := bob", "Main", SemanticPass.IdentifierKind.GlobalValue,typeof(AstLoadableIdentifier), typeof(AstFunctionType))]
         [InlineData(@" Main := bob bob:()()={} ", "Main", SemanticPass.IdentifierKind.GlobalValue,typeof(AstLoadableIdentifier), typeof(AstFunctionType))]
         [InlineData(@" bob : [8]bit Main := bob", "Main", SemanticPass.IdentifierKind.GlobalValue, typeof(AstLoadableIdentifier), typeof(AstArrayType))]

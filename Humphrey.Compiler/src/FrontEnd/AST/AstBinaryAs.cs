@@ -20,14 +20,15 @@ namespace Humphrey.FrontEnd
         public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
             var valueLeft = lhs.ProcessConstantExpression(unit);
-            valueLeft.Cast(rhs);
-            return valueLeft;
+            return valueLeft.Cast(rhs);
         }
 
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)
         {
             var vlhs = lhs.ProcessExpression(unit, builder);
             if (vlhs is CompilationConstantIntegerKind)
+                return ProcessConstantExpression(unit);
+            if (vlhs is CompilationConstantFloatKind)
                 return ProcessConstantExpression(unit);
 
             var valueLeft = vlhs as CompilationValue;
@@ -47,6 +48,29 @@ namespace Humphrey.FrontEnd
                     }
                 }
                 break;
+            }
+
+            if (valueLeft.Type is CompilationFloatType && typeRight is CompilationIntegerType integerType)
+            {
+                if (integerType.IsSigned)
+                {
+                    return builder.FloatToSigned(valueLeft, typeRight);
+                }
+                if (!integerType.IsSigned)
+                {
+                    return builder.FloatToUnsigned(valueLeft, typeRight);
+                }
+            }
+            if (valueLeft.Type is CompilationIntegerType iType && typeRight is CompilationFloatType)
+            {
+                if (iType.IsSigned)
+                {
+                    return builder.SignedToFloat(valueLeft, typeRight);
+                }
+                else
+                {
+                    return builder.UnsignedToFloat(valueLeft, typeRight);
+                }
             }
 
             return builder.Cast(valueLeft, typeRight);
