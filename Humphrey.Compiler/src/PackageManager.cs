@@ -19,6 +19,8 @@ namespace Humphrey
         }
 
         private readonly IPackageManager _manager;
+
+        public PackageManager(): this("humphrey.json"){}
         public PackageManager(string packageJson)
         {
             var config = File.ReadAllText(packageJson);
