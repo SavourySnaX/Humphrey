@@ -350,6 +350,7 @@ namespace Humphrey.FrontEnd.Tests
         [Theory]
         [InlineData("{}","{ }")]
         [InlineData("{bob:bit}","{ bob : bit}")]
+        [InlineData("{bob:fp32}","{ bob : fp32}")]
         [InlineData("{bob,carol:bit}","{ bob , carol : bit}")]
         [InlineData("{bob:bit squee:[8]bit}","{ bob : bit squee : [8] bit}")]
         [InlineData("{bob,carol:bit squee,bees:[8]bit}","{ bob , carol : bit squee , bees : [8] bit}")]
