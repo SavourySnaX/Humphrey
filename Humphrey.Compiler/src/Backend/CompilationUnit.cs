@@ -629,7 +629,7 @@ namespace Humphrey.Backend
 
         public delegate bool ExecutionDelegate(IntPtr method);
 
-        public IntPtr JitMethod(string identifier)
+        public IntPtr JitMethod(string identifier, (string name, nint addr)[] globals = null)
         {
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
             {
@@ -642,6 +642,19 @@ namespace Humphrey.Backend
             {
                 Console.WriteLine($"Failed to create MCJit : {message}");
                 throw new System.Exception($"Failed to create jit");
+            }
+
+            if (globals!=null)
+            {
+                foreach (var global in globals)
+                {
+                    var symbol = root.FetchAny(global.name);
+                    if (symbol.Function != null)
+                    {
+                        var addr = symbol.Function.BackendValue;
+                        ee.AddGlobalMapping(addr, global.addr);
+                    }
+                }
             }
 
             return ee.GetPointerToGlobal(root.FetchFunction(identifier).Function.BackendValue);

@@ -4,6 +4,7 @@ using Humphrey.FrontEnd;
 using System.Runtime.InteropServices;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Humphrey.Backend.Tests
 {
@@ -1430,7 +1431,30 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
             Assert.True(InputIntExpectsFloatValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
         }
 
-        public IntPtr CompileForTest(string input, string entryPointName)
+        struct Float2
+        {
+            public float a;
+            public float b;
+        }
+
+        [UnmanagedCallersOnly(CallConvs = new [] { typeof(CallConvCdecl) })]
+        static float TestABICStruct(Float2 v)
+        {
+            return v.a + v.b;
+        }
+
+        [Theory]
+        [InlineData(@"Float2:{a:fp32 b:fp32} [C_CALLING_CONVENTION]TestABIStruct:(a:Float2)(out:fp32) Main:()(out:fp32)={b:Float2=0; b.a=1.0; b.b=2.0; out=TestABIStruct(b);}","Main",3.0f)]
+        public void CheckFloatStruct(string input, string entryPointName, float expected)
+        {
+            delegate* unmanaged[Cdecl]<Float2, float> TestABICStructFP = &TestABICStruct;
+            var globals = new (string name, nint addr)[] { ("TestABIStruct", (nint)TestABICStructFP) };
+            Assert.True(InputVoidExpectsFloatValue(CompileForTest(input, entryPointName, globals), expected), $"Test {entryPointName},{expected}");
+        }
+
+        // TODO test - ABI match for structs with C ...
+
+        public IntPtr CompileForTest(string input, string entryPointName, (string name, nint addr)[] globals=null)
         {
             var messages = new CompilerMessages(true, true, false);
             var tokenise = new HumphreyTokeniser(messages);
@@ -1449,7 +1473,7 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
                         var unit = compiler.Compile(semantic, "test", "x86_64", false, false);
                         if (!messages.HasErrors)
                         {
-                            return unit.JitMethod(entryPointName);
+                            return unit.JitMethod(entryPointName, globals);
                         }
                     }
                 }
@@ -1748,6 +1772,16 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
             var func = Marshal.GetDelegateForFunctionPointer<InputIntOutputFloat>(ee);
             float returnValue;
             func(input, &returnValue);
+            return returnValue == expected;
+        }
+        
+        delegate float InputVoidOutputFloat(float* returnVal);
+
+        public static bool InputVoidExpectsFloatValue(IntPtr ee, float expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputVoidOutputFloat>(ee);
+            float returnValue;
+            func(&returnValue);
             return returnValue == expected;
         }
 
