@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Extensions;
 using Humphrey.FrontEnd;
 using LLVMSharp.Interop;
 
@@ -413,6 +414,23 @@ namespace Humphrey.Backend
             for (int a = 0; a < arguments.Length; a++)
             {
                 backendValues[a] = arguments[a].BackendValue;
+                if ((func.Type as CompilationFunctionType).FunctionCallingConvention == CompilationFunctionType.CallingConvention.CDecl)
+                {
+                    if (arguments[a].Type is CompilationStructureType)
+                    {
+                        var dataLayout = this.unit.Module.GetDataLayout();
+                        var size = dataLayout.GetABISizeOfType(arguments[a].Type.BackendType);
+                        if (size <= 8)
+                        {
+                            var address = arguments[a].Storage.BackendValue;
+                            var I64 = unit.CreateIntegerType(64, false, new SourceLocation());
+                            var pI64 = unit.CreatePointerType(I64, new SourceLocation());
+                            var asI64 = builderRef.BuildBitCast(address, pI64.BackendType);
+                            var loadedValue = builderRef.BuildLoad2(I64.BackendType, asI64);
+                            backendValues[a] = loadedValue;
+                        }
+                    }
+                }
             }
 
             var returnKind = (func.Type as CompilationFunctionType).ReturnType;

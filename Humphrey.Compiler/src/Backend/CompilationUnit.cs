@@ -277,7 +277,17 @@ namespace Humphrey.Backend
             foreach(var i in inputs)
             {
                 allBackendParams[paramIdx] = i.Type==null ? null : i.Type.BackendType;
-                allParams[paramIdx++] = i;
+                allParams[paramIdx] = i;
+                if (i.Type is CompilationStructureType && i.Type!=null)
+                {
+                    var dataLayout = this.Module.GetDataLayout();
+                    var size = dataLayout.GetABISizeOfType(i.Type.BackendType);
+                    if (size <= 8)
+                    {
+                        allBackendParams[paramIdx] = CreateIntegerType(64, false, new SourceLocation()).BackendType;
+                    }
+                }
+                paramIdx++;
             }
 
             CompilationParam realReturn = default;
@@ -633,7 +643,8 @@ namespace Humphrey.Backend
         {
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
             {
-                Console.WriteLine($"Module Verification Failed : {message} {moduleRef.PrintToString()}");
+                var module = moduleRef.PrintToString();
+                Console.WriteLine($"Module Verification Failed : {message} {module}");
                 throw new System.Exception($"Failed to compile module");
             }
 
