@@ -122,6 +122,11 @@ namespace Extensions
             return LLVM.IntTypeInContext(context, numBits);
         }
 
+        public static LLVMTypeRef CreateVectorType(LLVMTypeRef elementType, uint numElements)
+        {
+            return LLVM.VectorType(elementType, numElements);
+        }
+
         public static LLVMValueRef FetchIntrinsic(LLVMModuleRef moduleRef, string intrinsicName, LLVMTypeRef[] paramTypes)
         {
             if (string.IsNullOrEmpty(intrinsicName))
@@ -312,6 +317,80 @@ namespace Extensions
         public static uint GetABIAlignmentOfType(this LLVMTargetDataRef targetDataRef, LLVMTypeRef type)
         {
             return LLVM.ABIAlignmentOfType(targetDataRef, type);
+        }
+
+        public static ulong GetTypeAllocSize(this LLVMTargetDataRef targetDataRef, LLVMTypeRef type)
+        {
+            return (LLVM.SizeOfTypeInBits(targetDataRef, type)+7)/8;
+        }
+        
+        public static uint AlignmentSystemV(LLVMTypeRef type)
+        {
+            if (type.Kind == LLVMTypeKind.LLVMIntegerTypeKind)
+            {
+                return type.IntWidth/8;
+            }
+            if (type.Kind == LLVMTypeKind.LLVMFloatTypeKind)
+            {
+                return 4;
+            }
+            if (type.Kind == LLVMTypeKind.LLVMDoubleTypeKind)
+            {
+                return 8;
+            }
+            if (type.Kind == LLVMTypeKind.LLVMPointerTypeKind)
+            {
+                return 8;
+            }
+            throw new Exception($"TODO Unsupported type {type.Kind}");
+        }
+
+        public static bool IsAggregateType(this LLVMTypeRef type)
+        {
+            return (type.Kind == LLVMTypeKind.LLVMArrayTypeKind) || 
+                   (type.Kind == LLVMTypeKind.LLVMStructTypeKind);
+        }
+
+
+        public static bool IsIntegralType(this LLVMTypeRef type)
+        {
+            return (type.Kind == LLVMTypeKind.LLVMIntegerTypeKind) || 
+                   (type.Kind == LLVMTypeKind.LLVMPointerTypeKind) || 
+                   (type.Kind == LLVMTypeKind.LLVMVectorTypeKind) ||
+                   (type.Kind == LLVMTypeKind.LLVMFloatTypeKind) ||
+                   (type.Kind == LLVMTypeKind.LLVMDoubleTypeKind);
+        }
+
+        public static bool IsPromotableIntegerType(this LLVMTypeRef type)
+        {
+            if (type.Kind == LLVMTypeKind.LLVMIntegerTypeKind)
+            {
+                return type.IntWidth < 32;
+            }
+            return false;
+        }
+
+
+        public static bool HasUnalignedFields(this LLVMTargetDataRef targetDataRef, LLVMTypeRef type)
+        {
+            if (type.Kind != LLVMTypeKind.LLVMStructTypeKind)
+                return false;
+            ulong offset=0;
+            for (uint a=0;a<LLVM.CountStructElementTypes(type);a++)
+            {
+                var elemType = LLVM.StructGetTypeAtIndex(type,a);
+                var alignment = AlignmentSystemV(elemType);
+                var sOffset = LLVM.OffsetOfElement(targetDataRef, type,a);
+                if (sOffset != offset)
+                    return true;
+                offset += alignment;
+            }
+            return false;
+        }
+
+        public static UInt64 GetOffsetOfElement(this LLVMTargetDataRef targetDataRef, LLVMTypeRef type, uint element)
+        {
+            return LLVM.OffsetOfElement(targetDataRef, type, element);
         }
 
         public static UInt64 GetPointerSizeInBits(this LLVMTargetDataRef targetDataRef)

@@ -6,6 +6,8 @@ using System.Numerics;
 using System;
 using System.IO;
 using System.Collections.Generic;
+using LLVMSharp;
+using System.Linq;
 
 namespace Humphrey.Backend
 {
@@ -32,6 +34,10 @@ namespace Humphrey.Backend
         string CompilerVersion => $"Humphrey Compiler - V{VersionNumber}";
 
         bool optimisations;
+
+        public string TargetTriple => targetTriple;
+
+        public LLVMContextRef Context => contextRef;
 
         public CompilationUnit(string sourceFileNameAndPath, CommonSymbolTable rootFromSemmantic, IEnumerable<SemanticPass.SymbolTableAndPass> extraNamespaces, IPackageManager manager, IEnumerable<IGlobalDefinition> definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
         {
@@ -282,9 +288,13 @@ namespace Humphrey.Backend
                 {
                     var dataLayout = this.Module.GetDataLayout();
                     var size = dataLayout.GetABISizeOfType(i.Type.BackendType);
-                    if (size <= 8)
+                    if (TargetTriple.Contains("msvc"))
                     {
-                        allBackendParams[paramIdx] = CreateIntegerType(64, false, new SourceLocation()).BackendType;
+                        // Small structs are passed in register
+                        if (size <= 8)
+                        {
+                            allBackendParams[paramIdx] = CreateIntegerType(64, false, new SourceLocation()).BackendType;
+                        }
                     }
                 }
                 paramIdx++;
@@ -309,7 +319,20 @@ namespace Humphrey.Backend
             }
 
             var compilationFunctionType = Extensions.Helpers.CreateFunctionType(returnType, allBackendParams, false);
-            return new CompilationFunctionType(compilationFunctionType, CompilationFunctionType.CallingConvention.CDecl, realReturn, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
+            var initialFunctionType = new CompilationFunctionType(compilationFunctionType, CompilationFunctionType.CallingConvention.CDecl, realReturn, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
+            if (!TargetTriple.Contains("msvc"))
+            {
+                var classifier = new SystemV_C_ABI.Classifier(this.Module.GetDataLayout());
+                var argInfo = classifier.classifyFunctionType(this, initialFunctionType);
+
+	            var mapping = SystemV_C_ABI.getFunctionIRMapping(argInfo);
+
+                var replacedBackendType = SystemV_C_ABI.getFunctionType(Context, returnType, allBackendParams, mapping);
+
+                // var replacedBackendType = Extensions.Helpers.CreateFunctionType(argInfo[0].CoerceType, argInfo.Skip(1).Select(x => x.CoerceType).ToArray(), false);
+                initialFunctionType = new CompilationFunctionType(replacedBackendType, CompilationFunctionType.CallingConvention.CDecl, realReturn, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
+            }
+            return initialFunctionType;
         }
 
         public CompilationValue FetchValueIfDefined(IIdentifier identifier, CompilationBuilder builder)
@@ -787,7 +810,7 @@ namespace Humphrey.Backend
             passes.PopulateFunctionPassManager(passManagerRef);
         }
 
-        public bool DumpDisassembly(bool pic, bool kernel)
+        public string FetchDisassembly(bool pic, bool kernel)
         {
             LLVMRelocMode reloc = LLVMRelocMode.LLVMRelocDefault;
             if (pic)
@@ -814,7 +837,7 @@ namespace Humphrey.Backend
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
             {
                 messages.Log(CompilerErrorKind.Error_FailedVerification, $"Module Verification Failed : {moduleRef.PrintToString()}{Environment.NewLine}{message}");
-                return false;
+                return "";
             }
 
             pm.Run(moduleRef);
@@ -823,11 +846,18 @@ namespace Humphrey.Backend
 
             targetMachine.EmitToFile(moduleRef, tmp, LLVMCodeGenFileType.LLVMAssemblyFile);
 
-            Console.WriteLine(File.ReadAllText(tmp));
+            var fromFile = File.ReadAllText(tmp);
 
             File.Delete(tmp);
 
-            return true;
+            return fromFile;
+        }
+
+        public bool DumpDisassembly(bool pic, bool kernel)
+        {
+            var fromFile = FetchDisassembly(pic, kernel);
+            Console.WriteLine(fromFile);
+            return !String.IsNullOrEmpty(fromFile);
         }
 
         public void AddModuleFlag(LLVMModuleFlagBehavior behavior, string key, uint value)
