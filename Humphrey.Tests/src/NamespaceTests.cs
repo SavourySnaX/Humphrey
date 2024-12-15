@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.IO;
 using LibGit2Sharp;
+using Extensions;
 
 namespace Humphrey.Backend.Tests
 {
@@ -232,7 +233,8 @@ MemorySizeOf:(type:_)(size:UInt64)=
             CompilationUnit unit=null;
             if (!messages.HasErrors)
             {
-                unit = compiler.Compile(semantic, "test", "x86_64", false, false);
+                var currentTarget = Helpers.GetDefaultTargetTriple();
+                unit = compiler.Compile(semantic, "test", currentTarget, false, false);
             }
 
             if (messages.HasErrors)

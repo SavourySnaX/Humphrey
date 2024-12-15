@@ -144,8 +144,17 @@ namespace Humphrey.FrontEnd
             // call the function
             var result = builder.Call(function, arguments);
             if (ftype.FunctionCallingConvention == CompilationFunctionType.CallingConvention.CDecl)
+            {
+                if (result.Storage == null)
+                {
+                    // allocate a storage for the result
+                    var storageForLater = builder.LocalBuilder.Alloca(ftype.ReturnType.Type);
+                    // copy the result to the storage
+                    builder.Store(result, storageForLater);
+                    result.Storage = new CompilationValue(storageForLater.BackendValue, unit.CreatePointerType(ftype.ReturnType.Type, new SourceLocation(argumentList.Token)), argumentList.Token);
+                }
                 return result;
-
+            }
             if (structType == null)
                 return null;        // undef?
 

@@ -1,3 +1,4 @@
+using Extensions;
 using Humphrey.FrontEnd;
 using System.Linq;
 using Xunit;
@@ -102,7 +103,8 @@ namespace Humphrey.Tests
                     semantic.RunPass(parsed);
                     if (!messages.HasErrors)
                     {
-                        var unit = new HumphreyCompiler(messages).Compile(semantic, "test", "x86_64", false, false);
+                        var currentTarget = Helpers.GetDefaultTargetTriple();
+                        var unit = new HumphreyCompiler(messages).Compile(semantic, "test", currentTarget, false, false);
                     }
                 }
             }

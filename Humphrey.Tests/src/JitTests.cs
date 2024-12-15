@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Extensions;
 
 namespace Humphrey.Backend.Tests
 {
@@ -1447,7 +1448,8 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
                     if (!messages.HasErrors)
                     {
                         var compiler = new HumphreyCompiler(messages);
-                        var unit = compiler.Compile(semantic, "test", "x86_64", false, false);
+                        var currentTarget = Helpers.GetDefaultTargetTriple();
+                        var unit = compiler.Compile(semantic, "test", currentTarget, false, false);
                         if (!messages.HasErrors)
                         {
                             return unit.JitMethod(entryPointName, globals);

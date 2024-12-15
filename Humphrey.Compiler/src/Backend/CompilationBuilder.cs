@@ -261,6 +261,8 @@ namespace Humphrey.Backend
 
         public CompilationValue InBoundsGEP(CompilationType type, CompilationValue ptr, CompilationPointerType resolvedType, LLVMValueRef[] indices)
         {
+            if (ptr==null)
+                throw new System.ArgumentException($"GEP requires a pointer value");
             var ptrType = ptr.Type as CompilationPointerType;
             if (ptrType==null)
                 throw new System.ArgumentException($"GEP requires a pointer value");

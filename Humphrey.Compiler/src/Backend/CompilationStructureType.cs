@@ -116,6 +116,11 @@ namespace Humphrey.Backend
 
         public CompilationValue AddressElement(CompilationUnit unit, CompilationBuilder builder, CompilationValue src, string identifier)
         {
+            if (src == null)
+            {
+                // Compilation error, attempt to dereference a null pointer
+                throw new System.Exception("Need error message and partial recovery - attempt to dereference a null pointer");
+            }
             // Find identifier in elements
             uint idx=0;
             foreach (var i in elementNames)
