@@ -24,7 +24,7 @@ namespace Humphrey.Backend.Tests
         [Theory]
         [InlineData(@"ReturnStruct:{a:[64]bit b:[32]bit} [C_CALLING_CONVENTION]TestCFunc:()(out:ReturnStruct) Main:()(out:[32]bit)={out=TestCFunc().b;}", "Main", 2)]
         [InlineData(@"ReturnStruct:{a:[64]bit b:[32]bit} [C_CALLING_CONVENTION]TestCFunc:()(out:ReturnStruct) Main:()(out:[32]bit)={out=TestCFunc().a as [32]bit;}", "Main", 1)]
-        public void CheckReturnStructLongInt(string input, string entryPointName, uint expected)
+        public void CABI_CheckReturnStructLongInt(string input, string entryPointName, uint expected)
         {
             delegate* unmanaged[Cdecl]<ReturnStructLongInt> TestDelegate = &TestABIReturnStructLongInt;
             var globals = new (string name, nint addr)[] { ("TestCFunc", (nint)TestDelegate) };
@@ -41,7 +41,7 @@ namespace Humphrey.Backend.Tests
         [Theory]
         [InlineData(@"[C_CALLING_CONVENTION]TestCFunc:(a:[8]bit)(out:[8]bit) Main:()(out:[32]bit)={out=TestCFunc(0x34);}", "Main", 0x34)]
         [InlineData(@"[C_CALLING_CONVENTION]TestCFunc:(a:[8]bit)(out:[8]bit) Main:()(out:[32]bit)={out=TestCFunc(0x80);}", "Main", 0x80)]
-        public void CheckUInt8Return(string input, string entryPointName, uint expected)
+        public void CABI_CheckUInt8Return(string input, string entryPointName, uint expected)
         {
             delegate* unmanaged[Cdecl]<byte, byte> TestDelegate = &TestABIU8Return;
             var globals = new (string name, nint addr)[] { ("TestCFunc", (nint)TestDelegate) };
@@ -57,7 +57,7 @@ namespace Humphrey.Backend.Tests
         [Theory]
         [InlineData(@"[C_CALLING_CONVENTION]TestCFunc:(a:[-16]bit)(out:[-16]bit) Main:()(out:[32]bit)={out=TestCFunc(0x12);}", "Main", 0x00000012)]
         [InlineData(@"[C_CALLING_CONVENTION]TestCFunc:(a:[-16]bit)(out:[-16]bit) Main:()(out:[32]bit)={out=TestCFunc(0x80);}", "Main", 0xFFFFFF80)]
-        public void CheckSInt8Return(string input, string entryPointName, uint expected)
+        public void CABI_CheckSInt8Return(string input, string entryPointName, uint expected)
         {
             delegate* unmanaged[Cdecl]<sbyte, sbyte> TestDelegate = &TestABIS8Return;
             var globals = new (string name, nint addr)[] { ("TestCFunc", (nint)TestDelegate) };
@@ -75,7 +75,7 @@ namespace Humphrey.Backend.Tests
         [Theory]
         [InlineData(@"[C_CALLING_CONVENTION]TestCFunc:(a:[16]bit)(out:[16]bit) Main:()(out:[32]bit)={out=TestCFunc(0x1234);}", "Main", 0x1234)]
         [InlineData(@"[C_CALLING_CONVENTION]TestCFunc:(a:[16]bit)(out:[16]bit) Main:()(out:[32]bit)={out=TestCFunc(0x8000);}", "Main", 0x8000)]
-        public void CheckUInt16Return(string input, string entryPointName, uint expected)
+        public void CABI_CheckUInt16Return(string input, string entryPointName, uint expected)
         {
             delegate* unmanaged[Cdecl]<UInt16, UInt16> TestDelegate = &TestABIU16Return;
             var globals = new (string name, nint addr)[] { ("TestCFunc", (nint)TestDelegate) };
@@ -91,7 +91,7 @@ namespace Humphrey.Backend.Tests
         [Theory]
         [InlineData(@"[C_CALLING_CONVENTION]TestCFunc:(a:[-16]bit)(out:[-16]bit) Main:()(out:[32]bit)={out=TestCFunc(0x1234);}", "Main", 0x00001234)]
         [InlineData(@"[C_CALLING_CONVENTION]TestCFunc:(a:[-16]bit)(out:[-16]bit) Main:()(out:[32]bit)={out=TestCFunc(0x8000);}", "Main", 0xFFFF8000)]
-        public void CheckSInt16Return(string input, string entryPointName, uint expected)
+        public void CABI_CheckSInt16Return(string input, string entryPointName, uint expected)
         {
             delegate* unmanaged[Cdecl]<Int16, Int16> TestDelegate = &TestABIS16Return;
             var globals = new (string name, nint addr)[] { ("TestCFunc", (nint)TestDelegate) };
@@ -112,7 +112,7 @@ namespace Humphrey.Backend.Tests
 
         [Theory]
         [InlineData(@"Float2:{a:fp32 b:fp32} [C_CALLING_CONVENTION]TestABIStruct:(a:Float2)(out:fp32) Main:()(out:fp32)={b:Float2=0; b.a=1.0; b.b=2.0; out=TestABIStruct(b);}", "Main", 3.0f)]
-        public void CheckFloatStruct_CABI(string input, string entryPointName, float expected)
+        public void CABI_CheckFloatStruct(string input, string entryPointName, float expected)
         {
             delegate* unmanaged[Cdecl]<Float2, float> TestABICStructFP = &TestABICStruct;
             var globals = new (string name, nint addr)[] { ("TestABIStruct", (nint)TestABICStructFP) };

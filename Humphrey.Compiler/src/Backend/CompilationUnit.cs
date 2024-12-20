@@ -8,12 +8,15 @@ using System.IO;
 using System.Collections.Generic;
 using LLVMSharp;
 using System.Linq;
+using Humphrey.Compiler.src.Backend.ABI;
 
 namespace Humphrey.Backend
 {
     public class CompilationUnit
     {
         string targetTriple;
+
+        CABI targetABI;
 
         IPackageManager packageManager;
         CommonSymbolTable root;
@@ -48,6 +51,22 @@ namespace Humphrey.Backend
             messages = overrideDefaultMessages;
             if (messages==null)
                 messages = new CompilerMessages(true, true, false);
+
+
+            // Determine ABI from triple ---
+
+            if (targetTriple.Contains("msvc") && targetTriple.Contains("x86_64"))
+            {
+                targetABI = new WindowsX64_C_ABI();
+            }
+            /*else if (targetTriple.Contains("x86_64") && !targetTriple.Contains("msvc"))
+            {
+                targetABI = new SystemV_C_ABI();
+            }*/
+            else
+            {
+                throw new System.Exception($"Unsupported ABI for target triple : {targetTriple}");
+            }
 
             LLVM.LinkInMCJIT();
 
@@ -284,19 +303,6 @@ namespace Humphrey.Backend
             {
                 allBackendParams[paramIdx] = i.Type==null ? null : i.Type.BackendType;
                 allParams[paramIdx] = i;
-                if (i.Type is CompilationStructureType && i.Type!=null)
-                {
-                    var dataLayout = this.Module.GetDataLayout();
-                    var size = dataLayout.GetABISizeOfType(i.Type.BackendType);
-                    if (TargetTriple.Contains("msvc"))
-                    {
-                        // Small structs are passed in register
-                        if (size <= 8)
-                        {
-                            allBackendParams[paramIdx] = CreateIntegerType(64, false, new SourceLocation()).BackendType;
-                        }
-                    }
-                }
                 paramIdx++;
             }
 
@@ -320,19 +326,13 @@ namespace Humphrey.Backend
 
             var compilationFunctionType = Extensions.Helpers.CreateFunctionType(returnType, allBackendParams, false);
             var initialFunctionType = new CompilationFunctionType(compilationFunctionType, CompilationFunctionType.CallingConvention.CDecl, realReturn, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
-            if (!TargetTriple.Contains("msvc"))
-            {
-                var classifier = new SystemV_C_ABI.Classifier(this.Module.GetDataLayout());
-                var argInfo = classifier.classifyFunctionType(this, initialFunctionType);
+            var argInfo = targetABI.ComputeTransform(this, initialFunctionType);
+            var mapping = targetABI.GetFunctionIRMapping(argInfo);
 
-	            var mapping = SystemV_C_ABI.getFunctionIRMapping(argInfo);
+            var replacedBackendType = targetABI.getFunctionType(Context, returnType, allBackendParams, mapping);
 
-                var replacedBackendType = SystemV_C_ABI.getFunctionType(Context, returnType, allBackendParams, mapping);
-
-                // var replacedBackendType = Extensions.Helpers.CreateFunctionType(argInfo[0].CoerceType, argInfo.Skip(1).Select(x => x.CoerceType).ToArray(), false);
-                initialFunctionType = new CompilationFunctionType(replacedBackendType, CompilationFunctionType.CallingConvention.CDecl, realReturn, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
-            }
-            return initialFunctionType;
+            var replacedFunctionType = new CompilationFunctionType(replacedBackendType, CompilationFunctionType.CallingConvention.CDecl, realReturn, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
+            return replacedFunctionType;
         }
 
         public CompilationValue FetchValueIfDefined(IIdentifier identifier, CompilationBuilder builder)
@@ -907,6 +907,7 @@ namespace Humphrey.Backend
 
         public LLVMModuleRef Module => moduleRef;
         public CompilerMessages Messages => messages;
+        public CABI TargetABI => targetABI;
 
         public bool DebugInfoEnabled => debugBuilder.Enabled;
     }

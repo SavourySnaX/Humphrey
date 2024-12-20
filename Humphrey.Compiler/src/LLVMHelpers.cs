@@ -361,6 +361,11 @@ namespace Extensions
                    (type.Kind == LLVMTypeKind.LLVMDoubleTypeKind);
         }
 
+        public static bool IsIntegerType(this LLVMTypeRef type)
+        {
+            return type.Kind == LLVMTypeKind.LLVMIntegerTypeKind;
+        }
+
         public static bool IsPromotableIntegerType(this LLVMTypeRef type)
         {
             if (type.Kind == LLVMTypeKind.LLVMIntegerTypeKind)

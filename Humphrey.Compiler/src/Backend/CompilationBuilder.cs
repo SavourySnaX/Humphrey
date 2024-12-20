@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Extensions;
+using Humphrey.Compiler.src.Backend.ABI;
 using Humphrey.FrontEnd;
-using LLVMSharp;
 using LLVMSharp.Interop;
 
 namespace Humphrey.Backend
@@ -421,58 +418,31 @@ namespace Humphrey.Backend
             for (int a = 0; a < arguments.Length; a++)
             {
                 backendValues[a] = arguments[a].BackendValue;
-                if (compilationFunctionType.FunctionCallingConvention == CompilationFunctionType.CallingConvention.CDecl)
-                {
-                    if (this.unit.TargetTriple.Contains("msvc"))
-                    {
-                        if (arguments[a].Type is CompilationStructureType)
-                        {
-                            var dataLayout = this.unit.Module.GetDataLayout();
-                            var size = dataLayout.GetABISizeOfType(arguments[a].Type.BackendType);
-                            if (size <= 8)
-                            {
-                                var address = arguments[a].Storage.BackendValue;
-                                var I64 = unit.CreateIntegerType(64, false, new SourceLocation());
-                                var pI64 = unit.CreatePointerType(I64, new SourceLocation());
-                                var asI64 = builderRef.BuildBitCast(address, pI64.BackendType);
-                                var loadedValue = builderRef.BuildLoad2(I64.BackendType, asI64);
-                                backendValues[a] = loadedValue;
-                            }
-                        }
-                    }
-                }
             }
 
             var returnKind = compilationFunctionType.ReturnType;
 
             if (compilationFunctionType.FunctionCallingConvention == CompilationFunctionType.CallingConvention.CDecl)
             {
-                if (!this.unit.TargetTriple.Contains("msvc"))
+                var argInfo = unit.TargetABI.ComputeTransform(unit, compilationFunctionType);
+                var mapping = unit.TargetABI.GetFunctionIRMapping(argInfo);
+
+                var caller = new Caller(unit.TargetABI, func.Type.BackendType, func.BackendValue, backendValues, mapping, builderRef, this.unit);
+
+                var encodedArguments = caller.encodeArguments(compilationFunctionType).ToArray();
+
+                var returnValue = builderRef.BuildCall2(func.Type.BackendType, func.BackendValue, encodedArguments);
+                if (returnKind == null)
+                    return null;
+
+                var (converted, storage) = caller.decodeReturnValue(encodedArguments, returnValue, returnKind.Type.BackendType);
+                var cv = new CompilationValue(converted, returnKind.Type, func.FrontendLocation);
+                if (storage != null)
                 {
-                    // Assume System V for now - note we don't support varargs, so don't need type promotion
-                    var argumentTypes = arguments.Select(x => x.Type.BackendType).ToArray();
-                    var classifier = new SystemV_C_ABI.Classifier(this.unit.Module.GetDataLayout());
-                    var argInfo = classifier.classifyFunctionType(this.unit, compilationFunctionType);
-                    var mapping = SystemV_C_ABI.getFunctionIRMapping(argInfo);
-
-                    var caller = new SystemV_C_ABI.Caller(func.Type.BackendType, func.BackendValue, backendValues, mapping, builderRef, this.unit);
-
-                    var encodedArguments = caller.encodeArguments(compilationFunctionType).ToArray();
-
-                    var returnValue = builderRef.BuildCall2(func.Type.BackendType, func.BackendValue, encodedArguments);
-                    if (returnKind == null)
-                        return null;
-
-                    var (converted, storage) = caller.decodeReturnValue(encodedArguments, returnValue, returnKind.Type.BackendType);
-                    var cv =  new CompilationValue(converted, returnKind.Type, func.FrontendLocation);
-                    if (storage!=null)
-                    {
-                        cv.Storage = new CompilationValue(storage, unit.CreatePointerType(returnKind.Type, new SourceLocation(func.FrontendLocation)), func.FrontendLocation);
-                    }
-                    return cv;
+                    cv.Storage = new CompilationValue(storage, unit.CreatePointerType(returnKind.Type, new SourceLocation(func.FrontendLocation)), func.FrontendLocation);
                 }
+                return cv;
             }
-
 
             var res=builderRef.BuildCall2(func.Type.BackendType, func.BackendValue, backendValues);
             if (returnKind==null)

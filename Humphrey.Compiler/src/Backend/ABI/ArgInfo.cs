@@ -18,6 +18,7 @@ public struct ArgInfo
         Ignore,
         Extend,
         Direct,
+        Cast,
         Indirect,
         Expand,
         InAlloca,
@@ -28,12 +29,12 @@ public struct ArgInfo
         this.kind = kind;
         this.typeData = default;
         this.paddingType = default;
-        this.paddingInReg = false;
+//        this.paddingInReg = false;
         this.inAllocaSRet = false;
         this.indirectByVal = false;
         this.indirectRealign = false;
         this.sRetAfterThis = false;
-        this.inReg = false;
+//        this.inReg = false;
         this.canBeFlattened = false;
         this.extra = 0;
     }
@@ -41,12 +42,12 @@ public struct ArgInfo
     LLVMTypeRef typeData;
     LLVMTypeRef paddingType;
     EArgKind kind;
-    bool paddingInReg;
+//    bool paddingInReg;
     bool inAllocaSRet;
     bool indirectByVal;
     bool indirectRealign;
     bool sRetAfterThis;
-    bool inReg;
+//    bool inReg;
     bool canBeFlattened;
 
     uint extra; // For Direct, this is the offset in bytes, for indirect its alignment
@@ -90,6 +91,14 @@ public struct ArgInfo
         info.setDirectOffset(offset);
         info.setPaddingType(unit.Context.VoidType);
         info.setCanBeFlattened(true);
+        return info;
+    }
+
+    public static ArgInfo getCast(CompilationUnit unit, LLVMTypeRef type, uint castSize = 0)
+    {
+        var info = new ArgInfo(ArgInfo.EArgKind.Cast);
+        info.setCoerceToType(type);
+        info.setDirectOffset(castSize);
         return info;
     }
 
