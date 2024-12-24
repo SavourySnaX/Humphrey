@@ -55,10 +55,11 @@ namespace Humphrey.Backend
 
             // Determine ABI from triple ---
 
-            if (targetTriple.Contains("msvc") && targetTriple.Contains("x86_64"))
+            if ((targetTriple.Contains("windows") || targetTriple.Contains("-w64")) && targetTriple.Contains("x86_64"))
             {
                 targetABI = new WindowsX64_C_ABI();
             }
+
             /*else if (targetTriple.Contains("x86_64") && !targetTriple.Contains("msvc"))
             {
                 targetABI = new SystemV_C_ABI();

@@ -298,7 +298,14 @@ namespace Humphrey.Compiler.src.Backend.ABI
                 }
             }
 
-            args.Add(Transform(unit, functionType.ReturnType.Type.BackendType));
+            if (functionType.ReturnType == null)
+            {
+                args.Add(ArgInfo.getIgnore());
+            }
+            else
+            {
+                args.Add(Transform(unit, functionType.ReturnType.Type.BackendType));
+            }
 
             foreach (var arg in functionType.Parameters)
             {
