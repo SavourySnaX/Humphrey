@@ -558,5 +558,13 @@ namespace Extensions
         {
             return LLVM.DebugMetadataVersion();
         }
+
+        public static LLVMValueRef CreateAlloca(this LLVMBuilderRef builder, LLVMBuilderRef locals, LLVMTypeRef type, string name)
+        {
+            fixed (byte* namePtr = Encoding.ASCII.GetBytes(name))
+            {
+                return LLVM.BuildAlloca(locals, type, (sbyte*)namePtr);
+            }
+        }
     }
 }

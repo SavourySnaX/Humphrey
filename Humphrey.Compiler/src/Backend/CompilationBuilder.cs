@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Extensions;
 using Humphrey.Compiler.src.Backend.ABI;
 using Humphrey.FrontEnd;
 using LLVMSharp.Interop;
@@ -12,8 +13,7 @@ namespace Humphrey.Backend
         LLVMBuilderRef builderRef;
         CompilationFunction function;
         CompilationBlock currentBlock;
-
-        CompilationBuilder localsBuilder;
+        LLVMBuilderRef localsBuilder;
 
         public enum CompareKind
         {
@@ -43,12 +43,13 @@ namespace Humphrey.Backend
             [CompareKind.SLE] = LLVMIntPredicate.LLVMIntSLE,
         };
 
-        public CompilationBuilder(CompilationUnit compUnit, LLVMBuilderRef builder, CompilationFunction func, CompilationBlock block)
+        public CompilationBuilder(CompilationUnit compUnit, LLVMBuilderRef builder, CompilationFunction func, CompilationBlock block, LLVMBuilderRef locals)
         {
             unit = compUnit;
             builderRef = builder;
             function = func;
             currentBlock = block;
+            this.localsBuilder = locals;
         }
 
         public void PositionAtEnd(CompilationBlock block)
@@ -241,9 +242,14 @@ namespace Humphrey.Backend
             return new CompilationValue(builderRef.BuildNot(src.BackendValue), src.Type, src.FrontendLocation);
         }
 
+        public CompilationValue Alloca(CompilationType type, string name)
+        {
+            return new CompilationValue(builderRef.CreateAlloca(localsBuilder, type.BackendType, name), type, type.FrontendLocation);
+        }
+
         public CompilationValue Alloca(CompilationType type)
         {
-            return new CompilationValue(builderRef.BuildAlloca(type.BackendType), type, type.FrontendLocation);
+            return new CompilationValue(builderRef.CreateAlloca(localsBuilder, type.BackendType, "alloca"), type, type.FrontendLocation);
         }
 
         public CompilationValue ExtractValue(CompilationValue src, CompilationType indexType, uint index)
@@ -427,7 +433,7 @@ namespace Humphrey.Backend
                 var argInfo = unit.TargetABI.ComputeTransform(unit, compilationFunctionType);
                 var mapping = unit.TargetABI.GetFunctionIRMapping(argInfo);
 
-                var caller = new Caller(unit.TargetABI, func.Type.BackendType, func.BackendValue, backendValues, mapping, builderRef, this.unit);
+                var caller = new Caller(unit.TargetABI, func.Type.BackendType, func.BackendValue, backendValues, mapping, builderRef, localsBuilder, this.unit);
 
                 var encodedArguments = caller.encodeArguments(compilationFunctionType).ToArray();
 
@@ -473,15 +479,11 @@ namespace Humphrey.Backend
             }
         }
 
-        public CompilationBuilder LocalBuilder 
-        {
-            get => localsBuilder;
-            set => localsBuilder = value;
-        }
         public LLVMBuilderRef BackendValue => builderRef;
         public CompilationFunction Function => function;
         public CompilationBlock CurrentBlock => currentBlock;
 
         public CompilationUnit Unit => unit;
+        public LLVMBuilderRef Locals => localsBuilder;
     }
 }

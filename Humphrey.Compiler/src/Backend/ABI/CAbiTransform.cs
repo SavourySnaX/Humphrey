@@ -440,10 +440,11 @@ namespace Humphrey.Compiler.src.Backend.ABI
         private LLVMValueRef[] _backendValues;
         private FunctionIRMapping _mapping;
         private LLVMBuilderRef _builder;
+        private LLVMBuilderRef _locals;
         private CompilationUnit _unit;
         private CABI _targetABI;
 
-        public Caller(CABI targetABI, LLVMTypeRef functionType, LLVMValueRef function, LLVMValueRef[] backendValues, FunctionIRMapping mapping, LLVMBuilderRef builder, CompilationUnit unit)
+        public Caller(CABI targetABI, LLVMTypeRef functionType, LLVMValueRef function, LLVMValueRef[] backendValues, FunctionIRMapping mapping, LLVMBuilderRef builder, LLVMBuilderRef locals, CompilationUnit unit)
         {
             _targetABI = targetABI;
             _functionType = functionType;
@@ -451,18 +452,19 @@ namespace Humphrey.Compiler.src.Backend.ABI
             _backendValues = backendValues;
             _mapping = mapping;
             _builder = builder;
+            _locals = locals;
             _unit = unit;
         }
 
         LLVMValueRef createTempAlloca(LLVMTypeRef type)
         {
-            var result = _builder.BuildAlloca(type);
+            var result = _builder.CreateAlloca(_locals, type, "abi_TempAlloc");
             return result;
         }
 
         LLVMValueRef createMemTemp(LLVMTypeRef type)
         {
-            var result = _builder.BuildAlloca(type);
+            var result = _builder.CreateAlloca(_locals, type, "abi_MemTemp");
             result.Alignment = getTypeRequiredAlign(type);
             return result;
         }

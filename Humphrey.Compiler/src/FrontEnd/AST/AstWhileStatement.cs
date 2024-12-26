@@ -19,23 +19,22 @@ namespace Humphrey.FrontEnd
 
             //Create check_end
             var checkBlock = new CompilationBlock(unit.AppendNewBasicBlockToFunction(function, $"while_check"));
-            var compilationBlock = loop.CreateCodeBlock(unit, function, builder.LocalBuilder, $"while_block");
+            var compilationBlock = loop.CreateCodeBlock(unit, function, builder.Locals, $"while_block");
             var endBlock = new CompilationBlock(unit.AppendNewBasicBlockToFunction(function, $"while_end"));
 
             builder.Branch(checkBlock);
 
             // CheckBlock 
             {
-                var checkBuilder = unit.CreateBuilder(function, checkBlock);
+                var checkBuilder = unit.CreateBuilder(function, checkBlock, builder.Locals);
                 checkBuilder.SetDebugLocation(new SourceLocation(condition.Token));
-                checkBuilder.LocalBuilder = builder.LocalBuilder;
                 var cond = AstUnaryExpression.EnsureTypeOk(unit, checkBuilder, condition, unit.CreateIntegerType(1, false, new SourceLocation(Token)));
                 checkBuilder.ConditionalBranch(Expression.ResolveExpressionToValue(unit, cond, null), compilationBlock.entry, endBlock);
             }
 
             // insert branch at end of while_block (if block is not already terminated)
             {
-                var loopBlockBuilder = unit.CreateBuilder(function, compilationBlock.exit);
+                var loopBlockBuilder = unit.CreateBuilder(function, compilationBlock.exit, builder.Locals);
                 if (compilationBlock.exit.BackendValue.Terminator == null)
                 {
                     loopBlockBuilder.SetDebugLocation(new SourceLocation(loop.BlockEnd));

@@ -433,11 +433,11 @@ namespace Humphrey.Backend
             return entry.Value.Storage;
         }
 
-        public CompilationBuilder CreateBuilder(CompilationFunction function, CompilationBlock bb)
+        public CompilationBuilder CreateBuilder(CompilationFunction function, CompilationBlock bb, LLVMBuilderRef locals)
         {
             var builder = contextRef.CreateBuilder();
             builder.PositionAtEnd(bb.BackendValue);
-            return new CompilationBuilder(this, builder, function, bb);
+            return new CompilationBuilder(this, builder, function, bb, locals == null ? builder : locals);
         }
 
         public LLVMValueRef CreateI32Constant(UInt32 value)
@@ -625,7 +625,7 @@ namespace Humphrey.Backend
             return (globalValue,type);
         }
 
-        public (CompilationValue cv, CompilationType ct) CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationBuilder localBuilder, CompilationType type, AstIdentifier identifier, ICompilationValue initialiser, Result<Tokens> location)
+        public (CompilationValue cv, CompilationType ct) CreateLocalVariable(CompilationUnit unit, CompilationBuilder builder, CompilationType type, AstIdentifier identifier, ICompilationValue initialiser, Result<Tokens> location)
         {
             var ident = identifier.Name;
 
@@ -638,7 +638,7 @@ namespace Humphrey.Backend
                 type = CreatePointerType(type, type.Location);
             }
 
-            var local = localBuilder.Alloca(type);
+            var local = builder.Alloca(type, "local");
 
             if (initialiser != null)
             {

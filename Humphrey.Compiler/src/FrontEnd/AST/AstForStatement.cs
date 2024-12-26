@@ -34,7 +34,7 @@ namespace Humphrey.FrontEnd
 
             //Create check_end
             var checkBlock = new CompilationBlock(unit.AppendNewBasicBlockToFunction(function,$"for_check_{identifiers[0].Dump()}"));
-            var compilationBlock = loopBlock.CreateCodeBlock(unit, function, builder.LocalBuilder, $"for_block_{identifiers[0].Dump()}");
+            var compilationBlock = loopBlock.CreateCodeBlock(unit, function, builder.Locals, $"for_block_{identifiers[0].Dump()}");
             var iterBlock = new CompilationBlock(unit.AppendNewBasicBlockToFunction(function, $"for_iter_{identifiers[0].Dump()}"));
             var endBlock = new CompilationBlock(unit.AppendNewBasicBlockToFunction(function,$"for_end_{identifiers[0].Dump()}"));
 
@@ -42,7 +42,7 @@ namespace Humphrey.FrontEnd
 
             // CheckBlock performs iter end check basically
             {
-                var checkBuilder = unit.CreateBuilder(function, checkBlock);
+                var checkBuilder = unit.CreateBuilder(function, checkBlock, builder.Locals);
                 checkBuilder.SetDebugLocation(new SourceLocation(Token));
                 var compare = new AstBinaryCompareLess(identifiers[0], rangeList[0].ExclusiveEnd);
                 compare.Token=rangeList[0].Token;
@@ -52,7 +52,7 @@ namespace Humphrey.FrontEnd
 
             // insert branch at end of for_block
             {
-                var loopBlockBuilder = unit.CreateBuilder(function, compilationBlock.exit);
+                var loopBlockBuilder = unit.CreateBuilder(function, compilationBlock.exit, builder.Locals);
                 if (compilationBlock.exit.BackendValue.Terminator==null)
                 {
                     loopBlockBuilder.SetDebugLocation(new SourceLocation(loopBlock.BlockEnd));
@@ -62,7 +62,7 @@ namespace Humphrey.FrontEnd
 
             // IterBlock performs iter next
             {
-                var iterBuilder = unit.CreateBuilder(function, iterBlock);
+                var iterBuilder = unit.CreateBuilder(function, iterBlock, builder.Locals);
                 iterBuilder.SetDebugLocation(new SourceLocation(rangeList[0].Token));
                 var binaryAdd = new AstBinaryPlus(identifiers[0], new AstNumber("1"));
                 identifiers[0].ProcessExpressionForStore(unit, iterBuilder, binaryAdd);

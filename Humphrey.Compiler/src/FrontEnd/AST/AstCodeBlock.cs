@@ -1,6 +1,7 @@
 
 using System.Text;
 using Humphrey.Backend;
+using LLVMSharp.Interop;
 
 namespace Humphrey.FrontEnd
 {
@@ -12,14 +13,13 @@ namespace Humphrey.FrontEnd
             statementList = statements;
         }
     
-        public (CompilationBlock entry, CompilationBlock exit) CreateCodeBlock(CompilationUnit unit, CompilationFunction function, CompilationBuilder locals, string blockName)
+        public (CompilationBlock entry, CompilationBlock exit) CreateCodeBlock(CompilationUnit unit, CompilationFunction function, LLVMBuilderRef locals, string blockName)
         {
             var oldScope = unit.PushScope(symbolTable, unit.CreateDebugScope(new SourceLocation(Token)));
             var newBB = new CompilationBlock(unit.AppendNewBasicBlockToFunction(function,blockName));
 
-            var builder = unit.CreateBuilder(function, newBB);
+            var builder = unit.CreateBuilder(function, newBB, locals);
             builder.SetDebugLocation(new SourceLocation(BlockStart));
-            builder.LocalBuilder = locals;
 
             foreach (var s in statementList)
             {
@@ -27,7 +27,6 @@ namespace Humphrey.FrontEnd
             }
 
             builder.SetDebugLocation(new SourceLocation(BlockEnd));
-            builder.LocalBuilder = locals;
             unit.PopScope(oldScope);
             return (newBB, builder.CurrentBlock);
         }

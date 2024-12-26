@@ -21,7 +21,7 @@ namespace Humphrey.FrontEnd
             builder.SetDebugLocation(new SourceLocation(Token));
 
             // Create blocks for if/end and else
-            var trueBlock = conditionTrue.CreateCodeBlock(unit, function, builder.LocalBuilder, "if_if");
+            var trueBlock = conditionTrue.CreateCodeBlock(unit, function, builder.Locals, "if_if");
             var endBlock = new CompilationBlock(unit.AppendNewBasicBlockToFunction(function, $"if_end"));
 
             // Evaluate condition
@@ -31,7 +31,7 @@ namespace Humphrey.FrontEnd
 
             // Insert branch at end of trueBlock
             {
-                var endCondBuilder = unit.CreateBuilder(function, trueBlock.exit);
+                var endCondBuilder = unit.CreateBuilder(function, trueBlock.exit, builder.Locals);
                 if (trueBlock.exit.BackendValue.Terminator == null)
                 {
                     endCondBuilder.SetDebugLocation(new SourceLocation(conditionTrue.BlockEnd));
@@ -46,13 +46,13 @@ namespace Humphrey.FrontEnd
             }
             else
             {
-                var falseBlock = conditionElse.CreateCodeBlock(unit, function, builder.LocalBuilder, "if_else");
+                var falseBlock = conditionElse.CreateCodeBlock(unit, function, builder.Locals, "if_else");
 
                 builder.ConditionalBranch(resolved, trueBlock.entry, falseBlock.entry);
             
                 // Insert branch at end of elseBlock
                 {
-                    var endCondBuilder = unit.CreateBuilder(function, falseBlock.exit);
+                    var endCondBuilder = unit.CreateBuilder(function, falseBlock.exit, builder.Locals);
                     if (falseBlock.exit.BackendValue.Terminator == null)
                     {
                         endCondBuilder.SetDebugLocation(new SourceLocation(conditionElse.BlockEnd));

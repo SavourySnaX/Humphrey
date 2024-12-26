@@ -1081,27 +1081,29 @@ public static class SystemV_C_ABI
         private LLVMValueRef[] _backendValues;
         private FunctionIRMapping _mapping;
         private LLVMBuilderRef _builder;
+        private LLVMBuilderRef _locals;
         private CompilationUnit _unit;
 
-        public Caller(LLVMTypeRef functionType, LLVMValueRef function, LLVMValueRef[] backendValues, FunctionIRMapping mapping, LLVMBuilderRef builder, CompilationUnit unit)
+        public Caller(LLVMTypeRef functionType, LLVMValueRef function, LLVMValueRef[] backendValues, FunctionIRMapping mapping, LLVMBuilderRef builder, LLVMBuilderRef locals, CompilationUnit unit)
         {
             _functionType = functionType;
             _function = function;
             _backendValues = backendValues;
             _mapping = mapping;
             _builder = builder;
+            _locals = locals;
             _unit = unit;
         }
 
         LLVMValueRef createTempAlloca(LLVMTypeRef type)
         {
-            var result = _builder.BuildAlloca(type);
+            var result = _builder.CreateAlloca(_locals, type, "abi_tempAlloca");
             return result;
         }
 
         LLVMValueRef createMemTemp(LLVMTypeRef type)
         {
-            var result = _builder.BuildAlloca(type);
+            var result = _builder.CreateAlloca(_locals, type, "abi_memTemp");
             result.Alignment = getTypeRequiredAlign(type);
             return result;
         }
@@ -1111,7 +1113,7 @@ public static class SystemV_C_ABI
             var args = new LLVMValueRef[_mapping.TotalIRArgs];
 
             var returnArgInfo = _mapping.ReturnArgInfo;
-            LLVMValueRef argMemory = default;
+            //LLVMValueRef argMemory = default;
             LLVMValueRef structRetPtr = default;
 
             if (returnArgInfo.IsIndirect || returnArgInfo.IsInAllocaSRet)
