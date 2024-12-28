@@ -25,6 +25,7 @@ namespace Humphrey.Experiments
             public bool infoLog;
             public bool warningsAsErrors;
             public bool emitLLVM;
+            public bool source;
             public bool optimisations;
             public bool debugInfo;
             public bool pic;
@@ -42,6 +43,7 @@ namespace Humphrey.Experiments
             options.warningsAsErrors = false;
             options.target = Helpers.GetDefaultTargetTriple();
             options.emitLLVM = false;
+            options.source = false;
             options.optimisations = true;
             options.debugInfo = false;
             options.pic = false;
@@ -67,6 +69,7 @@ namespace Humphrey.Experiments
             Console.WriteLine($"--target=<string>            Set the compilation target triple (Default: \"{options.target}\")");
             Console.WriteLine();
             Console.WriteLine($"--emitLLVM[=<bool>]          Enable/Disable emitting llvm object/asm (Default: {options.emitLLVM})");
+            Console.WriteLine($"-S                           Emit asm instead of object file");
             Console.WriteLine($"--optimisations[=<bool>]     Enable/Disable optimisations (Default: {options.optimisations})");
             Console.WriteLine($"--debugInfo[=<bool>]         Enable/Disable debug information (Default: {options.debugInfo})");
             Console.WriteLine($"--pic[=<bool>]               Compile for position independant code (Default: {options.pic})");
@@ -110,6 +113,7 @@ namespace Humphrey.Experiments
         {
             ["--package"] = (s, split) => ParseStringOption(s, split, out options.packageJson),
             ["-o"] = (s, split) => ParseStringOption(s, split, out options.outputFileName),
+            ["-S"] = (s, split) => options.source = true,
             ["--output"] = (s, split) => ParseStringOption(s, split, out options.outputFileName),
             ["--debugLog"] = (s, split) => ParseBoolOption(s, split, out options.debugLog),
             ["--infoLog"] = (s, split) => ParseBoolOption(s, split, out options.infoLog),
@@ -197,10 +201,20 @@ namespace Humphrey.Experiments
                         {
                             if (options.outputFileName != null)
                             {
-                                if (options.emitLLVM)
-                                    cu.EmitToBitCodeFile(options.outputFileName);
+                                if (options.source)
+                                {
+                                    if (options.emitLLVM)
+                                        cu.EmitToLLVMFile(options.outputFileName);
+                                    else
+                                        cu.EmitToSourceFile(options.outputFileName, options.pic, options.kernelCodeModel);
+                                }
                                 else
-                                    cu.EmitToFile(options.outputFileName,options.pic,options.kernelCodeModel);
+                                {
+                                    if (options.emitLLVM)
+                                        cu.EmitToBitCodeFile(options.outputFileName);
+                                    else
+                                        cu.EmitToFile(options.outputFileName, options.pic, options.kernelCodeModel);
+                                }
                             }
                             else
                             {

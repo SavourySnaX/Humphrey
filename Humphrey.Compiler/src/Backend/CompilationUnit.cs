@@ -701,6 +701,12 @@ namespace Humphrey.Backend
             return true;
         }
 
+        public bool EmitToLLVMFile(string filename)
+        {
+            File.WriteAllText(filename, moduleRef.PrintToString());
+            return true;
+        }
+
         public bool EmitToFile(string filename, bool pic, bool kernel)
         {
             LLVMRelocMode reloc = LLVMRelocMode.LLVMRelocDefault;
@@ -768,7 +774,7 @@ namespace Humphrey.Backend
             return default;
         }
 
-        public bool DumpLLVM(bool pic, bool kernel)
+        public string DumpLLVMToString(bool pic, bool kernel)
         {
             LLVMRelocMode reloc = LLVMRelocMode.LLVMRelocDefault;
             if (pic)
@@ -794,13 +800,21 @@ namespace Humphrey.Backend
             if (!moduleRef.TryVerify(LLVMVerifierFailureAction.LLVMPrintMessageAction, out var message))
             {
                 messages.Log(CompilerErrorKind.Error_FailedVerification, $"Module Verification Failed : {moduleRef.PrintToString()}{Environment.NewLine}{message}");
-                return false;
+                return "";
             }
 
             pm.Run(moduleRef);
 
-            Console.WriteLine(moduleRef.PrintToString());
+            return moduleRef.PrintToString();
+        }
 
+        public bool DumpLLVM(bool pic, bool kernel)
+        {
+            var fromFile = DumpLLVMToString(pic, kernel);
+            if (fromFile.Length == 0)
+                return false;
+
+            Console.WriteLine(fromFile);
             return true;
         }
 
@@ -859,6 +873,16 @@ namespace Humphrey.Backend
             var fromFile = FetchDisassembly(pic, kernel);
             Console.WriteLine(fromFile);
             return !String.IsNullOrEmpty(fromFile);
+        }
+
+        public bool EmitToSourceFile(string filename, bool pic, bool kernel)
+        {
+            var fromFile = FetchDisassembly(pic, kernel);
+            if (fromFile.Length == 0)
+                return false;
+
+            File.WriteAllText(filename, fromFile);
+            return true;
         }
 
         public void AddModuleFlag(LLVMModuleFlagBehavior behavior, string key, uint value)
