@@ -1,4 +1,5 @@
 
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -15,6 +16,7 @@ namespace Humphrey.FrontEnd
         Stack<CommonSymbolTable> symbolStack;
         CommonSymbolTable root;
         CommonSymbolTable currentScope;
+        HashSet<string> dependencies;
 
         ICompilerMessages messages;
         Dictionary<string, IGlobalDefinition> pendingDefinitions;
@@ -95,6 +97,7 @@ namespace Humphrey.FrontEnd
             semanticInfo = new Dictionary<Result<Tokens>, SemanticInfo>();
             pendingCompile = new List<IGlobalDefinition>();
             pendingDefinitions = new Dictionary<string, IGlobalDefinition>();
+            dependencies = new HashSet<string>();
             usedDefinitions = new Dictionary<string, IGlobalDefinition>();
             importedNamespaces = new List<SymbolTableAndPass>();
             allImportedNamespaces = allImports;
@@ -315,6 +318,15 @@ namespace Humphrey.FrontEnd
             return currentScope;
         }
 
+        private void AddToDependencies(string path)
+        {
+            if (String.IsNullOrEmpty(path))
+                return;
+            if (dependencies.Contains(path))
+                return;
+            dependencies.Add(path);
+        }
+
         public void ImportNamespace(IIdentifier[] scope)
         {
             var scopeName = new StringBuilder();
@@ -351,6 +363,7 @@ namespace Humphrey.FrontEnd
                 {
                     var t = new HumphreyTokeniser(messages);
                     var p = new HumphreyParser(t.Tokenize(packageEntry.Contents, packageEntry.Path), messages);
+                    AddToDependencies(packageEntry.Path);
                     var globals = p.File();
                     var sp = new SemanticPass(currentManager, cLevel, allImportedNamespaces, messages);
 
@@ -391,6 +404,7 @@ namespace Humphrey.FrontEnd
                         // this would be a file, and thus should be compiled i think...
                         var t = new HumphreyTokeniser(messages);
                         var p = new HumphreyParser(t.Tokenize(packageEntry.Contents, packageEntry.Path), messages);
+                        AddToDependencies(packageEntry.Path);
                         var globals = p.File();
                         var sp = new SemanticPass(currentManager,entry, messages);
                         sp.RunPass(globals);
@@ -425,6 +439,7 @@ namespace Humphrey.FrontEnd
         public IEnumerable<SymbolTableAndPass> ImportedNamespaces => allImportedNamespaces.Values;
         public ICompilerMessages Messages => messages;
         public CommonSymbolTable RootSymbolTable => root;
+        public IEnumerable<string> Dependencies => dependencies;
 
         public Dictionary<string, IGlobalDefinition> UsedDefinitions => usedDefinitions;
     }

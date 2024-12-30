@@ -22,6 +22,7 @@ namespace Humphrey.Backend
         CommonSymbolTable root;
         CommonSymbolTable currentNamespace;
         CommonSymbolTable currentScope;
+        List<string> dependencies;
         Stack<LLVMMetadataRef> debugScopeStack;
         LLVMMetadataRef rootDebugScope;
 
@@ -273,8 +274,22 @@ namespace Humphrey.Backend
         {
             return new CompilationPointerType(Extensions.Helpers.CreatePointerType(element.BackendType), element, debugBuilder, location);
         }
+        private CompilationFunctionType CreateFunctionTypeSingleOutput(AstFunctionType functionType, CompilationParam[] inputs, CompilationParam output, CompilationFunctionType.CallingConvention callingConvention)
+        {
+            var allParams = new CompilationParam[inputs.Length];
+            var allBackendParams = new LLVMTypeRef[inputs.Length];
+            var paramIdx = 0;
+            foreach(var i in inputs)
+            {
+                allBackendParams[paramIdx] = i.Type==null ? null : i.Type.BackendType;
+                allParams[paramIdx++] = i;
+            }
 
-        public CompilationFunctionType CreateFunctionType(AstFunctionType functionType, CompilationParam[] inputs, CompilationParam[] outputs)
+            var compilationFunctionType = Extensions.Helpers.CreateFunctionType(output.Type.BackendType, allBackendParams, false);
+            return new CompilationFunctionType(compilationFunctionType, callingConvention, output, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
+        }
+
+        private CompilationFunctionType CreateFunctionTypeZeroOrMultipleOutputs(AstFunctionType functionType, CompilationParam[] inputs, CompilationParam[] outputs, CompilationFunctionType.CallingConvention callingConvention)
         {
             var allParams = new CompilationParam[inputs.Length + outputs.Length];
             var allBackendParams = new LLVMTypeRef[inputs.Length + outputs.Length];
@@ -292,7 +307,29 @@ namespace Humphrey.Backend
             }
 
             var compilationFunctionType = Extensions.Helpers.CreateFunctionType(contextRef.VoidType, allBackendParams, false);
-            return new CompilationFunctionType(compilationFunctionType, CompilationFunctionType.CallingConvention.HumphreyInternal, null, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
+            return new CompilationFunctionType(compilationFunctionType, callingConvention, null, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
+        }
+
+        private CompilationFunctionType CreateFunctionType(AstFunctionType functionType, CompilationParam[] inputs, CompilationParam[] outputs, CompilationFunctionType.CallingConvention callingConvention)
+        {
+            if (outputs.Length == 1 && callingConvention == CompilationFunctionType.CallingConvention.HumphreyBuiltIn)
+            {
+                return CreateFunctionTypeSingleOutput(functionType, inputs, outputs[0], callingConvention);
+            }
+            else
+            {
+                return CreateFunctionTypeZeroOrMultipleOutputs(functionType, inputs, outputs, callingConvention);
+            }
+        }
+
+        public CompilationFunctionType CreateFunctionType(AstFunctionType functionType, CompilationParam[] inputs, CompilationParam[] outputs)
+        {
+            return CreateFunctionType(functionType, inputs, outputs, CompilationFunctionType.CallingConvention.HumphreyInternal);
+        }
+
+        public CompilationFunctionType CreateBuiltInFunctionType(AstFunctionType functionType, CompilationParam[] inputs, CompilationParam[] outputs)
+        {
+            return CreateFunctionType(functionType, inputs, outputs, CompilationFunctionType.CallingConvention.HumphreyBuiltIn);
         }
 
         public CompilationFunctionType CreateExternalCFunctionType(AstFunctionType functionType, CompilationParam[] inputs, CompilationParam[] outputs)

@@ -127,6 +127,11 @@ namespace Extensions
             return LLVM.VectorType(elementType, numElements);
         }
 
+        public static void SetOrdering(this LLVMValueRef atomic, LLVMAtomicOrdering ordering)
+        {
+            LLVM.SetOrdering(atomic, ordering);
+        }
+
         public static LLVMValueRef FetchIntrinsic(LLVMModuleRef moduleRef, string intrinsicName, LLVMTypeRef[] paramTypes)
         {
             if (string.IsNullOrEmpty(intrinsicName))

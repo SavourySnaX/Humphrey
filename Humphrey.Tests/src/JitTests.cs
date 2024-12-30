@@ -1452,6 +1452,8 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
                         var unit = compiler.Compile(semantic, "test", currentTarget, false, false);
                         if (!messages.HasErrors)
                         {
+                            //var result = unit.Dump();
+                            var other = unit.FetchDisassembly(false,false);
                             return unit.JitMethod(entryPointName, globals);
                         }
                     }
@@ -1496,6 +1498,16 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
         {
             var func = Marshal.GetDelegateForFunctionPointer<InputVoidOutput32Bit>(ee);
             uint returnValue;
+            func(&returnValue);
+            return returnValue == expected;
+        }
+
+        delegate void InputVoidOutput64Bit(UInt64* returnVal);
+
+        public static bool InputVoidExpects64BitValue(IntPtr ee, UInt64 expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputVoidOutput64Bit>(ee);
+            UInt64 returnValue;
             func(&returnValue);
             return returnValue == expected;
         }

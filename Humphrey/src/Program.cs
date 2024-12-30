@@ -4,6 +4,7 @@ using Humphrey.FrontEnd;
 using System.Collections.Generic;
 
 using Extensions;
+using System.Linq;
 namespace Humphrey.Experiments
 {
     unsafe class Program
@@ -19,6 +20,7 @@ namespace Humphrey.Experiments
         {
             public List<string> inputFiles;
             public string outputFileName;
+            public string depsFile;
             public string target;
             public string packageJson;
             public bool debugLog;
@@ -36,6 +38,7 @@ namespace Humphrey.Experiments
 
         static void InitialiseOptions()
         {
+            options.depsFile = null;
             options.outputFileName = null;
             options.inputFiles = new List<string>();
             options.debugLog = false;
@@ -61,6 +64,7 @@ namespace Humphrey.Experiments
             Console.WriteLine();
             Console.WriteLine($"-o=<filename>                Output filename and path (Default: compile and dump disassembly)");
             Console.WriteLine($"--output=<filename>");
+            Console.WriteLine($"--depsFile=<filename>        Output dependency file");
             Console.WriteLine();
             Console.WriteLine($"--debugLog[=<bool>]          Enable/Disable logging of debug messages (Default: {options.debugLog})");
             Console.WriteLine($"--infoLog[=<bool>]           Enable/Disable logging of information messages (Default: {options.infoLog})");
@@ -114,6 +118,7 @@ namespace Humphrey.Experiments
             ["--package"] = (s, split) => ParseStringOption(s, split, out options.packageJson),
             ["-o"] = (s, split) => ParseStringOption(s, split, out options.outputFileName),
             ["-S"] = (s, split) => options.source = true,
+            ["--depsFile"] = (s, split) => ParseStringOption(s, split, out options.depsFile),
             ["--output"] = (s, split) => ParseStringOption(s, split, out options.outputFileName),
             ["--debugLog"] = (s, split) => ParseBoolOption(s, split, out options.debugLog),
             ["--infoLog"] = (s, split) => ParseBoolOption(s, split, out options.infoLog),
@@ -194,7 +199,35 @@ namespace Humphrey.Experiments
                     semantic.RunPass(parse);
                     if (!messages.HasErrors)
                     {
+                        if (options.depsFile != null)
+                        {
+                            using (var writer = new System.IO.StreamWriter(options.depsFile))
+                            {
+                                var list = new List<string>();
+                                var curDirectory = System.IO.Directory.GetCurrentDirectory();
+                                foreach (var file in options.inputFiles)
+                                {
+                                    list.Add(System.IO.Path.GetRelativePath(curDirectory,file));
+                                }
+                                foreach (var file in semantic.Dependencies)
+                                {
+                                    list.Add(System.IO.Path.GetRelativePath(curDirectory,file));
+                                }
+                                if (list.Count > 0)
+                                {
+                                    writer.Write($"{options.outputFileName}:");
+
+                                    foreach (var file in list.Skip(1))
+                                    {
+                                        writer.WriteLine($" {file} \\");
+                                    }
+                                    writer.WriteLine($" {list.First()}");
+                                }
+                            }
+                        }
+
                         var compiler = new HumphreyCompiler(messages);
+
                         var cu = compiler.Compile(semantic, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo);
 
                         if (!messages.HasErrors)

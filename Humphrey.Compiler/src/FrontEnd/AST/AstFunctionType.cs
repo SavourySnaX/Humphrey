@@ -45,6 +45,10 @@ namespace Humphrey.FrontEnd
                     // We should treat this function as being an external function and thus needs resolving at link time?
                     return (unit.CreateExternalCFunctionType(this, inputs, outputs), this);
                 }
+                if (metaData.Contains("BUILT_IN"))
+                {
+                    return (unit.CreateBuiltInFunctionType(this, inputs, outputs), this);
+                }
             }
 
             return (unit.CreateFunctionType(this, inputs, outputs), this);
@@ -60,6 +64,10 @@ namespace Humphrey.FrontEnd
                 {
                     // We should treat this function as being an external function and thus needs resolving at link time?
                     return (unit.CreateExternalCFunctionType(this, inputs, outputs), this);
+                }
+                if (metaData.Contains("BUILT_IN"))
+                {
+                    return (unit.CreateBuiltInFunctionType(this, inputs, outputs), this);
                 }
             }
 
@@ -189,6 +197,10 @@ namespace Humphrey.FrontEnd
                     {
                         throw new System.NotImplementedException($"TODO - error illegal for c functions to return multiple params");
                     }
+                }
+                if (metaData.Contains("BUILT_IN") && outputs.Length == 1)
+                {
+                    return outputs[0].Type;
                 }
             }
             var astStructMembers = new AstStructElement[outputs.Length];

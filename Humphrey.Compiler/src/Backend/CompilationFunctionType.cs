@@ -9,6 +9,7 @@ namespace Humphrey.Backend
         {
             HumphreyInternal,
             HumphreyExternal,
+            HumphreyBuiltIn,
             CDecl,
         }
         CallingConvention callingConvention;

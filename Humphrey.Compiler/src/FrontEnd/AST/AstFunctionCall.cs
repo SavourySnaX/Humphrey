@@ -1,5 +1,9 @@
+using System;
 using System.Text;
 using Humphrey.Backend;
+using Humphrey.Compiler.src.Backend.ABI;
+using LibGit2Sharp;
+using LLVMSharp.Interop;
 namespace Humphrey.FrontEnd
 {
     public class AstFunctionCall : IStatement,IExpression,ILoadValue
@@ -88,6 +92,14 @@ namespace Humphrey.FrontEnd
                 }
                 if (function.BackendValue.IsUndef)
                 {
+                    if (function.Type is CompilationFunctionType ft)
+                    {
+                        var intrinsicInputValues = ComputeInputValues(unit, builder, ft);
+                        if (ft.FunctionCallingConvention == CompilationFunctionType.CallingConvention.HumphreyBuiltIn)
+                        {
+                            return CallBuiltIn(unit, builder, function, ft, intrinsicInputValues);
+                        }
+                    }
                     unit.Messages.Log(CompilerErrorKind.Error_TypeMismatch, $"Attempt to call a function type!", Token.Location, Token.Remainder);
                     return null;
                 }
@@ -107,6 +119,45 @@ namespace Humphrey.FrontEnd
 
                 return CallMethod(unit, builder, function, ftype, inputValues);
             }
+        }
+
+        private LLVMSharp.AtomicOrdering GetAtomicOrdering(CompilationValue value)
+        {
+            if (value.Type is CompilationIntegerType cit)
+            {
+                if (value.BackendValue.IsConstant)
+                {
+                    var idx = value.BackendValue.ConstIntZExt;
+                    switch ((int)idx)
+                    {
+                        case 0:
+                            return LLVMSharp.AtomicOrdering.Unordered;
+                        case 1:
+                            return LLVMSharp.AtomicOrdering.Monotonic;
+                        case 2:
+                            return LLVMSharp.AtomicOrdering.Acquire;
+                        case 3:
+                            return LLVMSharp.AtomicOrdering.Release;
+                        case 4:
+                            return LLVMSharp.AtomicOrdering.AcquireRelease;
+                        case 5:
+                            return LLVMSharp.AtomicOrdering.SequentiallyConsistent;
+                    }
+                }
+            }
+            throw new CompilationAbortException($"Atomic ordering must be a constant integer value");
+        }
+
+        private ICompilationValue CallBuiltIn(CompilationUnit unit, CompilationBuilder builder, CompilationValue function, CompilationFunctionType ftype, CompilationValue[] inputs)
+        {
+            switch (ftype.Identifier)
+            {
+                case "Intrinsic_AtomicLoadExplicit":
+                    {
+                        return builder.LoadAtomic(ftype.ReturnType.Type, inputs[0], GetAtomicOrdering(inputs[1]));
+                    }
+            }
+            throw new NotImplementedException($"Built in function {ftype.Identifier} not implemented");
         }
 
         private ICompilationValue CallMethod(CompilationUnit unit, CompilationBuilder builder, CompilationValue function, CompilationFunctionType ftype, CompilationValue[] inputs)

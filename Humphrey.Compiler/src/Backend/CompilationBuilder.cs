@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Extensions;
 using Humphrey.Compiler.src.Backend.ABI;
 using Humphrey.FrontEnd;
+using LLVMSharp;
 using LLVMSharp.Interop;
 
 namespace Humphrey.Backend
@@ -64,6 +65,15 @@ namespace Humphrey.Backend
             loadedValue.Storage = loadFrom.Storage;
             return loadedValue;
         }
+
+        public CompilationValue LoadAtomic(CompilationType loadType, CompilationValue loadFrom, AtomicOrdering ordering)
+        {
+            var loadedValue = new CompilationValue(builderRef.BuildLoad2(loadType.BackendType, loadFrom.BackendValue), loadType, loadFrom.FrontendLocation);
+            loadedValue.BackendValue.SetOrdering((LLVMAtomicOrdering)ordering);
+            loadedValue.Storage = loadFrom;
+            return loadedValue;
+        }
+
         public CompilationValue Store(CompilationValue value, CompilationValue storeTo)
         {
             if (storeTo is CompilationValueOutputParameter compilationValueOutputParameter)
