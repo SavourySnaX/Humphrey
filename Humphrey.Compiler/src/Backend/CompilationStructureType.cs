@@ -1,3 +1,4 @@
+using Extensions;
 using Humphrey.FrontEnd;
 using LLVMSharp.Interop;
 
@@ -116,6 +117,7 @@ namespace Humphrey.Backend
 
         public CompilationValue AddressElement(CompilationUnit unit, CompilationBuilder builder, CompilationValue src, string identifier)
         {
+            ulong srcAlign = src.Alignment == 0 ? src.BackendValue.Alignment : src.Alignment;
             if (src == null)
             {
                 // Compilation error, attempt to dereference a null pointer
@@ -140,8 +142,24 @@ namespace Humphrey.Backend
                 throw new CompilationAbortException($"Attempt to dereference an undefined type from structure '{identifier}'");
             }
 
+            if (srcAlign == 0)
+            {
+                throw new System.Exception("Hmm, expected an actual alignment in order to fix alignment for element");
+            }
+
+            var offsetInStruct = unit.Module.GetDataLayout().OffsetOfElement(BackendType, idx);
+            var alignWillBe = offsetInStruct % srcAlign;
+            if (Helpers.IsPowerTwo(alignWillBe))
+            {
+                srcAlign = alignWillBe == 0 ? srcAlign : alignWillBe;
+            }
+            else
+            {
+                srcAlign = 1;
+            }
+
             var cPtrType = unit.CreatePointerType(elementTypes[idx], elementTypes[idx].Location);
-            return builder.InBoundsGEP(this, src, cPtrType, new LLVMValueRef[] { unit.CreateI32Constant(0), unit.CreateI32Constant(idx) });
+            return builder.InBoundsGEP(this, src, cPtrType, new LLVMValueRef[] { unit.CreateI32Constant(0), unit.CreateI32Constant(idx) } , (uint)srcAlign);
         }
 
         void CreateDebugType()

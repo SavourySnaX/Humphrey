@@ -9,6 +9,7 @@ namespace Humphrey.Backend
         CompilationValue storage;
         CompilationType typeRef;
         Result<Tokens> frontendLocation;
+        uint alignment;
 
         public CompilationValue(LLVMValueRef val, CompilationType type, Result<Tokens> frontendLoc)
         {
@@ -16,6 +17,7 @@ namespace Humphrey.Backend
             typeRef = type;
             storage = null;
             frontendLocation = frontendLoc;
+            alignment = 0;
         }
 
         public LLVMValueRef BackendValue => valueRef;
@@ -27,7 +29,11 @@ namespace Humphrey.Backend
             set { storage = value; }
         }
         public CompilationType Type => typeRef;
-
+        public uint Alignment
+        {
+            get { return alignment; }
+            set { alignment = value; }
+        }
         public Result<Tokens> FrontendLocation => frontendLocation;
     }
 }

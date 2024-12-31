@@ -156,6 +156,11 @@ namespace Humphrey.FrontEnd
                     {
                         return builder.LoadAtomic(ftype.ReturnType.Type, inputs[0], GetAtomicOrdering(inputs[1]));
                     }
+                case "Intrinsic_AtomicStoreExplicit":
+                    {
+                        builder.StoreAtomic(inputs[1], inputs[0], GetAtomicOrdering(inputs[2]));
+                        return inputs[1];
+                    }
             }
             throw new NotImplementedException($"Built in function {ftype.Identifier} not implemented");
         }
@@ -167,7 +172,7 @@ namespace Humphrey.FrontEnd
             var structType = ftype.CreateOutputParameterStruct(unit, ftype.Location);
             if (structType != null) // not void function
             {
-                allocSpace = builder.Alloca(structType, "output_temp");
+                allocSpace = builder.Alloca(structType, $"output_temp_{ftype.Identifier}");
                 // we might want to always set this for alloca...
                 allocSpace.Storage = new CompilationValue(allocSpace.BackendValue, unit.CreatePointerType(structType, new SourceLocation(argumentList.Token)), argumentList.Token);
             }

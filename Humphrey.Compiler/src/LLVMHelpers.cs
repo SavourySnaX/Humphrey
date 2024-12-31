@@ -365,6 +365,11 @@ namespace Extensions
                    (type.Kind == LLVMTypeKind.LLVMFloatTypeKind) ||
                    (type.Kind == LLVMTypeKind.LLVMDoubleTypeKind);
         }
+        public static bool IsPowerTwo(ulong value)
+        {
+            return (value & (value - 1)) == 0;
+        }
+
 
         public static bool IsIntegerType(this LLVMTypeRef type)
         {

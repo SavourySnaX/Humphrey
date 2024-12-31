@@ -675,7 +675,7 @@ namespace Humphrey.Backend
                 type = CreatePointerType(type, type.Location);
             }
 
-            var local = builder.Alloca(type, "local");
+            var local = builder.Alloca(type, $"local_{identifier.Name}");
 
             if (initialiser != null)
             {

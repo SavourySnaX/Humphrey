@@ -2,6 +2,7 @@ using static Extensions.Helpers;
 using Humphrey.Backend;
 using static Humphrey.Backend.CompilationBuilder;
 using LLVMSharp;
+using Extensions;
 
 namespace Humphrey.FrontEnd
 {
@@ -106,7 +107,23 @@ namespace Humphrey.FrontEnd
 
             if (vlhs.Type is CompilationPointerType pointerType)
             {
-                var gep = builder.InBoundsGEP(pointerType.ElementType, vlhs, pointerType, new LLVMSharp.Interop.LLVMValueRef[] { builder.Ext(vrhs, i64Type).BackendValue });
+                ulong forAlign = vlhs.Alignment ==0 ? vlhs.BackendValue.Alignment : vlhs.Alignment;
+                if (forAlign == 0)
+                {
+                    throw new System.Exception("Hmm, expected an actual alignment in order to fix alignment for element");
+                }
+                var sizeElement = unit.Module.GetDataLayout().StoreSizeOfType(pointerType.ElementType.BackendType);
+                var alignWillBe = sizeElement % forAlign;
+                if (Helpers.IsPowerTwo(alignWillBe))
+                {
+                    forAlign = alignWillBe == 0 ? forAlign : alignWillBe;
+                }
+                else
+                {
+                    forAlign = 1;
+                }
+
+                var gep = builder.InBoundsGEP(pointerType.ElementType, vlhs, pointerType, new LLVMSharp.Interop.LLVMValueRef[] { builder.Ext(vrhs, i64Type).BackendValue },(uint)forAlign);
                 var dereferenced = builder.Load(pointerType.ElementType, gep);
                 var result = new CompilationValue(dereferenced.BackendValue, pointerType.ElementType, Token);
                 result.Storage = dereferenced.Storage;
@@ -114,7 +131,24 @@ namespace Humphrey.FrontEnd
             }
             if (vlhs.Type is CompilationArrayType arrayType)
             {
-                var gep = builder.InBoundsGEP(arrayType, vlhs.Storage, vlhs.Storage.Type as CompilationPointerType, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, unit.FetchIntegerType(64, false, new SourceLocation(subscriptIdx.Token))).BackendValue });
+                ulong forAlign = vlhs.Alignment ==0 ? vlhs.BackendValue.Alignment : vlhs.Alignment;
+                if (forAlign == 0)
+                {
+                    throw new System.Exception("Hmm, expected an actual alignment in order to fix alignment for element");
+                }
+
+                var sizeElement = unit.Module.GetDataLayout().StoreSizeOfType(arrayType.ElementType.BackendType);
+                var alignWillBe = sizeElement % forAlign;
+                if (Helpers.IsPowerTwo(alignWillBe))
+                {
+                    forAlign = alignWillBe == 0 ? forAlign : alignWillBe;
+                }
+                else
+                {
+                    forAlign = 1;
+                }
+
+                var gep = builder.InBoundsGEP(arrayType, vlhs.Storage, vlhs.Storage.Type as CompilationPointerType, new LLVMSharp.Interop.LLVMValueRef[] { i64Type.BackendType.CreateConstantValue(0), builder.Ext(vrhs, unit.FetchIntegerType(64, false, new SourceLocation(subscriptIdx.Token))).BackendValue }, (uint)forAlign);
                 var dereferenced = builder.Load(arrayType.ElementType, gep);
                 var result = new CompilationValue(dereferenced.BackendValue, arrayType.ElementType, Token);
                 result.Storage = dereferenced.Storage;

@@ -1452,7 +1452,7 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
                         var unit = compiler.Compile(semantic, "test", currentTarget, false, false);
                         if (!messages.HasErrors)
                         {
-                            //var result = unit.Dump();
+                            var result = unit.Dump();
                             var other = unit.FetchDisassembly(false,false);
                             return unit.JitMethod(entryPointName, globals);
                         }

@@ -59,10 +59,23 @@ namespace Humphrey.Backend
             builderRef.PositionAtEnd(block.BackendValue);
         }
 
+        public void SetAlignment(CompilationValue value, CompilationValue from)
+        {
+            var alignment = from.BackendValue.Alignment;
+            if (from.Alignment != 0 && alignment == 0)
+            {
+                alignment = from.Alignment;
+            }
+            if (alignment == 0)
+                return;
+            value.BackendValue.SetAlignment(alignment);
+        }
+
         public CompilationValue Load(CompilationType loadType, CompilationValue loadFrom)
         {
             var loadedValue = new CompilationValue(builderRef.BuildLoad2(loadType.BackendType, loadFrom.BackendValue), loadFrom.Type, loadFrom.FrontendLocation);
             loadedValue.Storage = loadFrom.Storage;
+            SetAlignment(loadedValue, loadFrom);
             return loadedValue;
         }
 
@@ -71,6 +84,7 @@ namespace Humphrey.Backend
             var loadedValue = new CompilationValue(builderRef.BuildLoad2(loadType.BackendType, loadFrom.BackendValue), loadType, loadFrom.FrontendLocation);
             loadedValue.BackendValue.SetOrdering((LLVMAtomicOrdering)ordering);
             loadedValue.Storage = loadFrom;
+            SetAlignment(loadedValue, loadFrom);
             return loadedValue;
         }
 
@@ -80,7 +94,21 @@ namespace Humphrey.Backend
             {
                 function.MarkUsed(compilationValueOutputParameter.Identifier);
             }
-            return new CompilationValue(builderRef.BuildStore(value.BackendValue, storeTo.BackendValue), value.Type, value.FrontendLocation.Combine(storeTo.FrontendLocation));
+            var store = new CompilationValue(builderRef.BuildStore(value.BackendValue, storeTo.BackendValue), value.Type, value.FrontendLocation.Combine(storeTo.FrontendLocation));
+            SetAlignment(store, storeTo);
+            return store;
+        }
+
+        public CompilationValue StoreAtomic(CompilationValue value, CompilationValue storeTo, AtomicOrdering ordering)
+        {
+            if (storeTo is CompilationValueOutputParameter compilationValueOutputParameter)
+            {
+                function.MarkUsed(compilationValueOutputParameter.Identifier);
+            }
+            var storeValue = new CompilationValue(builderRef.BuildStore(value.BackendValue, storeTo.BackendValue), value.Type, value.FrontendLocation.Combine(storeTo.FrontendLocation));
+            storeValue.BackendValue.SetOrdering((LLVMAtomicOrdering)ordering);
+            SetAlignment(storeValue, storeTo);
+            return storeValue;
         }
 
         public CompilationValue UDiv(CompilationValue left, CompilationValue right)
@@ -272,7 +300,7 @@ namespace Humphrey.Backend
             return new CompilationValue(builderRef.BuildInsertValue(dst.BackendValue, toStore.BackendValue, index), toStore.Type, dst.FrontendLocation.Combine(toStore.FrontendLocation));
         }
 
-        public CompilationValue InBoundsGEP(CompilationType type, CompilationValue ptr, CompilationPointerType resolvedType, LLVMValueRef[] indices)
+        public CompilationValue InBoundsGEP(CompilationType type, CompilationValue ptr, CompilationPointerType resolvedType, LLVMValueRef[] indices, uint alignment = 0)
         {
             if (ptr==null)
                 throw new System.ArgumentException($"GEP requires a pointer value");
@@ -281,6 +309,7 @@ namespace Humphrey.Backend
                 throw new System.ArgumentException($"GEP requires a pointer value");
             var value = new CompilationValue(builderRef.BuildInBoundsGEP2(type.BackendType, ptr.BackendValue, indices), resolvedType, ptr.FrontendLocation);
             value.Storage = value;
+            value.Alignment = alignment;
             return value;
         }
 
