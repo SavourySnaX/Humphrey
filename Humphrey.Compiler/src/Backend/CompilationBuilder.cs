@@ -399,7 +399,9 @@ namespace Humphrey.Backend
             if (sType is CompilationIntegerType && dType is CompilationPointerType)
                 return new CompilationValue(builderRef.BuildIntToPtr(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
 
-            return new CompilationValue(builderRef.BuildBitCast(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
+            var cast = new CompilationValue(builderRef.BuildBitCast(src.BackendValue, dType.BackendType), dType, src.FrontendLocation);
+            cast.Alignment = src.Alignment;
+            return cast;
         }
         
         public CompilationValue Compare(CompareKind compareKind, CompilationValue left, CompilationValue right)

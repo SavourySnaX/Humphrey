@@ -668,7 +668,7 @@ namespace Humphrey.Backend
 
             var predefinedValue = currentScope.FetchValue(ident);
             if (predefinedValue == null)
-                throw new Exception($"local value {identifier} is missing in symbol table!");
+                throw new Exception($"local value {identifier.Name} is missing in symbol table!");
 
             if (type is CompilationFunctionType)
             {
