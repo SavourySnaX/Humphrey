@@ -1,4 +1,5 @@
 using Humphrey.Backend;
+using System.Collections.Generic;
 
 namespace Humphrey.FrontEnd
 {
@@ -12,9 +13,16 @@ namespace Humphrey.FrontEnd
                 messages = new CompilerMessages(true, true, false);
         }
 
-        public CompilationUnit Compile(SemanticPass pass, string sourceFileNameAndPath , string targetTriple, bool disableOptimisations, bool debugInfo)
+        public CompilationUnit Compile(SemanticPass pass, string sourceFileNameAndPath, string targetTriple, bool disableOptimisations, bool debugInfo, Dictionary<string, string> defines = null)
         {
             var unit = new CompilationUnit(sourceFileNameAndPath, pass.RootSymbolTable, pass.ImportedNamespaces, pass.Manager, pass.ToCompile, targetTriple, disableOptimisations, debugInfo, messages);
+            if (defines != null)
+            {
+                foreach (var kp in defines)
+                {
+                    unit.PreDefined.Add(kp.Key, kp.Value);
+                }
+            }
             try
             {
                 unit.Compile();

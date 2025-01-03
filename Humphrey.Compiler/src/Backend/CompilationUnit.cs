@@ -6,8 +6,6 @@ using System.Numerics;
 using System;
 using System.IO;
 using System.Collections.Generic;
-using LLVMSharp;
-using System.Linq;
 using Humphrey.Compiler.src.Backend.ABI;
 
 namespace Humphrey.Backend
@@ -34,6 +32,8 @@ namespace Humphrey.Backend
 
         CompilationDebugBuilder debugBuilder;
 
+        Dictionary<string, string> predefinedValues;
+
         Version VersionNumber => new Version(1, 0);
         string CompilerVersion => $"Humphrey Compiler - V{VersionNumber}";
 
@@ -45,6 +45,7 @@ namespace Humphrey.Backend
 
         public CompilationUnit(string sourceFileNameAndPath, CommonSymbolTable rootFromSemmantic, IEnumerable<SemanticPass.SymbolTableAndPass> extraNamespaces, IPackageManager manager, IEnumerable<IGlobalDefinition> definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
         {
+            predefinedValues = new Dictionary<string, string>();
             optimisations = !disableOptimisations;
 
             this.targetTriple = targetTriple;
@@ -971,6 +972,7 @@ namespace Humphrey.Backend
         public CompilerMessages Messages => messages;
         public CABI TargetABI => targetABI;
 
+        public Dictionary<string, string> PreDefined => predefinedValues;
         public bool DebugInfoEnabled => debugBuilder.Enabled;
     }
 }

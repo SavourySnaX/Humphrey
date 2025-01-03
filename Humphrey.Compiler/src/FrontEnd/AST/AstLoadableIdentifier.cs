@@ -25,7 +25,13 @@ namespace Humphrey.FrontEnd
         }
         public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
-            throw new System.NotImplementedException($"Todo implement constant expression processing for constant values");
+            // Check if unit knows about this define (defines only affect constant values)
+            if (unit.PreDefined.ContainsKey(name))
+            {
+                return new CompilationConstantIntegerKind(new AstNumber(unit.PreDefined[name]));
+            }
+
+            throw new System.NotImplementedException($"Todo implement constant expression processing for constant values - or predefined value not defined {name}");
         }
 
         public ICompilationValue ProcessExpression(CompilationUnit unit, CompilationBuilder builder)

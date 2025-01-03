@@ -19,6 +19,7 @@ namespace Humphrey.Experiments
         struct Options
         {
             public List<string> inputFiles;
+            public Dictionary<string, string> defines;
             public string outputFileName;
             public string depsFile;
             public string target;
@@ -41,6 +42,7 @@ namespace Humphrey.Experiments
             options.depsFile = null;
             options.outputFileName = null;
             options.inputFiles = new List<string>();
+            options.defines = new Dictionary<string, string>();
             options.debugLog = false;
             options.infoLog = true;
             options.warningsAsErrors = false;
@@ -61,6 +63,8 @@ namespace Humphrey.Experiments
             Console.WriteLine($"Options are case sensistive!");
             Console.WriteLine();
             Console.WriteLine($"--package=<path>             Package json (Default: {options.packageJson})");
+            Console.WriteLine();
+            Console.WriteLine($"-D<name>=<value>             Define an integer constant that can be accessed from Humphrey code");
             Console.WriteLine();
             Console.WriteLine($"-o=<filename>                Output filename and path (Default: compile and dump disassembly)");
             Console.WriteLine($"--output=<filename>");
@@ -138,7 +142,12 @@ namespace Humphrey.Experiments
                 var split = s.Split('=');
                 if (split[0].StartsWith('-'))
                 {
-                    if (_optionsParsers.TryGetValue(split[0], out var parser))
+                    if (split[0][1]=='D')
+                    {
+                        if (!options.defines.TryAdd(split[0].Substring(2), split[1]))
+                            return false;
+                    }
+                    else if (_optionsParsers.TryGetValue(split[0], out var parser))
                     {
                         if (!parser(s, split))
                             return false;
@@ -228,7 +237,7 @@ namespace Humphrey.Experiments
 
                         var compiler = new HumphreyCompiler(messages);
 
-                        var cu = compiler.Compile(semantic, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo);
+                        var cu = compiler.Compile(semantic, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo, options.defines);
 
                         if (!messages.HasErrors)
                         {
