@@ -741,6 +741,15 @@ namespace Humphrey.Backend
 
         public bool EmitToLLVMFile(string filename)
         {
+            LLVMRelocMode reloc = LLVMRelocMode.LLVMRelocDefault;
+            LLVMCodeModel model = LLVMCodeModel.LLVMCodeModelDefault;
+            LLVMCodeGenOptLevel codeGenLevel = LLVMCodeGenOptLevel.LLVMCodeGenLevelNone;
+            if (optimisations)
+                codeGenLevel=LLVMCodeGenOptLevel.LLVMCodeGenLevelAggressive;
+            var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", "", codeGenLevel, reloc, model);
+
+            moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
+            moduleRef.Target = targetTriple;
             File.WriteAllText(filename, moduleRef.PrintToString());
             return true;
         }
@@ -760,7 +769,7 @@ namespace Humphrey.Backend
             var targetMachine = LLVMTargetRef.First.CreateTargetMachine(targetTriple, "generic", kernel?"-sse,-mmx":"", codeGenLevel, reloc, model);
 
             moduleRef.SetDataLayout(targetMachine.CreateTargetDataLayout());
-            moduleRef.Target = LLVMTargetRef.DefaultTriple;
+            moduleRef.Target = targetTriple;
 
             var pm = LLVMPassManagerRef.Create();
             if (optimisations)
