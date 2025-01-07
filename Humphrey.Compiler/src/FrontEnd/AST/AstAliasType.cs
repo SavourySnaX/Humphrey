@@ -60,7 +60,18 @@ namespace Humphrey.FrontEnd
                             {
                                 elementType = eCET.ElementType;
                             }
-                            start -= (elementType as CompilationIntegerType).IntegerWidth;
+                            if (elementType is CompilationIntegerType eCIT)
+                            {
+                                start -= (elementType as CompilationIntegerType).IntegerWidth;
+                            }
+                            else if (elementType is CompilationFloatType eCFT)
+                            {
+                                start -= 32;
+                            }
+                            else
+                            {
+                                throw new System.NotImplementedException($"AliasType needs support for {elementType.Identifier}");
+                            }
                             rotate[a][idx] = start;
                             idx++;
                         }
@@ -171,6 +182,10 @@ namespace Humphrey.FrontEnd
                         if (elType is CompilationIntegerType cIT)
                         {
                             compareWidth+=cIT.IntegerWidth;
+                        }
+                        else if (elType is CompilationFloatType cFT)
+                        {
+                            compareWidth += 32;
                         }
                         else
                         {
