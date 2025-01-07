@@ -180,6 +180,8 @@ namespace Humphrey.FrontEnd
             {
                 if (ftype.FunctionCallingConvention == CompilationFunctionType.CallingConvention.CDecl)
                 {
+                    if (ftype.ReturnType == null)
+                        return null;
                     return unit.CreateUndef(ftype.ReturnType.Type);
                 }
                 return structType == null ? null : unit.CreateUndef(structType);
