@@ -39,6 +39,21 @@ namespace Humphrey.FrontEnd
     
         public bool IsFunctionType => false;
 
+        public ICompilationConstantValue GetConstantFor(CompilationUnit unit, AstIdentifier ident)
+        {
+            foreach (var element in definitions)
+            {
+                foreach (var id in element.Identifiers)
+                {
+                    if (id.Name == ident.Name)
+                    {
+                        return element.ProcessConstantExpression(unit);
+                    }
+                }
+            }
+            throw new System.NotImplementedException($"TODO add error for enum not present in collection");
+        }
+
         public string Dump()
         {
             var s = new StringBuilder();

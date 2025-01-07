@@ -1431,6 +1431,13 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
         {
             Assert.True(InputIntExpectsFloatValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
         }
+        
+        [Theory]
+        [InlineData(@"Vector4:{x:fp32 y:fp32 z:fp32 w:fp32} Main:(a:fp32)(out:fp32)={vec:Vector4=_; vec.x=a; vec.y=a; vec.z=a; vec.w=a; out=vec.x+vec.y+vec.z+vec.w;}", "Main", 5.0f, 20.0f)]
+        public void CheckVector4PackedFloat(string input, string entryPointName, float ival1, float expected)
+        {
+            Assert.True(InputFloatExpectsFloatValue(CompileForTest(input, entryPointName), ival1, expected), $"Test {entryPointName},{input},{ival1},{expected}");
+        }
 
         public IntPtr CompileForTest(string input, string entryPointName, (string name, nint addr)[] globals=null)
         {

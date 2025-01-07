@@ -19,6 +19,14 @@ namespace Humphrey.FrontEnd
 
         public ICompilationConstantValue ProcessConstantExpression(CompilationUnit unit)
         {
+            if (lhs is AstLoadableIdentifier ident)
+            {
+                var type = unit.FetchNamedType(ident);
+                if (type.originalType is AstEnumType enumType)
+                {
+                    return enumType.GetConstantFor(unit, rhs);
+                }
+            }
             throw new System.NotImplementedException($"ProcessConstantExpression for reference operator is not implemented");
         }
 
