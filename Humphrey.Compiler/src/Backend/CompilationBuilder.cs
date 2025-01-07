@@ -267,6 +267,8 @@ namespace Humphrey.Backend
 
         public CompilationValue Negate(CompilationValue src)
         {
+            if (src.Type is CompilationFloatType)
+                return new CompilationValue(builderRef.BuildFNeg(src.BackendValue), src.Type, src.FrontendLocation);
             return new CompilationValue(builderRef.BuildNeg(src.BackendValue), src.Type, src.FrontendLocation);
         }
 
