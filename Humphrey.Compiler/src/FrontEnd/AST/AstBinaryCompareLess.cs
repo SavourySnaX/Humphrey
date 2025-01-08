@@ -26,6 +26,13 @@ namespace Humphrey.FrontEnd
             var leftIntType = left.Type as CompilationIntegerType;
             var rightIntType = right.Type as CompilationIntegerType;
 
+            var leftFloatType = left.Type as CompilationFloatType;
+            var rightFloatType = right.Type as CompilationFloatType;
+
+            if (leftFloatType != null && rightFloatType != null)
+            {
+                return builder.FCompare(CompilationBuilder.CompareKind.SLT, left, right);
+            }
             bool signed = leftIntType.IsSigned || rightIntType.IsSigned;
             return builder.Compare(signed ? CompilationBuilder.CompareKind.SLT : CompilationBuilder.CompareKind.ULT, left, right);
         }

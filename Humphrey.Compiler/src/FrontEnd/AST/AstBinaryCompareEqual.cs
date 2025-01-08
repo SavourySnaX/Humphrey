@@ -23,6 +23,13 @@ namespace Humphrey.FrontEnd
 
         public override ICompilationValue CompilationValue(CompilationBuilder builder, CompilationValue left, CompilationValue right)
         {
+            var leftFloatType = left.Type as CompilationFloatType;
+            var rightFloatType = right.Type as CompilationFloatType;
+
+            if (leftFloatType != null && rightFloatType != null)
+            {
+                return builder.FCompare(CompilationBuilder.CompareKind.EQ, left, right);
+            }
             return builder.Compare(CompilationBuilder.CompareKind.EQ, left, right);
         }
     }

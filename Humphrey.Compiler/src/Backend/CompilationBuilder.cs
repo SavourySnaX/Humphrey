@@ -44,6 +44,16 @@ namespace Humphrey.Backend
             [CompareKind.SLE] = LLVMIntPredicate.LLVMIntSLE,
         };
 
+        readonly Dictionary<CompareKind, LLVMRealPredicate> _floatPredicates = new Dictionary<CompareKind, LLVMRealPredicate>
+        {
+            [CompareKind.EQ] = LLVMRealPredicate.LLVMRealOEQ,
+            [CompareKind.NE] = LLVMRealPredicate.LLVMRealONE,
+            [CompareKind.SGT] = LLVMRealPredicate.LLVMRealOGT,
+            [CompareKind.SGE] = LLVMRealPredicate.LLVMRealOGE,
+            [CompareKind.SLT] = LLVMRealPredicate.LLVMRealOLT,
+            [CompareKind.SLE] = LLVMRealPredicate.LLVMRealOLE,
+        };
+
         public CompilationBuilder(CompilationUnit compUnit, LLVMBuilderRef builder, CompilationFunction func, CompilationBlock block, LLVMBuilderRef locals)
         {
             unit = compUnit;
@@ -406,6 +416,14 @@ namespace Humphrey.Backend
             return cast;
         }
         
+        public CompilationValue FCompare(CompareKind comparekind,  CompilationValue lhs, CompilationValue rhs)
+        {
+            if (_floatPredicates.TryGetValue(comparekind, out var predicate))
+                return new CompilationValue(builderRef.BuildFCmp(predicate, lhs.BackendValue, rhs.BackendValue),
+                    unit.CreateIntegerType(1, false, new SourceLocation()), lhs.FrontendLocation.Combine(rhs.FrontendLocation));
+
+            throw new NotImplementedException($"Unahandled compare kind {comparekind}");
+        }
         public CompilationValue Compare(CompareKind compareKind, CompilationValue left, CompilationValue right)
         {
             if (_intPredicates.TryGetValue(compareKind, out var intPredicate))
