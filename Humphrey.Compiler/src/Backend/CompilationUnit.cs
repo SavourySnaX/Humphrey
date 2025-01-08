@@ -265,6 +265,11 @@ namespace Humphrey.Backend
         {
             return new CompilationFloatType( contextRef.FloatType, debugBuilder, location);
         }
+        /*
+        public CompilationVectorType CreateVectorType(CompilationType elementKind, uint elementCount, SourceLocation)
+        {
+            return new CompilationVectorType( contextRef.FloatType, )
+        }*/
 
         public CompilationIntegerType CreateIntegerType(uint numBits, bool isSigned, SourceLocation location)
         {
@@ -709,11 +714,10 @@ namespace Humphrey.Backend
                 Console.WriteLine($"Module Verification Failed : {message} {module}");
                 throw new System.Exception($"Failed to compile module");
             }
-
             var options = LLVMMCJITCompilerOptions.Create();
-            if (!moduleRef.TryCreateMCJITCompiler(out var ee,ref options, out message))
+            if (!moduleRef.TryCreateMCJITCompiler(out var ee,ref options, out var message2))
             {
-                Console.WriteLine($"Failed to create MCJit : {message}");
+                Console.WriteLine($"Failed to create MCJit : {message2}");
                 throw new System.Exception($"Failed to create jit");
             }
 

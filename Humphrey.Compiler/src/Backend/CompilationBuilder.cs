@@ -514,6 +514,81 @@ namespace Humphrey.Backend
             builderRef.BuildRetVoid();
         }
 
+        // Intrinsic vector support below (types are not reflected back into humphrey types
+        public LLVMValueRef FAdd(LLVMValueRef left, LLVMValueRef right)
+        {
+            return builderRef.BuildFAdd(left, right);
+        }
+        public LLVMValueRef FSub(LLVMValueRef left, LLVMValueRef right)
+        {
+            return builderRef.BuildFSub(left, right);
+        }
+        public LLVMValueRef FMul(LLVMValueRef left, LLVMValueRef right)
+        {
+            return builderRef.BuildFMul(left, right);
+        }
+        public LLVMValueRef FDiv(LLVMValueRef left, LLVMValueRef right)
+        {
+            return builderRef.BuildFDiv(left, right);
+        }
+
+        public LLVMValueRef DoIntrinsic(string name, LLVMTypeRef[] backendTypes, LLVMValueRef[] backendValues)
+        {
+            var function = unit.FetchIntrinsicFunction(name, backendTypes);
+            var functionType = unit.FetchIntrinsicFunctionType(name, backendTypes);
+            return builderRef.BuildCall2(functionType, function, backendValues);
+        }
+
+        public LLVMValueRef CreateConstF(float v)
+        {
+            var t = unit.Context.FloatType;
+            return t.CreateConstantFloatValue(v);
+        }
+        public LLVMValueRef FDot(LLVMValueRef left, LLVMValueRef right)
+        {
+            var r = FMul(left, right);
+            return DoIntrinsic("llvm.vector.reduce.fadd", new[] { left.TypeOf }, new[] { CreateConstF(-0.0f), r });
+        }
+        public unsafe LLVMValueRef StructToVec(CompilationValue input, uint numElements)
+        {
+            var elementType = (input.Type as CompilationStructureType).Elements[0].BackendType;
+            var t = LLVM.VectorType(elementType, numElements);
+            var v = LLVM.GetUndef(t);
+            var r = v;
+            for (uint a=0;a<numElements;a++)
+            {
+                var sElement = builderRef.BuildExtractValue(input.BackendValue, a);
+                var idx = unit.CreateI64Constant(a);
+                r = builderRef.BuildInsertElement(r, sElement, idx);
+            }
+            return r;
+        }
+
+        public unsafe CompilationValue VecToStruct(LLVMValueRef input, CompilationType t, uint numElements, Result<Tokens> frontendLocation)
+        {
+            var r = LLVM.GetUndef(t.BackendType);
+            for (uint a = 0; a < numElements; a++)
+            {
+                var idx = unit.CreateI64Constant(a);
+                var element = builderRef.BuildExtractElement(input, idx);
+                r = builderRef.BuildInsertValue(r, element, a);
+            }
+            var alloc = Alloca(t);
+            var rv = new CompilationValue(r, t, frontendLocation);
+            Store(rv, alloc);
+            rv.Storage = alloc;
+            return rv;
+        }
+
+        public unsafe CompilationValue FloatTo(LLVMValueRef input, CompilationType t, Result<Tokens> frontendLocation)
+        {
+            var alloc = Alloca(t);
+            var rv = new CompilationValue(input, t, frontendLocation);
+            Store(rv, alloc);
+            rv.Storage = alloc;
+            return rv;
+        }
+
         public void SetDebugLocation(SourceLocation location)
         {
             if (unit.DebugInfoEnabled)

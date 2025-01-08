@@ -1,3 +1,4 @@
+using Humphrey.FrontEnd;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -24,5 +25,45 @@ namespace Humphrey.Backend.Tests
         {
             Assert.True(InputVoidExpects64BitValue(CompileForTest(input, entryPointName), expected), $"Test {entryPointName},{expected}");
         }
+
+        const string LocalVec2F = "MyVec2:{a:fp32 b:fp32}";
+        const string anonVec2F = "{x:fp32 y:fp32}";
+        const string MakeVec2F = "MakeVec:()(result:MyVec2)={result=0;}";
+
+        [Theory]
+        [InlineData($"{LocalVec2F} {MakeVec2F} [BUILT_IN]Intrinsic_Vec2FAdd:(a:{anonVec2F},b:{anonVec2F})(result:{anonVec2F}) Main:(i1:fp32,i2:fp32)(out:fp32)={{s:=MakeVec().result; t:=MakeVec().result; s.a=i1; t.a=i2; s=Intrinsic_Vec2FAdd(s,t); out=s.a;}}", "Main", 8, 8, 16)]
+        public void BuiltIn_Vec2Add(string input, string entryPointName, float a, float b, float expected)
+        {
+            Assert.True(InputFloatFloatExpectsFloatValue(CompileForTest(input, entryPointName), a, b, expected), $"Test {entryPointName},{expected}");
+        }
+
+        [Theory]
+        [InlineData($"{LocalVec2F} {MakeVec2F} [BUILT_IN]Intrinsic_Vec2FSub:(a:{anonVec2F},b:{anonVec2F})(result:{anonVec2F}) Main:(i1:fp32,i2:fp32)(out:fp32)={{s:=MakeVec().result; t:=MakeVec().result; s.a=i1; t.a=i2; s=Intrinsic_Vec2FSub(s,t); out=s.a;}}", "Main", 8, 2, 6)]
+        public void BuiltIn_Vec2Sub(string input, string entryPointName, float a, float b, float expected)
+        {
+            Assert.True(InputFloatFloatExpectsFloatValue(CompileForTest(input, entryPointName), a, b, expected), $"Test {entryPointName},{expected}");
+        }
+
+        [Theory]
+        [InlineData($"{LocalVec2F} {MakeVec2F} [BUILT_IN]Intrinsic_Vec2FMul:(a:{anonVec2F},b:{anonVec2F})(result:{anonVec2F}) Main:(i1:fp32,i2:fp32)(out:fp32)={{s:=MakeVec().result; t:=MakeVec().result; s.a=i1; t.a=i2; s=Intrinsic_Vec2FMul(s,t); out=s.a;}}", "Main", 8, 8, 64)]
+        public void BuiltIn_Vec2Mul(string input, string entryPointName, float a, float b, float expected)
+        {
+            Assert.True(InputFloatFloatExpectsFloatValue(CompileForTest(input, entryPointName), a, b, expected), $"Test {entryPointName},{expected}");
+        }
+
+        [Theory]
+        [InlineData($"{LocalVec2F} {MakeVec2F} [BUILT_IN]Intrinsic_Vec2FDiv:(a:{anonVec2F},b:{anonVec2F})(result:{anonVec2F}) Main:(i1:fp32,i2:fp32)(out:fp32)={{s:=MakeVec().result; t:=MakeVec().result; s.a=i1; t.a=i2; s=Intrinsic_Vec2FDiv(s,t); out=s.a;}}", "Main", 8, 2, 4)]
+        public void BuiltIn_Vec2Div(string input, string entryPointName, float a, float b, float expected)
+        {
+            Assert.True(InputFloatFloatExpectsFloatValue(CompileForTest(input, entryPointName), a, b, expected), $"Test {entryPointName},{expected}");
+        }
+        
+        [Theory]
+        [InlineData($"{LocalVec2F} {MakeVec2F} [BUILT_IN]Intrinsic_Vec2FDot:(a:{anonVec2F},b:{anonVec2F})(result:fp32) Main:(i1:fp32,i2:fp32)(out:fp32)={{s:=MakeVec().result; t:=MakeVec().result; s.a=i1; t.a=i2; out=Intrinsic_Vec2FDot(s,t);}}", "Main", 1, 1, 1)]
+        public void BuiltIn_Vec2Dot(string input, string entryPointName, float a, float b, float expected)
+        {
+            Assert.True(InputFloatFloatExpectsFloatValue(CompileForTest(input, entryPointName), a, b, expected), $"Test {entryPointName},{expected}");
+        }
+
     }
 }
