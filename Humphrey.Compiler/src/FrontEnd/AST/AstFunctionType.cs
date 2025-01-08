@@ -1,4 +1,6 @@
 using Humphrey.Backend;
+using Humphrey.Compiler.src.Backend.Builtin;
+using LLVMSharp.Interop;
 namespace Humphrey.FrontEnd
 {
     public class AstFunctionType : IType, ISymbolScope /*Used for input and output symbols currently*/
@@ -6,6 +8,7 @@ namespace Humphrey.FrontEnd
         AstParamList inputList;
         AstParamList outputList;
         private bool semanticDone;
+        private bool isBuiltIn;
 
         AstCodeBlock genericInitialiser;
         string genericBaseName;
@@ -17,8 +20,9 @@ namespace Humphrey.FrontEnd
             semanticDone = false;
             genericInitialiser = null;
             genericBaseName = null;
+            isBuiltIn = false;
         }
-    
+
         public void SetGenericInitialiser(AstCodeBlock codeBlock, string baseName)
         {
             if (IsGeneric)
@@ -74,6 +78,23 @@ namespace Humphrey.FrontEnd
             return (unit.CreateFunctionType(this, inputs, outputs), this);
         }
     
+        public void SetLinkage(CompilationUnit unit, CompilationFunction compilationFunction)
+        {
+            var linkageDefault = unit.InternalLinkageDefault ? LLVMLinkage.LLVMInternalLinkage : LLVMLinkage.LLVMExternalLinkage;
+            if (metaData!=null)
+            {
+                if (metaData.Contains("INTERNAL"))
+                {
+                    linkageDefault = LLVMLinkage.LLVMInternalLinkage;
+                }
+                if (metaData.Contains("EXTERNAL"))
+                {
+                    linkageDefault = LLVMLinkage.LLVMExternalLinkage;
+                }
+            }
+            compilationFunction.SetLinkage(linkageDefault);
+        }
+
         public void BuildFunction(CompilationUnit unit, CompilationFunctionType functionType, AstIdentifier ident)
         {
             // TODO generic output types???
@@ -98,6 +119,8 @@ namespace Humphrey.FrontEnd
 
         private void BuildFunction(CompilationUnit unit, CompilationFunctionType functionType, AstIdentifier ident, AstCodeBlock codeBlock, CompilationFunction newFunction)
         {
+            SetLinkage(unit, newFunction);
+
             var oldScope = unit.PushScope(symbolTable, unit.GetScope(newFunction));
 
             var localsBlock = new CompilationBlock(unit.AppendNewBasicBlockToFunction(newFunction,$"inputs_{ident.Dump()}"));
@@ -214,6 +237,7 @@ namespace Humphrey.FrontEnd
 
         public void Semantic(SemanticPass pass)
         {
+            isBuiltIn = metaData == null ? false : metaData.Contains("BUILT_IN");
             // do nothing
         }
         
@@ -244,6 +268,7 @@ namespace Humphrey.FrontEnd
         }
 
         public bool IsFunctionType => true;
+        public bool IsBuiltIn => isBuiltIn;
 
         public bool IsGeneric => inputList.HasGenericParameters() || outputList.HasGenericParameters();
         public string Dump()

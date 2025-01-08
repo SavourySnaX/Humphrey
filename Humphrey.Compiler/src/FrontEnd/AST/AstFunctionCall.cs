@@ -208,6 +208,11 @@ namespace Humphrey.FrontEnd
                     return new AstBitType();
                 }
             }
+            if (functionType.IsBuiltIn && resolved is AstLoadableIdentifier ident)
+            {
+                // Special case, we want to resolve the output type based on the builtins rules
+                return Builtin.ResolveOutputType(pass, ident, resolvedInputs, functionType);
+            }
             return functionType.ResolveOutputType(pass);
         }
 

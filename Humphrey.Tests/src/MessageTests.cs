@@ -104,7 +104,7 @@ namespace Humphrey.Tests
                     if (!messages.HasErrors)
                     {
                         var currentTarget = Helpers.GetDefaultTargetTriple();
-                        var unit = new HumphreyCompiler(messages).Compile(semantic, "test", currentTarget, false, false);
+                        var unit = new HumphreyCompiler(messages).Compile(semantic, "test", currentTarget, false, false, false);
                     }
                 }
             }

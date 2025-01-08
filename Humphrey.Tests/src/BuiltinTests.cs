@@ -65,5 +65,11 @@ namespace Humphrey.Backend.Tests
             Assert.True(InputFloatFloatExpectsFloatValue(CompileForTest(input, entryPointName), a, b, expected), $"Test {entryPointName},{expected}");
         }
 
+        [Theory]
+        [InlineData($"{LocalVec2F} {MakeVec2F} [BUILT_IN]Intrinsic_Vec2FFloor:(a:{anonVec2F})(result:{anonVec2F}) Main:(i1:fp32,i2:fp32)(out:fp32)={{s:=MakeVec().result; s.a=i1; s.b=i2; s=Intrinsic_Vec2FFloor(s); out=s.a;}}", "Main", 1.9, 0, 1)]
+        public void BuiltIn_Vec2Floor(string input, string entryPointName, float a, float b, float expected)
+        {
+            Assert.True(InputFloatFloatExpectsFloatValue(CompileForTest(input, entryPointName), a, b, expected), $"Test {entryPointName},{expected}");
+        }
     }
 }

@@ -33,6 +33,7 @@ namespace Humphrey.Experiments
             public bool debugInfo;
             public bool pic;
             public bool kernelCodeModel;
+            public bool internaliseFunctions;
         }
 
         static Options options;
@@ -51,6 +52,7 @@ namespace Humphrey.Experiments
             options.source = false;
             options.optimisations = true;
             options.debugInfo = false;
+            options.internaliseFunctions = false;
             options.pic = false;
             options.kernelCodeModel = false;
             options.packageJson = "humphrey.json";
@@ -80,6 +82,7 @@ namespace Humphrey.Experiments
             Console.WriteLine($"-S                           Emit asm instead of object file");
             Console.WriteLine($"--optimisations[=<bool>]     Enable/Disable optimisations (Default: {options.optimisations})");
             Console.WriteLine($"--debugInfo[=<bool>]         Enable/Disable debug information (Default: {options.debugInfo})");
+            Console.WriteLine($"--internal[=<bool>]          Make function declerations Internal by default (Default: {options.internaliseFunctions})");
             Console.WriteLine($"--pic[=<bool>]               Compile for position independant code (Default: {options.pic})");
             Console.WriteLine($"--kernel[=<bool>]            Compile for higher half kernel code model (Default: {options.kernelCodeModel})");
             Console.WriteLine();
@@ -131,6 +134,7 @@ namespace Humphrey.Experiments
             ["--emitLLVM"] = (s, split) => ParseBoolOption(s, split, out options.emitLLVM),
             ["--optimisations"] = (s, split) => ParseBoolOption(s, split, out options.optimisations),
             ["--debugInfo"] = (s, split) => ParseBoolOption(s, split, out options.debugInfo),
+            ["--internal"] = (s, split) => ParseBoolOption(s, split, out options.internaliseFunctions),
             ["--pic"] = (s, split) => ParseBoolOption(s, split, out options.pic),
             ["--kernel"] = (s, split) => ParseBoolOption(s, split, out options.kernelCodeModel),
         };
@@ -237,7 +241,7 @@ namespace Humphrey.Experiments
 
                         var compiler = new HumphreyCompiler(messages);
 
-                        var cu = compiler.Compile(semantic, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo, options.defines);
+                        var cu = compiler.Compile(semantic, options.inputFiles[0], options.target, !options.optimisations, options.debugInfo, options.internaliseFunctions, options.defines);
 
                         if (!messages.HasErrors)
                         {

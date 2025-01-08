@@ -68,5 +68,10 @@ namespace Humphrey.Backend
                  exitBlock=value;
              }
         }
+
+        public void SetLinkage(LLVMLinkage linkage)
+        {
+            function.Linkage=linkage;
+        }
     }
 }

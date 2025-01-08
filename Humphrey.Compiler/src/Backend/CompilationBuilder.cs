@@ -567,8 +567,18 @@ namespace Humphrey.Backend
             var r = FMul(left, right);
             return DoIntrinsic("llvm.vector.reduce.fadd", new[] { left.TypeOf }, new[] { CreateConstF(-0.0f), r });
         }
+
+        public LLVMValueRef FFloor(LLVMValueRef left)
+        {
+            return DoIntrinsic("llvm.floor", new[] { left.TypeOf }, new[] { left });
+        }
+
         public unsafe LLVMValueRef StructToVec(CompilationValue input, uint numElements)
         {
+            if (input.BackendValue.TypeOf.Kind == LLVMTypeKind.LLVMVectorTypeKind)
+            {
+                return input.BackendValue;
+            }
             var elementType = (input.Type as CompilationStructureType).Elements[0].BackendType;
             var t = LLVM.VectorType(elementType, numElements);
             var v = LLVM.GetUndef(t);

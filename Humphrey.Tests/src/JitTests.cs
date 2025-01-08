@@ -1456,7 +1456,7 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
                     {
                         var compiler = new HumphreyCompiler(messages);
                         var currentTarget = Helpers.GetDefaultTargetTriple();
-                        var unit = compiler.Compile(semantic, "test", currentTarget, false, false);
+                        var unit = compiler.Compile(semantic, "test", currentTarget, false, false, false);
                         if (!messages.HasErrors)
                         {
                             var result = unit.Dump();

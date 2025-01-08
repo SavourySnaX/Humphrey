@@ -234,7 +234,7 @@ MemorySizeOf:(type:_)(size:UInt64)=
             if (!messages.HasErrors)
             {
                 var currentTarget = Helpers.GetDefaultTargetTriple();
-                unit = compiler.Compile(semantic, "test", currentTarget, false, false);
+                unit = compiler.Compile(semantic, "test", currentTarget, false, false, false);
             }
 
             if (messages.HasErrors)

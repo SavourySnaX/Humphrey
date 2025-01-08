@@ -1,4 +1,5 @@
 ﻿using Humphrey.Backend;
+using Humphrey.FrontEnd;
 using LLVMSharp.Interop;
 using System;
 
@@ -35,6 +36,8 @@ namespace Humphrey.Compiler.src.Backend.Builtin
 
         static bool IsIntrinsicTypeCorrect(CompilationValue v, int numElements, LLVMTypeKind elementType)
         {
+            if (v.BackendType.Kind == LLVMTypeKind.LLVMVectorTypeKind && v.BackendType.ElementType.Kind == elementType && v.BackendType.VectorSize == numElements)
+                return true;
             if (v.Type is CompilationStructureType cst)
             {
                 foreach (var e in cst.Elements)
@@ -51,8 +54,27 @@ namespace Humphrey.Compiler.src.Backend.Builtin
             return false;
         }
 
+        public static IType ResolveOutputType(SemanticPass pass, AstLoadableIdentifier ident, IType[] inputs, AstFunctionType functionType)
+        {
+            switch (ident.Name)
+            {
+                case "Intrinsic_AtomicLoadExplicit":
+                case "Intrinsic_AtomicStoreExplicit":
+                case "Intrinsic_Vec2FDot":  // 2Vec in 1f out
+                    return functionType.ResolveOutputType(pass);
+                case "Intrinsic_Vec2FAdd":  // 2Vec in 1Vec out
+                case "Intrinsic_Vec2FSub":
+                case "Intrinsic_Vec2FMul":
+                case "Intrinsic_Vec2FDiv":
+                case "Intrinsic_Vec2FFloor":    // 2Vec in 1Vec out
+                    return inputs[0];
+            }
+            throw new NotImplementedException($"Unhandled Builtin '{ident.Name}'");
+        }
+
         public static ICompilationValue CallBuiltIn(CompilationUnit unit, CompilationBuilder builder, CompilationValue function, CompilationFunctionType ftype, CompilationValue[] inputs)
         {
+            // TODO validate input and output parameters numbers and kinds
             switch (ftype.Identifier)
             {
                 case "Intrinsic_AtomicLoadExplicit":
@@ -64,7 +86,7 @@ namespace Humphrey.Compiler.src.Backend.Builtin
                         builder.StoreAtomic(inputs[1], inputs[0], GetAtomicOrdering(inputs[2]));
                         return inputs[1];
                     }
-                case "Intrinsic_Vec2FAdd":
+                case "Intrinsic_Vec2FAdd":  // 2Vec in 1Vec out
                 case "Intrinsic_Vec2FSub":
                 case "Intrinsic_Vec2FMul":
                 case "Intrinsic_Vec2FDiv":
@@ -99,7 +121,7 @@ namespace Humphrey.Compiler.src.Backend.Builtin
 
                         throw new Exception($"Built in function (Vec2FAdd types mismatch) - Something is wrong");
                     }
-                case "Intrinsic_Vec2FDot":
+                case "Intrinsic_Vec2FDot":  // 2Vec in 1f out
                     {
                         if (IsIntrinsicTypeCorrect(inputs[0], 2, LLVMTypeKind.LLVMFloatTypeKind) && IsIntrinsicTypeCorrect(inputs[1], 2, LLVMTypeKind.LLVMFloatTypeKind))
                         {
@@ -112,7 +134,22 @@ namespace Humphrey.Compiler.src.Backend.Builtin
                             return builder.FloatTo(res, (inputs[0].Type as CompilationStructureType).Elements[0], function.FrontendLocation);
                         }
 
-                        throw new Exception($"Built in function (Vec2FAdd types mismatch) - Something is wrong");
+                        throw new Exception($"Built in function (Vec2FDot types mismatch) - Something is wrong");
+                    }
+                case "Intrinsic_Vec2FFloor":    // 2Vec in 1Vec out
+                    {
+                        // Step 2 validate our inputs are expected
+                        if (IsIntrinsicTypeCorrect(inputs[0], 2, LLVMTypeKind.LLVMFloatTypeKind))
+                        {
+                            var vecA = builder.StructToVec(inputs[0], 2);
+                            LLVMValueRef res;
+
+                            res = builder.FFloor(vecA);
+
+                            return builder.VecToStruct(res, inputs[0].Type, 2, function.FrontendLocation);
+                        }
+
+                        throw new Exception($"Built in function (Vec2FFloor types mismatch) - Something is wrong");
                     }
 
             }

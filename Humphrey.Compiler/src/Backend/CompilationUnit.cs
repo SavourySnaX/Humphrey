@@ -38,15 +38,17 @@ namespace Humphrey.Backend
         string CompilerVersion => $"Humphrey Compiler - V{VersionNumber}";
 
         bool optimisations;
+        bool internalLinkageDefault;
 
         public string TargetTriple => targetTriple;
 
         public LLVMContextRef Context => contextRef;
 
-        public CompilationUnit(string sourceFileNameAndPath, CommonSymbolTable rootFromSemmantic, IEnumerable<SemanticPass.SymbolTableAndPass> extraNamespaces, IPackageManager manager, IEnumerable<IGlobalDefinition> definitions, string targetTriple, bool disableOptimisations, bool debugInfo, CompilerMessages overrideDefaultMessages = null)
+        public CompilationUnit(string sourceFileNameAndPath, CommonSymbolTable rootFromSemmantic, IEnumerable<SemanticPass.SymbolTableAndPass> extraNamespaces, IPackageManager manager, IEnumerable<IGlobalDefinition> definitions, string targetTriple, bool disableOptimisations, bool debugInfo, bool internalDefault, CompilerMessages overrideDefaultMessages = null)
         {
             predefinedValues = new Dictionary<string, string>();
             optimisations = !disableOptimisations;
+            internalLinkageDefault = internalDefault;
 
             this.targetTriple = targetTriple;
 
@@ -987,5 +989,6 @@ namespace Humphrey.Backend
 
         public Dictionary<string, string> PreDefined => predefinedValues;
         public bool DebugInfoEnabled => debugBuilder.Enabled;
+        public bool InternalLinkageDefault => internalLinkageDefault;
     }
 }
