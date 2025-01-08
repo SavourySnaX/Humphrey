@@ -34,7 +34,7 @@ namespace Humphrey.Compiler.src.Backend.Builtin
             throw new CompilationAbortException($"Atomic ordering must be a constant integer value");
         }
 
-        static bool IsIntrinsicTypeCorrect(CompilationValue v, int numElements, LLVMTypeKind elementType)
+        static bool IsIntrinsicTypeCorrect(CompilationValue v, uint numElements, LLVMTypeKind elementType)
         {
             if (v.BackendType.Kind == LLVMTypeKind.LLVMVectorTypeKind && v.BackendType.ElementType.Kind == elementType && v.BackendType.VectorSize == numElements)
                 return true;
@@ -54,105 +54,151 @@ namespace Humphrey.Compiler.src.Backend.Builtin
             return false;
         }
 
+        enum IntrinsicKind
+        {
+            Atomic,
+            Vector
+        }
+
+        static IntrinsicKind DecodeKindFromName(string name, out string Kind, out string subName, out uint numElements)
+        {
+            Kind = "";
+            numElements = 0;
+            if (name.StartsWith("Intrinsic_Atomic"))
+            {
+                subName = name.Substring("Intrinsic_Atomic".Length);
+                return IntrinsicKind.Atomic;
+            }
+            if (name.StartsWith("Intrinsic_Vec"))
+            {
+                subName = name.Substring("Intrinsic_Vec".Length);
+                int len = 0;
+                foreach(char c in subName)
+                {
+                    if (!Char.IsDigit(c))
+                        break;
+                    len++;
+                }
+                var num = subName.Substring(0, len);
+                numElements = UInt32.Parse(num);
+                subName = subName.Substring(len);
+                Kind = subName.Substring(0,1);
+                subName=subName.Substring(1);
+                return IntrinsicKind.Vector;
+            }
+            throw new System.NotImplementedException($"{name} is not handled in decodekindfromname");
+        }
+
         public static IType ResolveOutputType(SemanticPass pass, AstLoadableIdentifier ident, IType[] inputs, AstFunctionType functionType)
         {
-            switch (ident.Name)
+            var kind = DecodeKindFromName(ident.Name, out _, out var name, out _);
+            switch (kind)
             {
-                case "Intrinsic_AtomicLoadExplicit":
-                case "Intrinsic_AtomicStoreExplicit":
-                case "Intrinsic_Vec2FDot":  // 2Vec in 1f out
+                case IntrinsicKind.Atomic:
                     return functionType.ResolveOutputType(pass);
-                case "Intrinsic_Vec2FAdd":  // 2Vec in 1Vec out
-                case "Intrinsic_Vec2FSub":
-                case "Intrinsic_Vec2FMul":
-                case "Intrinsic_Vec2FDiv":
-                case "Intrinsic_Vec2FFloor":    // 2Vec in 1Vec out
-                    return inputs[0];
+                case IntrinsicKind.Vector:
+                    switch (name)
+                    {
+                        case "Dot":
+                            return functionType.ResolveOutputType(pass);
+                        case "Add":
+                        case "Sub":
+                        case "Mul":
+                        case "Div":
+                        case "Floor":
+                            return inputs[0];
+                    }
+                    break;
             }
             throw new NotImplementedException($"Unhandled Builtin '{ident.Name}'");
         }
 
         public static ICompilationValue CallBuiltIn(CompilationUnit unit, CompilationBuilder builder, CompilationValue function, CompilationFunctionType ftype, CompilationValue[] inputs)
         {
-            // TODO validate input and output parameters numbers and kinds
-            switch (ftype.Identifier)
+            var kind = DecodeKindFromName(ftype.Identifier, out var vectorKind, out var name, out var numElements);
+
+            switch (kind)
             {
-                case "Intrinsic_AtomicLoadExplicit":
+                case IntrinsicKind.Atomic:
+                    switch (name)
                     {
-                        return builder.LoadAtomic(ftype.ReturnType.Type, inputs[0], GetAtomicOrdering(inputs[1]));
-                    }
-                case "Intrinsic_AtomicStoreExplicit":
-                    {
-                        builder.StoreAtomic(inputs[1], inputs[0], GetAtomicOrdering(inputs[2]));
-                        return inputs[1];
-                    }
-                case "Intrinsic_Vec2FAdd":  // 2Vec in 1Vec out
-                case "Intrinsic_Vec2FSub":
-                case "Intrinsic_Vec2FMul":
-                case "Intrinsic_Vec2FDiv":
-                    {
-                        // Step 2 validate our inputs are expected
-                        if (IsIntrinsicTypeCorrect(inputs[0], 2, LLVMTypeKind.LLVMFloatTypeKind) && IsIntrinsicTypeCorrect(inputs[1], 2, LLVMTypeKind.LLVMFloatTypeKind))
+                        case "LoadExplicit":
+                            return builder.LoadAtomic(ftype.ReturnType.Type, inputs[0], GetAtomicOrdering(inputs[1]));
+                        case "StoreExplicit":
                         {
-                            var vecA = builder.StructToVec(inputs[0], 2);
-                            var vecB = builder.StructToVec(inputs[1], 2);
-                            LLVMValueRef res;
-
-                            switch (ftype.Identifier)
+                            builder.StoreAtomic(inputs[1], inputs[0], GetAtomicOrdering(inputs[2]));
+                            return inputs[1];
+                        }
+                    }
+                    break;
+                case IntrinsicKind.Vector:
+                    switch (name)
+                    {
+                        case "Add":
+                        case "Sub":
+                        case "Mul":
+                        case "Div":
+                        case "Dot":
                             {
-                                case "Intrinsic_Vec2FAdd":
-                                    res = builder.FAdd(vecA, vecB);
-                                    break;
-                                case "Intrinsic_Vec2FSub":
-                                    res = builder.FSub(vecA, vecB);
-                                    break;
-                                case "Intrinsic_Vec2FMul":
-                                    res = builder.FMul(vecA, vecB);
-                                    break;
-                                case "Intrinsic_Vec2FDiv":
-                                    res = builder.FDiv(vecA, vecB);
-                                    break;
-                                default:
-                                    throw new NotImplementedException($"Built in function {ftype.Identifier} not implemented");
+                                if (vectorKind!="F")
+                                {
+                                    throw new NotImplementedException($"TODO - Only F type vector supported at present");
+                                }
+                                // Step 2 validate our inputs are expected
+                                if (IsIntrinsicTypeCorrect(inputs[0], numElements, LLVMTypeKind.LLVMFloatTypeKind) && IsIntrinsicTypeCorrect(inputs[1], numElements, LLVMTypeKind.LLVMFloatTypeKind))
+                                {
+                                    var vecA = builder.StructToVec(inputs[0], numElements);
+                                    var vecB = builder.StructToVec(inputs[1], numElements);
+                                    LLVMValueRef res;
+
+                                    switch (name)
+                                    {
+                                        case "Add":
+                                            res = builder.FAdd(vecA, vecB);
+                                            break;
+                                        case "Sub":
+                                            res = builder.FSub(vecA, vecB);
+                                            break;
+                                        case "Mul":
+                                            res = builder.FMul(vecA, vecB);
+                                            break;
+                                        case "Div":
+                                            res = builder.FDiv(vecA, vecB);
+                                            break;
+                                        case "Dot":
+                                            res = builder.FDot(vecA, vecB);
+                                            break;
+                                        default:
+                                            throw new NotImplementedException($"Built in function {ftype.Identifier} not implemented");
+                                    }
+
+                                    if (res.TypeOf.Kind==LLVMTypeKind.LLVMFloatTypeKind)
+                                        return builder.FloatTo(res, (inputs[0].Type as CompilationStructureType).Elements[0], function.FrontendLocation);
+
+                                    return builder.VecToStruct(res, inputs[0].Type, numElements, function.FrontendLocation);
+                                }
+
+                                throw new Exception($"Built in function ({ftype.Identifier} types mismatch) - Something is wrong");
                             }
+                        case "Floor":    // 2Vec in 1Vec out
+                            {
+                                // Step 2 validate our inputs are expected
+                                if (IsIntrinsicTypeCorrect(inputs[0], numElements, LLVMTypeKind.LLVMFloatTypeKind))
+                                {
+                                    var vecA = builder.StructToVec(inputs[0], numElements);
+                                    LLVMValueRef res;
 
-                            return builder.VecToStruct(res, inputs[0].Type, 2, function.FrontendLocation);
-                        }
+                                    res = builder.FFloor(vecA);
 
-                        throw new Exception($"Built in function (Vec2FAdd types mismatch) - Something is wrong");
+                                    return builder.VecToStruct(res, inputs[0].Type, numElements, function.FrontendLocation);
+                                }
+
+                                throw new Exception($"Built in function (Vec2FFloor types mismatch) - Something is wrong");
+                            }
                     }
-                case "Intrinsic_Vec2FDot":  // 2Vec in 1f out
-                    {
-                        if (IsIntrinsicTypeCorrect(inputs[0], 2, LLVMTypeKind.LLVMFloatTypeKind) && IsIntrinsicTypeCorrect(inputs[1], 2, LLVMTypeKind.LLVMFloatTypeKind))
-                        {
-                            var vecA = builder.StructToVec(inputs[0], 2);
-                            var vecB = builder.StructToVec(inputs[1], 2);
-                            LLVMValueRef res;
-
-                            res =  builder.FDot(vecA, vecB);
-
-                            return builder.FloatTo(res, (inputs[0].Type as CompilationStructureType).Elements[0], function.FrontendLocation);
-                        }
-
-                        throw new Exception($"Built in function (Vec2FDot types mismatch) - Something is wrong");
-                    }
-                case "Intrinsic_Vec2FFloor":    // 2Vec in 1Vec out
-                    {
-                        // Step 2 validate our inputs are expected
-                        if (IsIntrinsicTypeCorrect(inputs[0], 2, LLVMTypeKind.LLVMFloatTypeKind))
-                        {
-                            var vecA = builder.StructToVec(inputs[0], 2);
-                            LLVMValueRef res;
-
-                            res = builder.FFloor(vecA);
-
-                            return builder.VecToStruct(res, inputs[0].Type, 2, function.FrontendLocation);
-                        }
-
-                        throw new Exception($"Built in function (Vec2FFloor types mismatch) - Something is wrong");
-                    }
-
+                    break;
             }
+
             throw new NotImplementedException($"Built in function {ftype.Identifier} not implemented");
         }
 
