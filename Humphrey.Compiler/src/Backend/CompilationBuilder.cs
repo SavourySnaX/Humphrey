@@ -573,6 +573,16 @@ namespace Humphrey.Backend
             return DoIntrinsic("llvm.floor", new[] { left.TypeOf }, new[] { left });
         }
 
+        public LLVMValueRef FMin(LLVMValueRef left, LLVMValueRef right)
+        {
+            return DoIntrinsic("llvm.minnum", new[] { left.TypeOf }, new[] { left, right });
+        }
+
+        public LLVMValueRef FMax(LLVMValueRef left, LLVMValueRef right)
+        {
+            return DoIntrinsic("llvm.maxnum", new[] { left.TypeOf }, new[] { left, right });
+        }
+
         public unsafe LLVMValueRef StructToVec(CompilationValue input, uint numElements)
         {
             if (input.BackendValue.TypeOf.Kind == LLVMTypeKind.LLVMVectorTypeKind)

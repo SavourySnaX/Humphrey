@@ -105,6 +105,8 @@ namespace Humphrey.Compiler.src.Backend.Builtin
                         case "Sub":
                         case "Mul":
                         case "Div":
+                        case "Min":
+                        case "Max":
                         case "Floor":
                             return inputs[0];
                     }
@@ -138,6 +140,8 @@ namespace Humphrey.Compiler.src.Backend.Builtin
                         case "Sub":
                         case "Mul":
                         case "Div":
+                        case "Min":
+                        case "Max":
                         case "Dot":
                             {
                                 if (vectorKind!="F")
@@ -167,6 +171,12 @@ namespace Humphrey.Compiler.src.Backend.Builtin
                                             break;
                                         case "Dot":
                                             res = builder.FDot(vecA, vecB);
+                                            break;
+                                        case "Min":
+                                            res = builder.FMin(vecA, vecB);
+                                            break;
+                                        case "Max":
+                                            res = builder.FMax(vecA, vecB);
                                             break;
                                         default:
                                             throw new NotImplementedException($"Built in function {ftype.Identifier} not implemented");
