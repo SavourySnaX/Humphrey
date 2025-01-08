@@ -71,7 +71,14 @@ namespace Humphrey.Backend.Tests
         {
             Assert.True(InputFloatFloatExpectsFloatValue(CompileForTest(input, entryPointName), a, b, expected), $"Test {entryPointName},{expected}");
         }
-        
+ 
+        [Theory]
+        [InlineData($"{LocalVec2F} {MakeVec2F} [BUILT_IN]Intrinsic_Vec2FAbs:(a:{anonVec2F})(result:{anonVec2F}) Main:(i1:fp32,i2:fp32)(out:fp32)={{s:=MakeVec().result; s.a=i1; s.b=i2; s=Intrinsic_Vec2FAbs(s); out=s.a;}}", "Main", -1.9, 0, 1.9)]
+        public void BuiltIn_Vec2Abs(string input, string entryPointName, float a, float b, float expected)
+        {
+            Assert.True(InputFloatFloatExpectsFloatValue(CompileForTest(input, entryPointName), a, b, expected), $"Test {entryPointName},{expected}");
+        }
+
         [Theory]
         [InlineData($"{LocalVec2F} {MakeVec2F} [BUILT_IN]Intrinsic_Vec2FMin:(a:{anonVec2F},b:{anonVec2F})(result:{anonVec2F}) Main:(i1:fp32,i2:fp32)(out:fp32)={{s:=MakeVec().result; t:=MakeVec().result; s.a=i1; t.a=i2; s=Intrinsic_Vec2FMin(s,t); out=s.a;}}", "Main", 3, 1, 1)]
         public void BuiltIn_Vec2Min(string input, string entryPointName, float a, float b, float expected)

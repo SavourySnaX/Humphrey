@@ -573,6 +573,11 @@ namespace Humphrey.Backend
             return DoIntrinsic("llvm.floor", new[] { left.TypeOf }, new[] { left });
         }
 
+        public LLVMValueRef FAbs(LLVMValueRef left)
+        {
+            return DoIntrinsic("llvm.fabs", new[] { left.TypeOf }, new[] { left });
+        }
+
         public LLVMValueRef FMin(LLVMValueRef left, LLVMValueRef right)
         {
             return DoIntrinsic("llvm.minnum", new[] { left.TypeOf }, new[] { left, right });

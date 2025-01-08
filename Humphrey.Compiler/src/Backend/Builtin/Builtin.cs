@@ -108,6 +108,7 @@ namespace Humphrey.Compiler.src.Backend.Builtin
                         case "Min":
                         case "Max":
                         case "Floor":
+                        case "Abs":
                             return inputs[0];
                     }
                     break;
@@ -191,6 +192,7 @@ namespace Humphrey.Compiler.src.Backend.Builtin
                                 throw new Exception($"Built in function ({ftype.Identifier} types mismatch) - Something is wrong");
                             }
                         case "Floor":    // 2Vec in 1Vec out
+                        case "Abs":
                             {
                                 // Step 2 validate our inputs are expected
                                 if (IsIntrinsicTypeCorrect(inputs[0], numElements, LLVMTypeKind.LLVMFloatTypeKind))
@@ -198,7 +200,17 @@ namespace Humphrey.Compiler.src.Backend.Builtin
                                     var vecA = builder.StructToVec(inputs[0], numElements);
                                     LLVMValueRef res;
 
-                                    res = builder.FFloor(vecA);
+                                    switch (name)
+                                    {
+                                        case "Floor":
+                                            res = builder.FFloor(vecA);
+                                            break;
+                                        case "Abs":
+                                            res = builder.FAbs(vecA);
+                                            break;
+                                        default:
+                                            throw new NotImplementedException($"Built in function {ftype.Identifier} not implemented");
+                                    }
 
                                     return builder.VecToStruct(res, inputs[0].Type, numElements, function.FrontendLocation);
                                 }
