@@ -191,7 +191,11 @@ public static class SystemV_C_ABI_STATIC
 
         public List<ArgInfo> classifyFunctionType(CompilationUnit unit, CompilationFunctionType functionType)
         {
-            ArgInfo returnInfo = classifyReturnType(unit, functionType.ReturnType.Type);
+            ArgInfo returnInfo = default;
+            if (functionType.ReturnType != null)
+            {
+                returnInfo = classifyReturnType(unit, functionType.ReturnType.Type);
+            }
 
             var argInfoArray = new List<ArgInfo>();
             argInfoArray.Add(returnInfo);
@@ -1523,8 +1527,7 @@ public static class SystemV_C_ABI_STATIC
 
         uint getTypeRequiredAlign(LLVMTypeRef type)
         {
-            return 0;
-            //return SystemV_C_ABI.getTypeRequiredAlign(_unit, type);
+            return SystemV_C_ABI_STATIC.getTypeRequiredAlign(_unit, type);
         }
 
         void createCoercedStore(LLVMValueRef source, LLVMValueRef destPtr, LLVMTypeRef sourceType, LLVMTypeRef destType)

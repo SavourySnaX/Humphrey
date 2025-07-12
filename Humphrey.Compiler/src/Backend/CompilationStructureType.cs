@@ -144,7 +144,11 @@ namespace Humphrey.Backend
 
             if (srcAlign == 0)
             {
-                throw new System.Exception("Hmm, expected an actual alignment in order to fix alignment for element");
+                srcAlign = unit.Module.GetDataLayout().GetABIAlignmentOfType(src.BackendType);
+                if (srcAlign == 0)
+                {
+                    throw new System.Exception("Hmm, expected an actual alignment in order to fix alignment for element");
+                }
             }
 
             var offsetInStruct = unit.Module.GetDataLayout().OffsetOfElement(BackendType, idx);

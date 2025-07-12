@@ -347,6 +347,11 @@ namespace Extensions
             {
                 return 8;
             }
+            if (type.Kind == LLVMTypeKind.LLVMArrayTypeKind)
+            {
+                var elementType = type.ElementType;
+                return AlignmentSystemV(elementType);
+            }
             throw new Exception($"TODO Unsupported type {type.Kind}");
         }
 
