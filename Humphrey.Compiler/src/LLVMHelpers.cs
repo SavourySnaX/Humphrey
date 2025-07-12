@@ -10,12 +10,12 @@ namespace Extensions
         {
             return LLVMTargetRef.DefaultTriple;
         }
-
+/*
         public static LLVMPassManagerBuilderRef PassManagerBuilderCreate()
         {
             return LLVM.PassManagerBuilderCreate();
         }
-
+*/
         public static LLVMContextRef CreateContext()
         {
             return LLVM.ContextCreate();
@@ -291,9 +291,9 @@ namespace Extensions
             return LLVM.DIBuilderCreateExpression(builderRef, null, (UIntPtr)0);
         }
 
-        public static LLVMValueRef InsertDeclareAtEnd(this LLVMDIBuilderRef builderRef, LLVMValueRef storage, LLVMMetadataRef varInfo, LLVMMetadataRef expr, LLVMMetadataRef debugLoc, LLVMBasicBlockRef atEnd)
+        public static LLVMDbgRecordRef InsertDeclareAtEnd(this LLVMDIBuilderRef builderRef, LLVMValueRef storage, LLVMMetadataRef varInfo, LLVMMetadataRef expr, LLVMMetadataRef debugLoc, LLVMBasicBlockRef atEnd)
         {
-            return LLVM.DIBuilderInsertDeclareAtEnd(builderRef, storage, varInfo, expr, debugLoc, atEnd);
+            return LLVM.DIBuilderInsertDeclareRecordAtEnd(builderRef, storage, varInfo, expr, debugLoc, atEnd);
         }
 
         public static LLVMMetadataRef CreatePointerType(this LLVMDIBuilderRef builderRef, LLVMMetadataRef pointee, UInt64 sizeInBits, uint alignInBits, uint addressSpace, string name)

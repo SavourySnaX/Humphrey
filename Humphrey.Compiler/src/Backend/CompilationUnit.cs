@@ -63,11 +63,10 @@ namespace Humphrey.Backend
             {
                 targetABI = new WindowsX64_C_ABI();
             }
-
-            /*else if (targetTriple.Contains("x86_64") && !targetTriple.Contains("msvc"))
+            else if (targetTriple.Contains("x86_64") && !targetTriple.Contains("msvc"))
             {
                 targetABI = new SystemV_C_ABI();
-            }*/
+            }
             else
             {
                 throw new System.Exception($"Unsupported ABI for target triple : {targetTriple}");
@@ -873,9 +872,11 @@ namespace Humphrey.Backend
 
         public void Optimise(LLVMPassManagerRef passManagerRef)
         {
+/*            LLVM.AddAnalysisPasses(moduleRef, passManagerRef);
+
             var passes = PassManagerBuilderCreate();
             passes.PopulateModulePassManager(passManagerRef);
-            passes.PopulateFunctionPassManager(passManagerRef);
+            passes.PopulateFunctionPassManager(passManagerRef);*/
         }
 
         public string FetchDisassembly(bool pic, bool kernel)

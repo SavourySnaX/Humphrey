@@ -8,10 +8,28 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using Extensions;
 using Humphrey.Backend;
+using Humphrey.Compiler.src.Backend.ABI;
 using LLVMSharp;
 using LLVMSharp.Interop;
 using Microsoft.VisualBasic;
 using static Extensions.Helpers;
+
+
+public class SystemV_C_ABI : CABI
+{
+    SystemV_C_ABI_STATIC.Classifier classifier;
+
+    public List<ArgInfo> ComputeTransform(CompilationUnit unit, CompilationFunctionType functionType)
+    {
+        classifier = new SystemV_C_ABI_STATIC.Classifier(unit.Module.GetDataLayout());
+        return classifier.classifyFunctionType(unit, functionType);
+    }
+
+    public uint getTypeRequiredAlign(CompilationUnit unit, LLVMTypeRef type)
+    {
+        return unit.Module.GetDataLayout().GetABIAlignmentOfType(type);
+    }
+}
 
 public enum EClassification
 {
@@ -26,7 +44,7 @@ public enum EClassification
     Memory,
 }
 
-public static class SystemV_C_ABI
+public static class SystemV_C_ABI_STATIC
 {
     public static EClassification MergeClassification(EClassification first, EClassification second)
     {
@@ -234,7 +252,8 @@ public static class SystemV_C_ABI
             {
                 for (uint a=0;a<type.StructElementTypesCount;a++)
                 {
-                    var member = type.StructElementTypes[a];
+                    var structElementTypes = type.GetStructElementTypes();
+                    var member = structElementTypes[a];
                     var offset = dataLayout.GetOffsetOfElement(type, a);
 
                     if (offset*8 >= end)
@@ -274,7 +293,8 @@ public static class SystemV_C_ABI
                 // Find the field containing the offset.
                 for (int a=0;a<type.StructElementTypesCount;a++)
                 {
-                    var member = type.StructElementTypes[a];
+                    var structElementTypes = type.GetStructElementTypes();
+                    var member = structElementTypes[a];
                     var memberOffset = dataLayout.GetOffsetOfElement(type, (uint)a);
                     var memberSize = dataLayout.GetTypeAllocSize(member);
                     if (memberOffset <= offset && offset < memberOffset + memberSize)
@@ -361,7 +381,8 @@ public static class SystemV_C_ABI
             {
                 for (int a=0;a<type.StructElementTypesCount;a++)
                 {
-                    var member = type.StructElementTypes[a];
+                    var structElementTypes = type.GetStructElementTypes();
+                    var member = structElementTypes[a];
                     var memberOffset = unit.Module.GetDataLayout().GetOffsetOfElement(type, (uint)a);
                     var memberSize = unit.Module.GetDataLayout().GetTypeAllocSize(member);
                     if (memberOffset <= offset && offset < memberOffset + memberSize)
@@ -739,7 +760,8 @@ public static class SystemV_C_ABI
         if (type.Kind == LLVMTypeKind.LLVMStructTypeKind)
         {
 			uint result = 0;
-            foreach (var field in type.StructElementTypes)
+            var structElementTypes = type.GetStructElementTypes();
+            foreach (var field in structElementTypes)
             {
                 result += getExpansionSize(field);
             }
@@ -943,7 +965,8 @@ public static class SystemV_C_ABI
                         {
                             throw new Exception("Invalid number of IR args for Direct");
                         }
-						foreach (var member in coerceType.StructElementTypes)
+                            var structElementTypes = coerceType.GetStructElementTypes();
+                            foreach (var member in structElementTypes)
                         {
                             argumentTypes[firstIRArg++] = member;
                         }
@@ -1012,9 +1035,10 @@ public static class SystemV_C_ABI
             case LLVMTypeKind.LLVMStructTypeKind:
                 {
                     uint align = 1;
+                    var structElementTypes = type.GetStructElementTypes();
                     for (int a = 0; a < type.StructElementTypesCount; a++)
                     {
-                        var elementAlign = getTypeRequiredAlign(unit, type.StructElementTypes[a]);
+                        var elementAlign = getTypeRequiredAlign(unit, structElementTypes[a]);
                         if (elementAlign > align)
                         {
                             align = elementAlign;
@@ -1058,9 +1082,11 @@ public static class SystemV_C_ABI
                     {
                         return false;
                     }
+                    var structElementTypes1 = type1.GetStructElementTypes();
+                    var structElementTypes2 = type2.GetStructElementTypes();
                     for (int a = 0; a < type1.StructElementTypesCount; a++)
                     {
-                        if (!typesAreEqual(type1.StructElementTypes[a], type2.StructElementTypes[a]))
+                        if (!typesAreEqual(structElementTypes1[a], structElementTypes2[a]))
                         {
                             return false;
                         }
@@ -1375,7 +1401,8 @@ public static class SystemV_C_ABI
                 return (sourcePtr, sourceType);
             }
 
-            var firstElementType = sourceType.StructElementTypes[0];
+            var structElementTypes = sourceType.GetStructElementTypes();
+            var firstElementType = structElementTypes[0];
 
             var typeStoreSize = _unit.Module.GetDataLayout().GetTypeAllocSize(sourceType);
             var firstElementSize = _unit.Module.GetDataLayout().GetTypeAllocSize(firstElementType);
@@ -1496,7 +1523,8 @@ public static class SystemV_C_ABI
 
         uint getTypeRequiredAlign(LLVMTypeRef type)
         {
-            return SystemV_C_ABI.getTypeRequiredAlign(_unit, type);
+            return 0;
+            //return SystemV_C_ABI.getTypeRequiredAlign(_unit, type);
         }
 
         void createCoercedStore(LLVMValueRef source, LLVMValueRef destPtr, LLVMTypeRef sourceType, LLVMTypeRef destType)

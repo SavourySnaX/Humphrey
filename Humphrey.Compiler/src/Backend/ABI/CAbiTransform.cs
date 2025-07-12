@@ -108,7 +108,8 @@ namespace Humphrey.Compiler.src.Backend.ABI
             if (type.Kind == LLVMTypeKind.LLVMStructTypeKind)
             {
                 uint result = 0;
-                foreach (var field in type.StructElementTypes)
+                var structElementTypes = type.GetStructElementTypes();
+                foreach (var field in structElementTypes)
                 {
                     result += getExpansionSize(field);
                 }
@@ -233,7 +234,8 @@ namespace Humphrey.Compiler.src.Backend.ABI
                                 {
                                     throw new System.ArgumentException("Invalid number of IR args for Direct");
                                 }
-                                foreach (var member in coerceType.StructElementTypes)
+                                var structElementTypes = coerceType.GetStructElementTypes();
+                                foreach (var member in structElementTypes)
                                 {
                                     argumentTypes[firstIRArg++] = member;
                                 }
@@ -332,9 +334,10 @@ namespace Humphrey.Compiler.src.Backend.ABI
                 case LLVMTypeKind.LLVMStructTypeKind:
                     {
                         uint align = 1;
+                        var structElementTypes = type.GetStructElementTypes();
                         for (int a = 0; a < type.StructElementTypesCount; a++)
                         {
-                            var elementAlign = getTypeRequiredAlign(unit, type.StructElementTypes[a]);
+                            var elementAlign = getTypeRequiredAlign(unit, structElementTypes[a]);
                             if (elementAlign > align)
                             {
                                 align = elementAlign;
@@ -753,7 +756,8 @@ namespace Humphrey.Compiler.src.Backend.ABI
                 return (sourcePtr, sourceType);
             }
 
-            var firstElementType = sourceType.StructElementTypes[0];
+            var structElementTypes = sourceType.GetStructElementTypes();
+            var firstElementType = structElementTypes[0];
 
             var typeStoreSize = _unit.Module.GetDataLayout().GetTypeAllocSize(sourceType);
             var firstElementSize = _unit.Module.GetDataLayout().GetTypeAllocSize(firstElementType);
@@ -961,9 +965,11 @@ namespace Humphrey.Compiler.src.Backend.ABI
                         {
                             return false;
                         }
+                        var structElementTypes1 = type1.GetStructElementTypes();
+                        var structElementTypes2 = type2.GetStructElementTypes();
                         for (int a = 0; a < type1.StructElementTypesCount; a++)
                         {
-                            if (!typesAreEqual(type1.StructElementTypes[a], type2.StructElementTypes[a]))
+                            if (!typesAreEqual(structElementTypes1[a], structElementTypes2[a]))
                             {
                                 return false;
                             }
