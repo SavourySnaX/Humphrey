@@ -627,31 +627,51 @@ namespace Humphrey.FrontEnd
             return next;
         }
 
-        protected static Result<char> SkipToEndCommentBlock(TokenSpan span)
+        protected class CommentBlockHandler
         {
-            var next = span.ConsumeChar();
-            int blockCommentDepth = 1;
-            while (next.HasValue && blockCommentDepth > 0)
+            int blockCommentDepth;
+            TokenSpan consuming;
+            Result<char> nextToken;
+            Result<char> lastValid;
+            public CommentBlockHandler(TokenSpan start)
             {
-                if (next.Value == '#')
-                {
-                    next = next.Remainder.ConsumeChar();
-                    if (!next.HasValue)
-                        break;
-                    if (next.Value == '!')
-                        blockCommentDepth++;
-                }
-                else if (next.Value == '!')
-                {
-                    next = next.Remainder.ConsumeChar();
-                    if (!next.HasValue)
-                        break;
-                    if (next.Value == '#')
-                        blockCommentDepth--;
-                }
-                next = next.Remainder.ConsumeChar();
+                consuming = start;
+                blockCommentDepth = 1;
             }
-            return next;
+
+            public bool Next()
+            {
+                nextToken = consuming.ConsumeChar();
+                lastValid = nextToken;
+                while (nextToken.HasValue && blockCommentDepth > 0 && nextToken.Value != '\n' && nextToken.Value != '\r' && Char.GetUnicodeCategory(nextToken.Value) != System.Globalization.UnicodeCategory.LineSeparator)
+                {
+                    if (nextToken.Value == '#')
+                    {
+                        nextToken = nextToken.Remainder.ConsumeChar();
+                        if (!nextToken.HasValue)
+                            break;
+                        if (nextToken.Value == '!')
+                            blockCommentDepth++;
+                    }
+                    else if (nextToken.Value == '!')
+                    {
+                        nextToken = nextToken.Remainder.ConsumeChar();
+                        if (!nextToken.HasValue)
+                            break;
+                        if (nextToken.Value == '#')
+                            blockCommentDepth--;
+                    }
+                    nextToken = nextToken.Remainder.ConsumeChar();
+                    if (nextToken.HasValue)
+                    {
+                        lastValid = nextToken;
+                    }
+                }
+                consuming = nextToken.Remainder;
+                return nextToken.HasValue && blockCommentDepth > 0;
+            }
+
+            public Result<char> NextToken => nextToken.HasValue ? nextToken : lastValid;
         }
 
         protected static Result<char> SkipToEndString(TokenSpan span)
@@ -972,7 +992,16 @@ namespace Humphrey.FrontEnd
                         c = next.Value;
                         if (c == '!')
                         {
-                            next = SkipToEndCommentBlock(next.Remainder);
+                            //LSP doesn't like tokens that span multiple lines (since column info would be lost)
+                            //so we will yield per line until the end of the comment block
+                            var commentHandler = new CommentBlockHandler(next.Remainder);
+                            while (commentHandler.Next())
+                            {
+                                next = commentHandler.NextToken;
+                                yield return new Result<Tokens>(Tokens.MultiLineComment, start, next.Location);
+                                start=next.Remainder;
+                            }
+                            next = commentHandler.NextToken;
                             yield return new Result<Tokens>(Tokens.MultiLineComment, start, next.Location);
                         }
                         else
