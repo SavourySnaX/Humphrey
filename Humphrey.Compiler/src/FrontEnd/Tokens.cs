@@ -668,6 +668,11 @@ namespace Humphrey.FrontEnd
                     }
                 }
                 consuming = nextToken.Remainder;
+                if (blockCommentDepth <= 0 && !nextToken.HasValue && lastValid.HasValue)
+                {
+                    var hashResult = lastValid.Remainder.ConsumeChar();
+                    lastValid = new Result<char>(hashResult.Remainder);
+                }
                 return nextToken.HasValue && blockCommentDepth > 0;
             }
 
