@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="LibGit2Sharp" Version="0.30.0" />
 		<PackageReference Include="libLLVM" Version="20.1.2" />
+		<PackageReference Include="libLLVM.runtime.win-arm64" Version="20.1.2" />
 		<PackageReference Include="libLLVM.runtime.win-x64" Version="20.1.2" />
 		<PackageReference Include="LLVMSharp" Version="20.1.2" />
 	</ItemGroup>
