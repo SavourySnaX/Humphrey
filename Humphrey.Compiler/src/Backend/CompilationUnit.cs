@@ -67,6 +67,15 @@ namespace Humphrey.Backend
             {
                 targetABI = new SystemV_C_ABI();
             }
+            else if (targetTriple.Contains("aarch64") && targetTriple.Contains("windows"))
+            {
+                targetABI = new WindowsArm64_C_ABI();
+            }
+            else if (targetTriple.Contains("aarch64") && !targetTriple.Contains("msvc"))
+            {
+                // ARM64 Linux (SystemV-like) — treat as SystemV for now
+                targetABI = new SystemV_C_ABI();
+            }
             else
             {
                 throw new System.Exception($"Unsupported ABI for target triple : {targetTriple}");
@@ -74,11 +83,22 @@ namespace Humphrey.Backend
 
             LLVM.LinkInMCJIT();
 
-            LLVM.InitializeX86TargetMC();
-            LLVM.InitializeX86Target();
-            LLVM.InitializeX86TargetInfo();
-            LLVM.InitializeX86AsmParser();
-            LLVM.InitializeX86AsmPrinter();
+            if (targetTriple.Contains("aarch64"))
+            {
+                LLVM.InitializeAArch64TargetMC();
+                LLVM.InitializeAArch64Target();
+                LLVM.InitializeAArch64TargetInfo();
+                LLVM.InitializeAArch64AsmParser();
+                LLVM.InitializeAArch64AsmPrinter();
+            }
+            else
+            {
+                LLVM.InitializeX86TargetMC();
+                LLVM.InitializeX86Target();
+                LLVM.InitializeX86TargetInfo();
+                LLVM.InitializeX86AsmParser();
+                LLVM.InitializeX86AsmPrinter();
+            }
 
             root = rootFromSemmantic;
             packageManager = manager;

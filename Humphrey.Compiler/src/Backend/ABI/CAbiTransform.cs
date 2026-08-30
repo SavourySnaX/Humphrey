@@ -219,7 +219,10 @@ namespace Humphrey.Compiler.src.Backend.ABI
 
                     case ArgInfo.EArgKind.Cast:
                         {
-                            argumentTypes[firstIRArg] = context.Int64Type;
+                            // Use CoerceType (original struct type) so native C functions receive
+                            // the struct value directly (e.g., in FP register on ARM64 Windows).
+                            // x64 Windows LLVM JIT implicitly bitcasts this to i64.
+                            argumentTypes[firstIRArg] = argInfo.CoerceType;
                         }
                         break;
                     case ArgInfo.EArgKind.Extend:
@@ -315,6 +318,201 @@ namespace Humphrey.Compiler.src.Backend.ABI
             }
 
             return args;
+        }
+
+        public uint getTypeRequiredAlign(CompilationUnit unit, LLVMTypeRef type)
+        {
+            switch (type.Kind)
+            {
+                case LLVMTypeKind.LLVMVoidTypeKind:
+                    return 1;
+                case LLVMTypeKind.LLVMPointerTypeKind:
+                    return 8;
+                case LLVMTypeKind.LLVMIntegerTypeKind:
+                    return LLVMHelper.roundUpToPower2(type.IntWidth / 8);
+                case LLVMTypeKind.LLVMFloatTypeKind:
+                    return 4;
+                case LLVMTypeKind.LLVMDoubleTypeKind:
+                    return 8;
+                case LLVMTypeKind.LLVMStructTypeKind:
+                    {
+                        uint align = 1;
+                        var structElementTypes = type.GetStructElementTypes();
+                        for (int a = 0; a < type.StructElementTypesCount; a++)
+                        {
+                            var elementAlign = getTypeRequiredAlign(unit, structElementTypes[a]);
+                            if (elementAlign > align)
+                            {
+                                align = elementAlign;
+                            }
+                        }
+                        return align;
+                    }
+                case LLVMTypeKind.LLVMArrayTypeKind:
+                    return getTypeRequiredAlign(unit, type.ElementType);
+                case LLVMTypeKind.LLVMVectorTypeKind:
+                    {
+                        uint elementAlign = getTypeRequiredAlign(unit, type.ElementType);
+                        uint minAlign = unit.Module.GetDataLayout().GetTypeAllocSize(type) >= 32 ? 32u : unit.Module.GetDataLayout().GetTypeAllocSize(type) >= 16 ? 16u : 1u;
+                        return elementAlign > minAlign ? elementAlign : minAlign;
+                    }
+                default:
+                    throw new System.NotImplementedException("TODO");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Windows ARM64 (AArch64) C ABI.
+    /// Integer/pointer args: R0-R7 (8 regs, 8 bytes each).
+    /// FP args: Q0-Q7 (8 regs, 16 bytes each).
+    /// Return: R0-R1 for integers/pointers, Q0-Q1 for FP.
+    /// Large aggregates (&gt;16 bytes): hidden pointer.
+    /// </summary>
+    public class WindowsArm64_C_ABI : CABI
+    {
+        private const uint IntRegSize = 8;  // ARM64 registers are 8 bytes
+        private const uint IntRegCount = 8; // R0-R7
+        private const uint FpRegSize = 16;  // ARM64 FP registers are 16 bytes (Q0-Q7)
+        private const uint FpRegCount = 8;  // 8 FP regs
+        private const uint MaxAggSize = 12; // ARM64 Windows: <= 12 bytes go in R0:R1, > 12 use Indirect
+
+        // Override getFunctionType to use struct type (not i64) for Cast params.
+        // Native C functions on ARM64 Windows expect struct by value in FP register,
+        // not packed i64 in int register.
+
+
+        public List<ArgInfo> ComputeTransform(CompilationUnit unit, CompilationFunctionType functionType)
+        {
+            var args = new List<ArgInfo>();
+
+            // Classify return type and args using the ARM64 register budget
+            var regBudget = new RegBudget();
+
+            // Handle return value first
+            if (functionType.ReturnType == null)
+            {
+                args.Add(ArgInfo.getIgnore());
+            }
+            else
+            {
+                var retArg = classifyReturnType(unit, functionType.ReturnType.Type.BackendType, regBudget);
+                args.Add(retArg);
+            }
+
+            // Handle each parameter
+            foreach (var arg in functionType.Parameters)
+            {
+                var argArg = classifyArgument(unit, arg.Type.BackendType, regBudget);
+                args.Add(argArg);
+            }
+
+            return args;
+        }
+
+        private ArgInfo classifyReturnType(CompilationUnit unit, LLVMTypeRef type, RegBudget budget)
+        {
+            var size = (uint)unit.Module.GetDataLayout().ABISizeOfType(type);
+
+            // Integer / pointer return
+            if (type.IsIntegralType() || type.Kind == LLVMTypeKind.LLVMPointerTypeKind)
+            {
+                if (size <= budget.IntRegs * IntRegSize)
+                {
+                    return ArgInfo.getDirect(unit, type);
+                }
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+            }
+
+            // FP return
+            if (type.Kind == LLVMTypeKind.LLVMFloatTypeKind)
+            {
+                if (budget.FpRegs >= 1)
+                {
+                    budget.FpRegs--;
+                    return ArgInfo.getDirect(unit, type);
+                }
+                // FP overflow: return via stack (hidden pointer) — same as x64 Windows sret
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+            }
+
+            // Aggregate return
+            if (type.IsAggregateType())
+            {
+                if (size <= MaxAggSize)
+                {
+                    // Fits in registers: use Cast (same pattern as x64 Windows)
+                    return ArgInfo.getCast(unit, type, (uint)size);
+                }
+                // Too large: hidden pointer
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+            }
+
+            throw new System.NotImplementedException($"TODO ARM64 return type: {type.Kind}");
+        }
+
+        private ArgInfo classifyArgument(CompilationUnit unit, LLVMTypeRef type, RegBudget budget)
+        {
+            var size = (uint)unit.Module.GetDataLayout().ABISizeOfType(type);
+
+            // Integer / pointer argument
+            if (type.IsIntegralType())
+            {
+                if (budget.IntRegs >= (size + IntRegSize - 1) / IntRegSize)
+                {
+                    budget.IntRegs -= (size + IntRegSize - 1) / IntRegSize;
+                    return ArgInfo.getDirect(unit, type);
+                }
+                // Not enough integer regs: indirect (hidden pointer)
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+            }
+
+            // Pointer argument
+            if (type.Kind == LLVMTypeKind.LLVMPointerTypeKind)
+            {
+                if (budget.IntRegs >= 1)
+                {
+                    budget.IntRegs--;
+                    return ArgInfo.getDirect(unit, type);
+                }
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+            }
+
+            // FP argument
+            if (type.Kind == LLVMTypeKind.LLVMFloatTypeKind)
+            {
+                if (budget.FpRegs >= 1)
+                {
+                    budget.FpRegs--;
+                    return ArgInfo.getDirect(unit, type);
+                }
+                // FP overflow: indirect via stack
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+            }
+
+            // Aggregate argument
+            if (type.IsAggregateType())
+            {
+                if (size <= MaxAggSize)
+                {
+                    // Fits in registers: use Cast
+                    return ArgInfo.getCast(unit, type, (uint)size);
+                }
+                // > 4 bytes: pass via hidden pointer (memory) to avoid register packing issues on ARM64
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+            }
+
+            throw new System.NotImplementedException($"TODO ARM64 arg type: {type.Kind}");
+        }
+
+        /// <summary>
+        /// Tracks the available register budget for an ARM64 Windows ABI function call.
+        /// </summary>
+        private struct RegBudget
+        {
+            public uint IntRegs;
+            public uint FpRegs;
+            public RegBudget() { IntRegs = IntRegCount; FpRegs = FpRegCount; }
         }
 
         public uint getTypeRequiredAlign(CompilationUnit unit, LLVMTypeRef type)
@@ -574,12 +772,23 @@ namespace Humphrey.Compiler.src.Backend.ABI
                                 address.Alignment = argInfo.IndirectAlign;
                             }
                             _builder.BuildStore(argumentValue, address);
-                            var I64 = _unit.CreateIntegerType(64, false, new SourceLocation());
-                            var pI64 = _unit.CreatePointerType(I64, new SourceLocation());
-                            var asI64 = _builder.BuildBitCast(address, pI64.BackendType);
-                            var loadedValue = _builder.BuildLoad2(I64.BackendType, asI64);
-                            args[firstIRArg] = loadedValue;
 
+                            if (_targetABI is WindowsArm64_C_ABI)
+                            {
+                                // ARM64 Windows: load struct type so it goes in FP register (Q0)
+                                // matching native C function's expectation
+                                var loadAsStruct = _builder.BuildLoad2(argumentType.BackendType, address);
+                                args[firstIRArg] = loadAsStruct;
+                            }
+                            else
+                            {
+                                // x64 Windows: pass packed i64
+                                var I64 = _unit.CreateIntegerType(64, false, new SourceLocation());
+                                var pI64 = _unit.CreatePointerType(I64, new SourceLocation());
+                                var asI64 = _builder.BuildBitCast(address, pI64.BackendType);
+                                var loadedValue = _builder.BuildLoad2(I64.BackendType, asI64);
+                                args[firstIRArg] = loadedValue;
+                            }
                         }
                         break;
 
@@ -656,15 +865,6 @@ namespace Humphrey.Compiler.src.Backend.ABI
                                 for (int a = 0; a < coerceType.StructElementTypesCount; a++)
                                 {
                                     throw new System.NotImplementedException("TODO");
-                                    /*
-                                    const auto elementPtr = createConstGEP2_32(builder_,
-                                                                                                   typeInfo_.getLLVMType(coerceType),
-                                                                                                   sourcePtr,
-                                                                                                   0, i);
-                                    const auto loadInst = builder_.getBuilder().CreateLoad(elementPtr);
-                                    // We don't know what we're loading from.
-                                    loadInst->setAlignment(1);
-                                    irCallArgs[firstIRArg + i] = loadInst;*/
                                 }
                             }
                             else
@@ -821,7 +1021,28 @@ namespace Humphrey.Compiler.src.Backend.ABI
                     }
 
                 case ArgInfo.EArgKind.Cast:
-                    throw new System.NotImplementedException("TODO CAST");
+                    {
+                        // Cast return: value is packed in a struct that fits in registers.
+                        // Store to memory so AddressElement can use GetElementPtr into it.
+                        var coerceType = returnArgInfo.CoerceType;
+                        var destPtr = createMemTemp(returnType);
+                        if (LLVMHelper.typesAreEqual(returnValue.TypeOf, returnType))
+                        {
+                            // Already the right type — just store
+                            _builder.BuildStore(returnValue, destPtr);
+                        }
+                        else if (coerceType.Kind == LLVMTypeKind.LLVMStructTypeKind)
+                        {
+                            // Extract packed struct elements into memory
+                            buildAggStore(returnValue, destPtr, false);
+                        }
+                        else
+                        {
+                            _builder.BuildStore(returnValue, destPtr);
+                        }
+                        // Return the pointer to the struct in memory so AddressElement works
+                        return (default, destPtr);
+                    }
                 case ArgInfo.EArgKind.Extend:
                 case ArgInfo.EArgKind.Direct:
                     {
