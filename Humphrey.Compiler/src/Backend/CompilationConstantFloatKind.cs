@@ -39,11 +39,11 @@ namespace Humphrey.Backend
                 destType = resultType.CreateOrFetchType(unit).compilationType;
 
             if (destType == null)
-                return unit.CreateConstant(this, location);
+                return unit.CreateConstant(this, null, location);
 
-            if (destType is CompilationFloatType destFloatType)
+            if (destType is CompilationFloatType || destType is CompilationDoubleType)
             {
-                return unit.CreateConstant(this, location);
+                return unit.CreateConstant(this, destType, location);
             }
             if (destType is CompilationIntegerType destIntType)
             {

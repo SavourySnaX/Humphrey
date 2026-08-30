@@ -39,6 +39,9 @@ namespace Humphrey.FrontEnd
         [Token(Category = "Keyword", Example = "fp32", SemanticKind = "Type")]
         KW_FP32,
 
+        [Token(Category = "Keyword", Example = "fp64", SemanticKind = "Type")]
+        KW_FP64,
+
         [Token(Category = "Keyword", Example = "using", SemanticKind = "Keyword")]
         KW_Using,
 
@@ -492,7 +495,8 @@ namespace Humphrey.FrontEnd
         {
             ["as"] = Tokens.O_As,
             ["bit"] = Tokens.KW_Bit,
-            ["fp32"] = Tokens.KW_FP32, // TODO: Remove this when we have a proper floating point type
+            ["fp32"] = Tokens.KW_FP32,
+            ["fp64"] = Tokens.KW_FP64,
             ["for"] = Tokens.KW_For,
             ["return"] = Tokens.KW_Return,
             ["if"] = Tokens.KW_If,

@@ -201,6 +201,11 @@ namespace Humphrey.Backend
             return new CompilationValue(builderRef.BuildFPToUI(src.BackendValue, destType.BackendType), destType, src.FrontendLocation);
         }
 
+        public CompilationValue FloatToDouble(CompilationValue src, CompilationType destType)
+        {
+            return new CompilationValue(builderRef.BuildFPExt(src.BackendValue, destType.BackendType), destType, src.FrontendLocation);
+        }
+
         public CompilationValue LogicalAnd(CompilationValue left, CompilationValue right)
         {
             return new CompilationValue(builderRef.BuildAnd(left.BackendValue, right.BackendValue), left.Type, left.FrontendLocation.Combine(right.FrontendLocation));

@@ -124,6 +124,7 @@ namespace Humphrey.FrontEnd
             }
 
             var destFloatType = destType as CompilationFloatType;
+            var destDoubleType = destType as CompilationDoubleType;
 
             if (srcIntType!=null && destFloatType!=null)
             {
@@ -138,6 +139,13 @@ namespace Humphrey.FrontEnd
                 {
                     return builder.UnsignedToFloat(src, destFloatType);
                 }
+            }
+
+            // Implicit fp32 -> fp64 promotion
+            var srcFloatType = src.Type as CompilationFloatType;
+            if (srcFloatType != null && destDoubleType != null)
+            {
+                return builder.FloatToDouble(src, destDoubleType);
             }
 
 

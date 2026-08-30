@@ -119,7 +119,7 @@ namespace Humphrey.Compiler.src.Backend.ABI
             return 1;
         }
 
-        LLVMTypeRef getFunctionType(LLVMContextRef context, LLVMTypeRef returnType, LLVMTypeRef[] paramTypes, FunctionIRMapping functionIRMapping)
+        virtual LLVMTypeRef getFunctionType(LLVMContextRef context, LLVMTypeRef returnType, LLVMTypeRef[] paramTypes, FunctionIRMapping functionIRMapping)
         {
             LLVMTypeRef resultType = default;
 
@@ -219,10 +219,9 @@ namespace Humphrey.Compiler.src.Backend.ABI
 
                     case ArgInfo.EArgKind.Cast:
                         {
-                            // Use CoerceType (original struct type) so native C functions receive
-                            // the struct value directly (e.g., in FP register on ARM64 Windows).
-                            // x64 Windows LLVM JIT implicitly bitcasts this to i64.
-                            argumentTypes[firstIRArg] = argInfo.CoerceType;
+                            // x64 Windows: caller emits i64 via bitcast→load, param must be i64.
+                            // ARM64 Windows: handled by WindowsArm64_C_ABI override (struct for Q0).
+                            argumentTypes[firstIRArg] = context.Int64Type;
                         }
                         break;
                     case ArgInfo.EArgKind.Extend:
@@ -556,6 +555,91 @@ namespace Humphrey.Compiler.src.Backend.ABI
             }
         }
 
+        // ARM64 Windows: Cast params use struct type (not i64) — the caller loads struct for Q0.
+        // x64 Windows: Cast params use i64 — the caller loads i64 via bitcast.
+        public new virtual LLVMTypeRef getFunctionType(LLVMContextRef context, LLVMTypeRef returnType, LLVMTypeRef[] paramTypes, FunctionIRMapping functionIRMapping)
+        {
+            LLVMTypeRef resultType = default;
+            var returnArgInfo = functionIRMapping.ReturnArgInfo;
+            switch (returnArgInfo.getKind())
+            {
+                case ArgInfo.EArgKind.Expand:
+                    throw new System.ArgumentException("Invalid ABI kind for return argument");
+                case ArgInfo.EArgKind.Cast:
+                case ArgInfo.EArgKind.Extend:
+                case ArgInfo.EArgKind.Direct:
+                    resultType = returnArgInfo.CoerceType;
+                    break;
+                case ArgInfo.EArgKind.InAlloca:
+                    if (returnArgInfo.IsInAllocaSRet)
+                    {
+                        var pointeeType = returnType;
+                        resultType = LLVMTypeRef.CreatePointer(pointeeType, 0);
+                    }
+                    else
+                    {
+                        resultType = context.VoidType;
+                    }
+                    break;
+                case ArgInfo.EArgKind.Indirect:
+                    resultType = context.VoidType;
+                    break;
+                case ArgInfo.EArgKind.Ignore:
+                    resultType = returnType;
+                    break;
+            }
+
+            var argumentTypes = new LLVMTypeRef[functionIRMapping.TotalIRArgs];
+
+            if (functionIRMapping.HasStructRetArg)
+            {
+                var pointeeType = returnType;
+                argumentTypes[functionIRMapping.StructRetArgIndex] = LLVMTypeRef.CreatePointer(pointeeType, 0);
+            }
+
+            for (int argumentNumber = 0; argumentNumber < functionIRMapping.Arguments.Count; argumentNumber++)
+            {
+                var argInfo = functionIRMapping.Arguments[argumentNumber].argInfo;
+                var argumentType = paramTypes[argumentNumber];
+                uint firstIRArg, numIRArgs;
+                (firstIRArg, numIRArgs) = functionIRMapping.getIRArgRange(argumentNumber);
+
+                switch (argInfo.getKind())
+                {
+                    case ArgInfo.EArgKind.Ignore:
+                    case ArgInfo.EArgKind.InAlloca:
+                        break;
+                    case ArgInfo.EArgKind.Indirect:
+                        argumentTypes[firstIRArg] = Extensions.Helpers.CreatePointerType(argumentType);
+                        break;
+                    case ArgInfo.EArgKind.Cast:
+                        // ARM64 Windows: pass struct type in FP register (Q0)
+                        argumentTypes[firstIRArg] = argInfo.CoerceType;
+                        break;
+                    case ArgInfo.EArgKind.Extend:
+                    case ArgInfo.EArgKind.Direct:
+                        {
+                            var coerceType = argInfo.CoerceType;
+                            if (coerceType.Kind == LLVMTypeKind.LLVMStructTypeKind && argInfo.IsDirect && argInfo.CanBeFlattened)
+                            {
+                                var structElementTypes = coerceType.GetStructElementTypes();
+                                foreach (var member in structElementTypes)
+                                {
+                                    argumentTypes[firstIRArg++] = member;
+                                }
+                            }
+                            else
+                            {
+                                argumentTypes[firstIRArg] = coerceType;
+                            }
+                        }
+                        break;
+                }
+            }
+
+            return Extensions.Helpers.CreateFunctionType(resultType, argumentTypes, false);
+        }
+
 
     }
 
@@ -775,14 +859,13 @@ namespace Humphrey.Compiler.src.Backend.ABI
 
                             if (_targetABI is WindowsArm64_C_ABI)
                             {
-                                // ARM64 Windows: load struct type so it goes in FP register (Q0)
-                                // matching native C function's expectation
+                                // ARM64 Windows: load struct type for Q0 register
                                 var loadAsStruct = _builder.BuildLoad2(argumentType.BackendType, address);
                                 args[firstIRArg] = loadAsStruct;
                             }
                             else
                             {
-                                // x64 Windows: pass packed i64
+                                // x64 Windows: load i64 to match function param type
                                 var I64 = _unit.CreateIntegerType(64, false, new SourceLocation());
                                 var pI64 = _unit.CreatePointerType(I64, new SourceLocation());
                                 var asI64 = _builder.BuildBitCast(address, pI64.BackendType);

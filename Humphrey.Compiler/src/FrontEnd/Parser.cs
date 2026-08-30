@@ -304,6 +304,7 @@ namespace Humphrey.FrontEnd
         // bit_keyword : bit
         public AstBitType BitKeyword() { return AstItem(Tokens.KW_Bit, (e) => new AstBitType()) as AstBitType; }
         public AstFp32Type Fp32Keyword() { return AstItem(Tokens.KW_FP32, (e) => new AstFp32Type()) as AstFp32Type; }
+        public AstFp64Type Fp64Keyword() { return AstItem(Tokens.KW_FP64, (e) => new AstFp64Type()) as AstFp64Type; }
         public IAst ReturnKeyword() { return AstItem(Tokens.KW_Return, (e) => new AstKeyword(e)); }
         public IAst ForKeyword() { return AstItem(Tokens.KW_For, (e) => new AstKeyword(e)); }
         public IAst IfKeyword() { return AstItem(Tokens.KW_If, (e) => new AstKeyword(e)); }
@@ -403,9 +404,9 @@ namespace Humphrey.FrontEnd
                 LogicalAndOperator, LogicalOrOperator, BinaryAndOperator, BinaryOrOperator, BinaryXorOperator,
                 LogicalShiftLeftOperator, LogicalShiftRightOperator, ArithmeticShiftRightOperator };
         public AstItemDelegate[] ExpressionKind => new AstItemDelegate[] { UnderscoreExpression, UnaryExpression, BinaryExpression };
-        public AstItemDelegate[] BaseTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Fp32Keyword, TypeIdentifier, FunctionType, StructType};
+        public AstItemDelegate[] BaseTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Fp32Keyword, Fp64Keyword, TypeIdentifier, FunctionType, StructType};
         public AstItemDelegate[] Types => new AstItemDelegate[] { BaseTypeOrEnumOrAliasType };
-        public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Fp32Keyword, TypeIdentifier, StructType };
+        public AstItemDelegate[] NonFunctionTypes => new AstItemDelegate[] { PointerType, ArrayType, BitKeyword, Fp32Keyword, Fp64Keyword, TypeIdentifier, StructType };
         public AstItemDelegate[] IdentifierOrAnonymous => new AstItemDelegate[] { Identifier, AnonymousIdentifier };
         public AstItemDelegate[] Assignables => new AstItemDelegate[] {  CodeBlock, ParseExpression };
         public AstItemDelegate[] Statements => new AstItemDelegate[] { ReturnStatement, ForStatement, IfStatement, WhileStatement, CouldBeLocalScopeDefinitionOrAssignmentOrExpression };

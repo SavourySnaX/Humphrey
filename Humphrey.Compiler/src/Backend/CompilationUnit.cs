@@ -202,6 +202,16 @@ namespace Humphrey.Backend
             return CreateFloatType(location);
         }
 
+        public CompilationDoubleType FetchDoubleType(SourceLocation location)
+        {
+            return CreateDoubleType(location);
+        }
+
+        public CompilationDoubleType CreateDoubleType(SourceLocation location)
+        {
+            return new CompilationDoubleType(contextRef.DoubleType, debugBuilder, location);
+        }
+
         public CompilationIntegerType FetchIntegerType(uint numBits, bool isSigned, SourceLocation location)
         {
             return CreateIntegerType(numBits, isSigned, location);
@@ -533,11 +543,24 @@ namespace Humphrey.Backend
             return new CompilationValue(constType.BackendType.CreateConstantValue(constantValue.Constant.ToString(), 10), constType, constantValue.FrontendLocation);
         }
         
-        public CompilationValue CreateConstant(CompilationConstantFloatKind constantValue, SourceLocation location)
+        public CompilationValue CreateConstant(CompilationConstantFloatKind constantValue, CompilationType destType, SourceLocation location)
         {
-            var constType = new CompilationFloatType(contextRef.FloatType, debugBuilder, location);
+            CompilationType constType;
+            if (destType is CompilationDoubleType)
+            {
+                constType = new CompilationDoubleType(contextRef.DoubleType, debugBuilder, location);
+            }
+            else
+            {
+                constType = new CompilationFloatType(contextRef.FloatType, debugBuilder, location);
+            }
 
             return new CompilationValue(constType.BackendType.CreateConstantFloatValue(constantValue.Constant), constType, constantValue.FrontendLocation);
+        }
+
+        public CompilationValue CreateConstant(CompilationConstantFloatKind constantValue, SourceLocation location)
+        {
+            return CreateConstant(constantValue, null, location);
         }
 
 

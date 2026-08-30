@@ -1793,6 +1793,17 @@ InsertFirstAlpha:(colour:*RGBA, alpha:U8)()=
             return returnValue == expected;
         }
 
+        delegate double InputVoidOutputDouble(double* returnVal);
+
+        public static bool InputVoidExpectsDoubleValue(IntPtr ee, double expected)
+        {
+            var func = Marshal.GetDelegateForFunctionPointer<InputVoidOutputDouble>(ee);
+            double returnValue;
+            func(&returnValue);
+            // Use epsilon comparison for floating point
+            return Math.Abs(returnValue - expected) < 1e-10;
+        }
+
     }
 }
 
