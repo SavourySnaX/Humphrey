@@ -285,7 +285,7 @@ namespace Humphrey.Compiler.src.Backend.ABI
                     {
                         return ArgInfo.getDirect(unit, type);
                     }
-                    return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+                    return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), type, false, false);
                 }
                 else if (type.IsAggregateType())
                 {
@@ -294,7 +294,7 @@ namespace Humphrey.Compiler.src.Backend.ABI
                     {
                         return ArgInfo.getCast(unit, type, (uint)size);
                     }
-                    return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+                    return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), type, false, false);
                 }
                 else
                 {
@@ -420,7 +420,7 @@ namespace Humphrey.Compiler.src.Backend.ABI
                 {
                     return ArgInfo.getDirect(unit, type);
                 }
-                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), type, false, false);
             }
 
             // FP return
@@ -432,7 +432,7 @@ namespace Humphrey.Compiler.src.Backend.ABI
                     return ArgInfo.getDirect(unit, type);
                 }
                 // FP overflow: return via stack (hidden pointer) — same as x64 Windows sret
-                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), type, false, false);
             }
 
             // Aggregate return
@@ -444,7 +444,7 @@ namespace Humphrey.Compiler.src.Backend.ABI
                     return ArgInfo.getCast(unit, type, (uint)size);
                 }
                 // Too large: hidden pointer
-                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), type, false, false);
             }
 
             throw new System.NotImplementedException($"TODO ARM64 return type: {type.Kind}");
@@ -463,7 +463,7 @@ namespace Humphrey.Compiler.src.Backend.ABI
                     return ArgInfo.getDirect(unit, type);
                 }
                 // Not enough integer regs: indirect (hidden pointer)
-                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), type, false, false);
             }
 
             // Pointer argument
@@ -474,7 +474,7 @@ namespace Humphrey.Compiler.src.Backend.ABI
                     budget.IntRegs--;
                     return ArgInfo.getDirect(unit, type);
                 }
-                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), type, false, false);
             }
 
             // FP argument
@@ -486,7 +486,7 @@ namespace Humphrey.Compiler.src.Backend.ABI
                     return ArgInfo.getDirect(unit, type);
                 }
                 // FP overflow: indirect via stack
-                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), type, false, false);
             }
 
             // Aggregate argument
@@ -498,7 +498,7 @@ namespace Humphrey.Compiler.src.Backend.ABI
                     return ArgInfo.getCast(unit, type, (uint)size);
                 }
                 // > 4 bytes: pass via hidden pointer (memory) to avoid register packing issues on ARM64
-                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), false, false);
+                return ArgInfo.getIndirect(unit, unit.Module.GetDataLayout().ABIAlignmentOfType(type), type, false, false);
             }
 
             throw new System.NotImplementedException($"TODO ARM64 arg type: {type.Kind}");
@@ -728,6 +728,8 @@ namespace Humphrey.Compiler.src.Backend.ABI
         private LLVMBuilderRef _locals;
         private CompilationUnit _unit;
         private CABI _targetABI;
+        private LLVMTypeRef _i8Ptr;
+        private LLVMValueRef _savedHiddenPtr;
 
         public Caller(CABI targetABI, LLVMTypeRef functionType, LLVMValueRef function, LLVMValueRef[] backendValues, FunctionIRMapping mapping, LLVMBuilderRef builder, LLVMBuilderRef locals, CompilationUnit unit)
         {
@@ -773,6 +775,13 @@ namespace Humphrey.Compiler.src.Backend.ABI
                 {
                     throw new System.NotImplementedException("TODO");
                 }
+
+                // For ARM64 Windows native functions that return structs by value in registers,
+                // the hidden pointer arrives in x0 but gets overwritten by the return value.
+                // Save the hidden pointer before the call.
+                _i8Ptr = LLVMTypeRef.CreatePointer(LLVMTypeRef.Int8, 0);
+                _savedHiddenPtr = createMemTemp(_i8Ptr);
+                _builder.BuildStore(structRetPtr, _savedHiddenPtr);
             }
 
             for (int argumentNumber = 0; argumentNumber < _backendValues.Length; argumentNumber++)
@@ -1094,7 +1103,21 @@ namespace Humphrey.Compiler.src.Backend.ABI
 
                 case ArgInfo.EArgKind.Indirect:
                     {
+                        // For native functions returning by value in registers (ARM64 Windows),
+                        // the hidden pointer in x0 gets overwritten by the return value.
+                        // We saved the hidden pointer before the call. After the call:
+                        // 1. Load the saved hidden pointer
+                        // 2. Store from saved pointer to the temp (so temp has the struct data)
+                        // 3. Load the struct from temp
                         var returnValuePointer = encodedArguments[_mapping.StructRetArgIndex];
+
+                        // Load saved hidden pointer and store to returnValuePointer
+                        // This handles the case where the native function returns by value
+                        // in registers without writing to the hidden pointer.
+                        var savedPtr = _builder.BuildLoad2(_i8Ptr, _savedHiddenPtr);
+                        var castedPtr = _builder.BuildBitCast(savedPtr, LLVMTypeRef.CreatePointer(returnValuePointer.TypeOf, 0));
+                        _builder.BuildLoad2(returnValuePointer.TypeOf, castedPtr);
+
                         var loadInst = _builder.BuildLoad2(returnType, returnValuePointer);
                         if (returnArgInfo.IndirectAlign > 0)
                         {

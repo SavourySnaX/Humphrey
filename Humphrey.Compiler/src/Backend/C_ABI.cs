@@ -431,7 +431,7 @@ public static class SystemV_C_ABI_STATIC
             {
                 return type.BackendType.IsPromotableIntegerType() ? ArgInfo.getExtend(unit, type.BackendType) : ArgInfo.getDirect(unit, type.BackendType);
             }
-            return ArgInfo.getIndirect(unit, 0);
+            return ArgInfo.getIndirect(unit, 0, type.BackendType);
         }
 
         LLVMTypeRef getX86_64ByValArgumentPair(CompilationUnit unit, LLVMTypeRef lowType,LLVMTypeRef highType) 

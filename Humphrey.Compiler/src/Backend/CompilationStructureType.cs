@@ -117,11 +117,32 @@ namespace Humphrey.Backend
 
         public CompilationValue AddressElement(CompilationUnit unit, CompilationBuilder builder, CompilationValue src, string identifier)
         {
-            ulong srcAlign = src.Alignment == 0 ? src.BackendValue.Alignment : src.Alignment;
             if (src == null)
             {
                 // Compilation error, attempt to dereference a null pointer
                 throw new System.Exception("Need error message and partial recovery - attempt to dereference a null pointer");
+            }
+
+            ulong srcAlign = src.Alignment == 0 ? (src.BackendValue.IsNull ? 0 : src.BackendValue.Alignment) : src.Alignment;
+
+            // Handle by-value struct returns (struct in register, not in memory)
+            if (src.BackendValue != null && src.BackendValue.TypeOf.Kind == LLVMTypeKind.LLVMStructTypeKind)
+            {
+                // Find identifier in elements
+                uint elemIdx = 0;
+                foreach (var i in elementNames)
+                {
+                    if (i == identifier)
+                        break;
+                    elemIdx++;
+                }
+                if (elemIdx == elementTypes.Length)
+                {
+                    throw new System.Exception($"Need error message and partial recovery - struct does not contain field {identifier}");
+                }
+                // Use ExtractValue to get the field from the by-value struct
+                var extracted = builder.ExtractValue(src, elementTypes[elemIdx], elemIdx);
+                return new CompilationValue(extracted.BackendValue, elementTypes[elemIdx], src.FrontendLocation);
             }
             // Find identifier in elements
             uint idx=0;

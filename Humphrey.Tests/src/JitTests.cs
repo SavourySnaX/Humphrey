@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Extensions;
+using LLVMSharp.Interop;
 
 namespace Humphrey.Backend.Tests
 {

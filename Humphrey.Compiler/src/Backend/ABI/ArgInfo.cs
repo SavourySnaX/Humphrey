@@ -110,10 +110,11 @@ public struct ArgInfo
         return info;
     }
 
-    public static ArgInfo getIndirect(CompilationUnit unit, uint alignment, bool byVal=true, bool realign=false)
+    public static ArgInfo getIndirect(CompilationUnit unit, uint alignment, LLVMTypeRef type, bool byVal=true, bool realign=false)
     {
         var info = new ArgInfo(ArgInfo.EArgKind.Indirect);
         info.setIndirectAlign(alignment);
+        info.setCoerceToType(type);
         info.indirectByVal = byVal;
         info.indirectRealign = realign;
         info.setPaddingType(unit.Context.VoidType);

@@ -778,8 +778,14 @@ namespace Humphrey.Backend
                 }
             }
 
+            // Store ee in static field to prevent GC finalizer from freeing memory prematurely.
+            // The EE will be disposed at process exit.
+            _lastExecutionEngine = ee;
             return ee.GetPointerToGlobal(root.FetchFunction(identifier).Function.BackendValue);
         }
+        
+        // Static reference to the last MCJIT ExecutionEngine to keep it alive during test execution
+        static LLVMExecutionEngineRef? _lastExecutionEngine;
 
         public bool EmitToBitCodeFile(string filename)
         {

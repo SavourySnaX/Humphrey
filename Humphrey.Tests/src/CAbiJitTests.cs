@@ -4,6 +4,9 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Xunit;
+using Humphrey.FrontEnd;
+using Humphrey.Compiler.src.Backend;
+using Extensions;
 
 namespace Humphrey.Backend.Tests
 {
@@ -166,10 +169,31 @@ namespace Humphrey.Backend.Tests
             public long c;
         }
 
+        // Original: returns struct by value, compiler generates sret (hidden pointer)
         [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-        static LargeReturnStruct TestABILargeReturn()
+        static LargeReturnStruct TestABILargeReturnOriginal()
         {
             return new LargeReturnStruct { a = 0xDEADBEEF, b = 0xCAFEBABE, c = 0x12345678 };
+        }
+
+        // Helper: writes struct to hidden pointer
+        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+        static void TestABILargeReturnWithPtr(IntPtr outPtr)
+        {
+            long* ptr = (long*)outPtr.ToPointer();
+            ptr[0] = 0xDEADBEEF;
+            ptr[1] = 0xCAFEBABE;
+            ptr[2] = 0x12345678;
+        }
+
+        // Helper: verify large struct return works
+        [Fact]
+        public unsafe void LargeStructReturnWorks()
+        {
+            var input = @"LargeStruct:{a:[64]bit b:[64]bit c:[64]bit} [C_CALLING_CONVENTION]TestCFunc:()(out:LargeStruct) Main:()(out:[64]bit)={out=TestCFunc().a;}";
+            delegate* unmanaged[Cdecl]<LargeReturnStruct> testDel = &TestABILargeReturnOriginal;
+            var globals = new (string name, nint addr)[] { ("TestCFunc", (nint)testDel) };
+            Assert.True(InputVoidExpects64BitValue(CompileForTest(input, "Main", globals), 0xDEADBEEF), "Large struct return works");
         }
 
         [Theory]
@@ -178,7 +202,7 @@ namespace Humphrey.Backend.Tests
         [InlineData(@"LargeStruct:{a:[64]bit b:[64]bit c:[64]bit} [C_CALLING_CONVENTION]TestCFunc:()(out:LargeStruct) Main:()(out:[64]bit)={out=TestCFunc().c;}", "Main", 0x12345678)]
         public void CABI_CheckLargeStructReturn(string input, string entryPointName, ulong expected)
         {
-            delegate* unmanaged[Cdecl]<LargeReturnStruct> TestDelegate = &TestABILargeReturn;
+            delegate* unmanaged[Cdecl]<LargeReturnStruct> TestDelegate = &TestABILargeReturnOriginal;
             var globals = new (string name, nint addr)[] { ("TestCFunc", (nint)TestDelegate) };
             Assert.True(InputVoidExpects64BitValue(CompileForTest(input, entryPointName, globals), expected), $"Test {entryPointName},{expected}");
         }

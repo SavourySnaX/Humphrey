@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Humphrey.Compiler/Humphrey.Compiler.csproj" />
+  <Project Path="Humphrey.Tests/Humphrey.Tests.csproj" />
+  <Project Path="Humphrey/Humphrey.csproj" />
+</Solution>
