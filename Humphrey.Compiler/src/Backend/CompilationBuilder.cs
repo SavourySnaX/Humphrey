@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Extensions;
-using Humphrey.Compiler.src.Backend.ABI;
 using Humphrey.FrontEnd;
 using LLVMSharp;
 using LLVMSharp.Interop;
@@ -493,28 +492,6 @@ namespace Humphrey.Backend
             }
 
             var returnKind = compilationFunctionType.ReturnType;
-
-            if (compilationFunctionType.FunctionCallingConvention == CompilationFunctionType.CallingConvention.CDecl)
-            {
-                var argInfo = unit.TargetABI.ComputeTransform(unit, compilationFunctionType);
-                var mapping = unit.TargetABI.GetFunctionIRMapping(argInfo);
-
-                var caller = new Caller(unit.TargetABI, func.Type.BackendType, func.BackendValue, backendValues, mapping, builderRef, localsBuilder, this.unit);
-
-                var encodedArguments = caller.encodeArguments(compilationFunctionType).ToArray();
-
-                var returnValue = builderRef.BuildCall2(func.Type.BackendType, func.BackendValue, encodedArguments);
-                if (returnKind == null)
-                    return null;
-
-                var (converted, storage) = caller.decodeReturnValue(encodedArguments, returnValue, returnKind.Type.BackendType);
-                var cv = new CompilationValue(converted, returnKind.Type, func.FrontendLocation);
-                if (storage != null)
-                {
-                    cv.Storage = new CompilationValue(storage, unit.CreatePointerType(returnKind.Type, new SourceLocation(func.FrontendLocation)), func.FrontendLocation);
-                }
-                return cv;
-            }
 
             var res=builderRef.BuildCall2(func.Type.BackendType, func.BackendValue, backendValues);
             if (returnKind==null)

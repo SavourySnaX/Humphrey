@@ -6,15 +6,12 @@ using System.Numerics;
 using System;
 using System.IO;
 using System.Collections.Generic;
-using Humphrey.Compiler.src.Backend.ABI;
 
 namespace Humphrey.Backend
 {
     public class CompilationUnit
     {
         string targetTriple;
-
-        CABI targetABI;
 
         IPackageManager packageManager;
         CommonSymbolTable root;
@@ -56,30 +53,6 @@ namespace Humphrey.Backend
             if (messages==null)
                 messages = new CompilerMessages(true, true, false);
 
-
-            // Determine ABI from triple ---
-
-            if ((targetTriple.Contains("windows") || targetTriple.Contains("-w64")) && targetTriple.Contains("x86_64"))
-            {
-                targetABI = new WindowsX64_C_ABI();
-            }
-            else if (targetTriple.Contains("x86_64") && !targetTriple.Contains("msvc"))
-            {
-                targetABI = new SystemV_C_ABI();
-            }
-            else if (targetTriple.Contains("aarch64") && targetTriple.Contains("windows"))
-            {
-                targetABI = new WindowsArm64_C_ABI();
-            }
-            else if (targetTriple.Contains("aarch64") && !targetTriple.Contains("msvc"))
-            {
-                // ARM64 Linux (SystemV-like) — treat as SystemV for now
-                targetABI = new SystemV_C_ABI();
-            }
-            else
-            {
-                throw new System.Exception($"Unsupported ABI for target triple : {targetTriple}");
-            }
 
             LLVM.LinkInMCJIT();
 
@@ -401,13 +374,7 @@ namespace Humphrey.Backend
 
             var compilationFunctionType = Extensions.Helpers.CreateFunctionType(returnType, allBackendParams, false);
             var initialFunctionType = new CompilationFunctionType(compilationFunctionType, CompilationFunctionType.CallingConvention.CDecl, realReturn, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
-            var argInfo = targetABI.ComputeTransform(this, initialFunctionType);
-            var mapping = targetABI.GetFunctionIRMapping(argInfo);
-
-            var replacedBackendType = targetABI.getFunctionType(Context, returnType, allBackendParams, mapping);
-
-            var replacedFunctionType = new CompilationFunctionType(replacedBackendType, CompilationFunctionType.CallingConvention.CDecl, realReturn, allParams, (uint)inputs.Length, debugBuilder, new SourceLocation(functionType.Token));
-            return replacedFunctionType;
+            return initialFunctionType;
         }
 
         public CompilationValue FetchValueIfDefined(IIdentifier identifier, CompilationBuilder builder)
@@ -1035,7 +1002,6 @@ namespace Humphrey.Backend
 
         public LLVMModuleRef Module => moduleRef;
         public CompilerMessages Messages => messages;
-        public CABI TargetABI => targetABI;
 
         public Dictionary<string, string> PreDefined => predefinedValues;
         public bool DebugInfoEnabled => debugBuilder.Enabled;
